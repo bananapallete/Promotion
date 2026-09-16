@@ -75,11 +75,11 @@
 }
 
 .survey-header[data-lang='en'] .survey-header__title {
-  font-size: 34px;
+  font-size: 40px;
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.4px;
 }
 
 .survey-header__rule {

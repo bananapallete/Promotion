@@ -595,24 +595,34 @@
 
 .benefit-badge__up {
   font-weight: 600;
-  color: rgba(70, 40, 0, 0.75);
+  background-image: linear-gradient(128deg, var(--gold-text-a) 12.5%, var(--gold-text-b) 93.5%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .benefit-badge--silver .benefit-badge__up {
-  color: rgba(40, 40, 45, 0.7);
+  background-image: linear-gradient(128deg, var(--silver-text-a) 12.5%, var(--silver-text-b) 93.5%);
 }
 
 .benefit-badge__pct {
-  font-family: 'Poppins', sans-serif;
   font-weight: 800;
-  color: rgba(70, 30, 0, 0.85);
   display: inline-flex;
   align-items: baseline;
   gap: 1px;
 }
 
-.benefit-badge--silver .benefit-badge__pct {
-  color: rgba(35, 35, 40, 0.85);
+.benefit-badge__pct-num,
+.benefit-badge__pct-sign {
+  background-image: linear-gradient(123deg, var(--gold-text-a) 12.5%, var(--gold-text-b) 93.5%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.benefit-badge--silver .benefit-badge__pct-num,
+.benefit-badge--silver .benefit-badge__pct-sign {
+  background-image: linear-gradient(123deg, var(--silver-text-a) 12.5%, var(--silver-text-b) 93.5%);
 }
 
 .benefit-badge__pct-input {
@@ -694,6 +704,14 @@
   max-width: 62%;
 }
 
+.promo-sheet[data-lang='en'] .gift-panel__heading {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.18px;
+}
+
 
 .gift-panel__note {
   position: relative;
@@ -760,6 +778,14 @@
   line-height: 1.35;
   letter-spacing: -0.02em;
   max-width: 62%;
+}
+
+.promo-sheet[data-lang='en'] .qr-panel__heading {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.18px;
 }
 
 
