@@ -229,6 +229,7 @@
 }
 
 .survey-option__add {
+  display: none;
   border: 1px dashed var(--app-border);
   background: transparent;
   color: var(--app-muted);
@@ -237,6 +238,11 @@
   font-weight: 700;
   padding: 4px 10px;
   cursor: pointer;
+}
+
+.survey-options:hover .survey-option__add,
+.survey-options:focus-within .survey-option__add {
+  display: inline-flex;
 }
 
 .survey-option__add:hover {
