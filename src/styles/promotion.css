@@ -198,18 +198,32 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: radial-gradient(
-    130% 150% at 68% 125%,
-    var(--header-grad-a) 0%,
-    var(--header-grad-b) 55%,
-    var(--header-grad-c) 100%
-  );
+  background:
+    linear-gradient(180deg, rgba(20, 0, 0, 0.15) 0%, rgba(20, 0, 0, 0.55) 100%),
+    url('../assets/figma/header-bg.png') center / cover no-repeat,
+    radial-gradient(
+      130% 150% at 68% 125%,
+      var(--header-grad-a) 0%,
+      var(--header-grad-b) 55%,
+      var(--header-grad-c) 100%
+    );
 }
 
 .promo-header__glow {
   position: absolute;
   inset: 0;
   background: radial-gradient(55% 55% at 82% 25%, rgba(255, 255, 255, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.promo-header__gift-accent {
+  position: absolute;
+  right: -20px;
+  bottom: -30px;
+  width: 50%;
+  max-width: 340px;
+  opacity: 0.9;
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 
@@ -543,12 +557,12 @@
 }
 
 .benefit-badge--gold {
-  background: linear-gradient(145deg, var(--gold-a), var(--gold-b));
+  background: url('../assets/figma/badge-gold.png') center / contain no-repeat;
   box-shadow: 0 8px 20px rgba(200, 130, 20, 0.35);
 }
 
 .benefit-badge--silver {
-  background: linear-gradient(145deg, var(--silver-a), var(--silver-b));
+  background: url('../assets/figma/badge-silver.png') center / contain no-repeat;
   box-shadow: 0 8px 20px rgba(90, 95, 100, 0.3);
 }
 
@@ -584,7 +598,9 @@
   position: absolute;
   right: 14px;
   bottom: 12px;
-  font-size: 46px;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
   opacity: 0.28;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
 }
@@ -657,10 +673,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.gift-panel__image-placeholder {
-  font-size: 42px;
 }
 
 .gift-panel--single .gift-panel__image {
@@ -737,12 +749,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.qr-panel__code-placeholder {
-  color: #111;
-  font-size: 34px;
-  line-height: 1;
 }
 
 .qr-panel__upload-btn {

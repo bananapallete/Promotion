@@ -3,6 +3,8 @@ import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 import { UI } from '../../i18n/ui.js'
+import giftDefaultImg from '../../assets/figma/gift-laptop.png'
+import qrDefaultImg from '../../assets/figma/qr-code.svg'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -83,11 +85,7 @@ export default function GiftBlock({ compact, single }) {
             }
           />
           <div className="gift-panel__image">
-            {giftImage ? (
-              <img src={giftImage} alt="gift" />
-            ) : (
-              <span className="gift-panel__image-placeholder">🎁</span>
-            )}
+            <img src={giftImage || giftDefaultImg} alt="gift" />
             <button
               type="button"
               className="ghost-btn no-print"
@@ -140,13 +138,7 @@ export default function GiftBlock({ compact, single }) {
             />
             <div className="qr-panel__code-wrap">
               <div className="qr-panel__code">
-                {qrImage ? (
-                  <img src={qrImage} alt="QR" />
-                ) : (
-                  <span className="qr-panel__code-placeholder" aria-hidden="true">
-                    ▦
-                  </span>
-                )}
+                <img src={qrImage || qrDefaultImg} alt="QR" />
               </div>
               <button
                 type="button"

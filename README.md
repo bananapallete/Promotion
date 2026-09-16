@@ -35,10 +35,16 @@ npm run lint     # oxlint 정적 분석
 
 ## 알려진 제한 사항
 
-- Figma 원본 디자인의 일부 사진 에셋(헤더 배경 사진, 금/은 배지, 사은품 예시 이미지, QR 아이콘 등)은
-  이 작업 환경에서 Figma 자산 서버 접근이 네트워크 정책으로 차단되어 있어 가져올 수 없었습니다.
-  대신 동일한 색상·레이아웃을 재현하는 CSS/이모지 플레이스홀더로 대체했습니다. 실제 에셋을
-  받아 `src/styles/promotion.css`의 `--header-grad-*`, `.benefit-badge`, `.gift-panel__image`,
-  `.qr-panel__code` 등을 이미지로 교체하면 원본과 동일하게 만들 수 있습니다.
 - 폰트는 Pretendard Variable(국문)과 Poppins(영문/숫자)를 npm 패키지로 번들링해 오프라인에서도
   동작합니다.
+
+## Figma 에셋
+
+Figma MCP(`node-id=108-7974`)에서 노드 단위로 정확히 매칭해 받은 실제 에셋을
+`src/assets/figma/`에 반영했습니다.
+
+- `header-bg.png` / `header-gift-accent.png` — 헤더 배경 사진 및 선물상자 액센트
+- `badge-gold.png` / `badge-silver.png` — Sale 혜택 배지(금/은 봉투)
+- `gift-laptop.png` — 사은품(고성능 노트북) 기본 이미지
+- `qr-code.svg` — QR코드 기본 이미지 (원본은 흰색 fill이라 흰 배경에서 보이도록 `#141414`로 재색칠)
+- `study-laptop.png` / `study-graduation-cap.png` — Study 섹션 아이콘

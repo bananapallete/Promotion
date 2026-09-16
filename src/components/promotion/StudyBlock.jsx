@@ -1,6 +1,8 @@
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
+import studyLaptopImg from '../../assets/figma/study-laptop.png'
+import studyGraduationCapImg from '../../assets/figma/study-graduation-cap.png'
 
 function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
   return (
@@ -24,9 +26,7 @@ function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
         value={data.desc}
         onChange={onDesc}
       />
-      <span className="benefit-box__icon" aria-hidden="true">
-        {icon}
-      </span>
+      <img className="benefit-box__icon" src={icon} alt="" aria-hidden="true" />
     </div>
   )
 }
@@ -55,7 +55,7 @@ export default function StudyBlock({ compact, single }) {
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
         <StudyBox
           data={study.box1}
-          icon={'\u{1F4BB}'}
+          icon={studyLaptopImg}
           compact={compact}
           single={single}
           onHeading={(v) =>
@@ -72,7 +72,7 @@ export default function StudyBlock({ compact, single }) {
         {!single && (
           <StudyBox
             data={study.box2}
-            icon={'\u{1F393}'}
+            icon={studyGraduationCapImg}
             compact={compact}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
