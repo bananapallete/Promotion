@@ -1,0 +1,126 @@
+:root {
+  --app-bg: #eef1f4;
+  --app-surface: #ffffff;
+  --app-surface-2: #f6f7f9;
+  --app-text: #1b1b1f;
+  --app-muted: #6b7280;
+  --app-border: #dfe3e8;
+  --app-accent: #9f393c;
+  --app-accent-contrast: #ffffff;
+
+  --sheet-bg: #ffffff;
+  --category-bg: #f3ebe7;
+  --category-border: #eae1dc;
+  --category-text: #010101;
+  --card-red: #9f393c;
+  --card-border: rgba(173, 128, 128, 0.15);
+  --gift-grad-from: #180002;
+  --gift-grad-to: #530209;
+  --qr-bg: #222222;
+  --notice-bg: #252323;
+  --notice-text: #ffffff;
+  --footer-bg: #111111;
+  --footer-text: #ffffff;
+  --header-grad-a: rgba(153, 0, 4, 1);
+  --header-grad-b: rgba(116, 1, 5, 1);
+  --header-grad-c: rgba(79, 2, 6, 1);
+  --divider-color: #e2d8d2;
+  --gold-a: #ffdf9c;
+  --gold-b: #c98a2b;
+  --silver-a: #f4f4f4;
+  --silver-b: #9aa0a6;
+}
+
+:root[data-theme='dark'] {
+  --app-bg: #0f1013;
+  --app-surface: #1b1c21;
+  --app-surface-2: #232227;
+  --app-text: #f2f0ee;
+  --app-muted: #9a9aa2;
+  --app-border: #2c2d33;
+  --app-accent: #c05559;
+  --app-accent-contrast: #ffffff;
+
+  --sheet-bg: #121014;
+  --category-bg: #221f22;
+  --category-border: #3a343a;
+  --category-text: #f5f1ef;
+  --card-red: #9f393c;
+  --card-border: rgba(173, 128, 128, 0.18);
+  --gift-grad-from: #120001;
+  --gift-grad-to: #3c0207;
+  --qr-bg: #1a1a1a;
+  --notice-bg: #1c1a1a;
+  --notice-text: #ffffff;
+  --footer-bg: #0c0c0c;
+  --footer-text: #ffffff;
+  --header-grad-a: rgba(78, 3, 5, 1);
+  --header-grad-b: rgba(41, 3, 6, 1);
+  --header-grad-c: rgba(4, 3, 8, 1);
+  --divider-color: #35302f;
+  --gold-a: #d9b877;
+  --gold-b: #8a5a1c;
+  --silver-a: #cfcfcf;
+  --silver-b: #6c7075;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html[lang='en'] body {
+  font-family: 'Poppins', 'Pretendard Variable', -apple-system, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: 'Pretendard Variable', 'Poppins', -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+}
+
+.editable {
+  outline: none;
+  border-radius: 4px;
+  cursor: text;
+  white-space: pre;
+}
+
+.editable--multiline {
+  white-space: pre-line;
+}
+
+.editable:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.editable:focus {
+  box-shadow: 0 0 0 2px var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

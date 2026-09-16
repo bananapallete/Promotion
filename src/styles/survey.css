@@ -1,0 +1,239 @@
+.survey-sheet {
+  width: 794px;
+  min-height: 1123.6px;
+  background: var(--sheet-bg);
+  color: var(--category-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* ---------- header ---------- */
+.survey-header {
+  position: relative;
+  flex: none;
+  min-height: 198px;
+  padding: 34px 44px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  background: radial-gradient(
+    130% 150% at 30% 0%,
+    var(--header-grad-a) 0%,
+    var(--header-grad-b) 55%,
+    var(--header-grad-c) 100%
+  );
+}
+
+.survey-header__glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(55% 65% at 15% 15%, rgba(255, 255, 255, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.survey-header__title {
+  position: relative;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+
+.survey-header[data-lang='kr'] .survey-header__title {
+  font-size: 26px;
+}
+
+.survey-header[data-lang='en'] .survey-header__title {
+  font-size: 21px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.survey-header__subtitle {
+  position: relative;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+  line-height: 1.5;
+  max-width: 560px;
+}
+
+/* ---------- body ---------- */
+.survey-body {
+  flex: 1;
+  padding: 22px 25px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.survey-section {
+  display: flex;
+  border-top: 1px solid var(--divider-color);
+  padding: 21px 0;
+  gap: 20px;
+}
+
+.survey-section:first-child {
+  border-top: none;
+}
+
+.survey-section__label {
+  flex: none;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.survey-section__index {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--app-accent);
+  font-family: 'Poppins', sans-serif;
+}
+
+.survey-section__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--category-text);
+  line-height: 1.3;
+}
+
+.survey-section__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 1px solid var(--divider-color);
+  padding-left: 24px;
+}
+
+/* ---------- field grid ---------- */
+.survey-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px 25px;
+}
+
+.survey-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.survey-field__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--category-text);
+}
+
+.survey-field__line {
+  height: 1px;
+  background: color-mix(in srgb, var(--category-text) 25%, transparent);
+}
+
+/* ---------- options ---------- */
+.survey-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+}
+
+.survey-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.survey-option__box {
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--app-accent);
+  flex: none;
+}
+
+.survey-option__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--category-text);
+  white-space: nowrap;
+}
+
+.survey-option__blank {
+  display: inline-block;
+  width: 60px;
+  height: 1px;
+  background: color-mix(in srgb, var(--category-text) 30%, transparent);
+  margin-left: 2px;
+}
+
+.survey-option__remove {
+  border: none;
+  background: transparent;
+  color: var(--app-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.survey-option__remove:hover {
+  color: var(--app-accent);
+}
+
+.survey-option__add {
+  border: 1px dashed var(--app-border);
+  background: transparent;
+  color: var(--app-muted);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.survey-option__add:hover {
+  border-color: var(--app-accent);
+  color: var(--app-accent);
+}
+
+/* ---------- notice ---------- */
+.survey-notice {
+  border-top: 1px solid var(--divider-color);
+  padding: 18px 0 24px;
+  display: flex;
+  gap: 20px;
+}
+
+.survey-notice__label {
+  flex: none;
+  width: 130px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--category-text);
+}
+
+.survey-notice__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.survey-notice__list li {
+  font-size: 10px;
+  color: color-mix(in srgb, var(--category-text) 65%, transparent);
+  line-height: 1.5;
+}
