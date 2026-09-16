@@ -7,6 +7,7 @@ export default function NoticeBlock() {
 
   return (
     <div className="notice-block">
+      <div className="notice-block__glow" aria-hidden="true" />
       <Editable
         as="p"
         className="notice-block__title"

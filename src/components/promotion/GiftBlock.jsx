@@ -5,6 +5,7 @@ import { useAppState } from '../../state/AppState.jsx'
 import { UI } from '../../i18n/ui.js'
 import giftDefaultImg from '../../assets/figma/gift-laptop.png'
 import qrDefaultImg from '../../assets/figma/qr-code.svg'
+import giftTextureImg from '../../assets/figma/header-bg.png'
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -62,6 +63,7 @@ export default function GiftBlock({ compact, single }) {
       />
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
         <div className={`gift-panel ${single ? 'gift-panel--single' : ''}`}>
+          <img className="gift-panel__texture" src={giftTextureImg} alt="" aria-hidden="true" />
           <div className="gift-panel__glow" aria-hidden="true" />
           <Editable
             as="p"
@@ -104,6 +106,7 @@ export default function GiftBlock({ compact, single }) {
         </div>
         {!single && (
           <div className="qr-panel">
+            <div className="qr-panel__glow" aria-hidden="true" />
             <Editable
               as="p"
               multiline
