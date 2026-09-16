@@ -7,7 +7,8 @@ const SECTION_LABELS = {
 }
 
 export default function SectionControls() {
-  const { lang, sections, toggleSection, activeProducts, toggleProduct } = useAppState()
+  const { lang, sections, toggleSection, itemCounts, setItemCount, activeProducts, toggleProduct } =
+    useAppState()
   const t = UI[lang]
   const labels = SECTION_LABELS[lang]
 
@@ -15,17 +16,34 @@ export default function SectionControls() {
     <div className="promo-controls no-print">
       <div className="promo-controls__group">
         {Object.keys(sections).map((key) => (
-          <label key={key} className="switch">
-            <input
-              type="checkbox"
-              checked={sections[key]}
-              onChange={() => toggleSection(key)}
-            />
-            <span className="switch__track">
-              <span className="switch__thumb" />
-            </span>
-            <span className="switch__label">{labels[key]}</span>
-          </label>
+          <span key={key} className="promo-controls__section">
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={sections[key]}
+                onChange={() => toggleSection(key)}
+              />
+              <span className="switch__track">
+                <span className="switch__thumb" />
+              </span>
+              <span className="switch__label">{labels[key]}</span>
+            </label>
+            {key in itemCounts && (
+              <span className="count-toggle">
+                {[1, 2].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
+                    disabled={!sections[key]}
+                    onClick={() => setItemCount(key, count)}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </span>
+            )}
+          </span>
         ))}
       </div>
       <div className="promo-controls__group">

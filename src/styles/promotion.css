@@ -42,6 +42,40 @@
   margin-right: 2px;
 }
 
+.promo-controls__section {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.count-toggle {
+  display: inline-flex;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.count-toggle__btn {
+  border: none;
+  background: var(--app-surface-2);
+  color: var(--app-muted);
+  font-size: 11px;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.count-toggle__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.count-toggle__btn.is-active {
+  background: var(--app-accent);
+  color: var(--app-accent-contrast);
+}
+
 .switch {
   display: inline-flex;
   align-items: center;
@@ -350,6 +384,10 @@
   height: 203px;
 }
 
+.promo-block__row:has(.benefit-box--single) {
+  height: auto;
+}
+
 .benefit-box {
   position: relative;
   flex: 1;
@@ -396,6 +434,16 @@
   font-size: 26px;
 }
 
+.benefit-box--single .benefit-box__heading {
+  font-size: 35px;
+  letter-spacing: -0.35px;
+  white-space: nowrap;
+}
+
+.benefit-box--single:has(.benefit-badge) .benefit-box__desc {
+  max-width: 60%;
+}
+
 .benefit-box__desc {
   position: relative;
   margin: auto 0 0;
@@ -418,6 +466,20 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
+}
+
+.benefit-badge--single {
+  width: 220px;
+  height: 190px;
+  gap: 6px;
+}
+
+.benefit-badge--single .benefit-badge__up {
+  font-size: 14.3px;
+}
+
+.benefit-badge--single .benefit-badge__pct {
+  font-size: 43px;
 }
 
 .benefit-badge--gold {

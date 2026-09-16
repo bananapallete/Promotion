@@ -2,9 +2,13 @@ import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
-function SaleBox({ data, badge, compact, onHeading, onPercent, onDesc }) {
+function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc }) {
   return (
-    <div className={`benefit-box ${compact ? 'benefit-box--m' : 'benefit-box--l'}`}>
+    <div
+      className={`benefit-box ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
+        single ? 'benefit-box--single' : ''
+      }`}
+    >
       <div className={`benefit-box__glow benefit-box__glow--${badge}`} aria-hidden="true" />
       <Editable
         as="p"
@@ -13,7 +17,7 @@ function SaleBox({ data, badge, compact, onHeading, onPercent, onDesc }) {
         value={data.heading}
         onChange={onHeading}
       />
-      <div className={`benefit-badge benefit-badge--${badge}`}>
+      <div className={`benefit-badge benefit-badge--${badge} ${single ? 'benefit-badge--single' : ''}`}>
         <span className="benefit-badge__up">Up to</span>
         <span className="benefit-badge__pct">
           <Editable
@@ -36,7 +40,7 @@ function SaleBox({ data, badge, compact, onHeading, onPercent, onDesc }) {
   )
 }
 
-export default function SaleBlock({ compact }) {
+export default function SaleBlock({ compact, single }) {
   const { lang, promotion, updatePromotion } = useAppState()
   const sale = promotion[lang].sale
 
@@ -62,6 +66,7 @@ export default function SaleBlock({ compact }) {
           data={sale.box1}
           badge="gold"
           compact={compact}
+          single={single}
           onHeading={(v) =>
             updatePromotion(lang, (d) => {
               d.sale.box1.heading = v
@@ -78,26 +83,28 @@ export default function SaleBlock({ compact }) {
             })
           }
         />
-        <SaleBox
-          data={sale.box2}
-          badge="silver"
-          compact={compact}
-          onHeading={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box2.heading = v
-            })
-          }
-          onPercent={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box2.percent = v
-            })
-          }
-          onDesc={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box2.desc = v
-            })
-          }
-        />
+        {!single && (
+          <SaleBox
+            data={sale.box2}
+            badge="silver"
+            compact={compact}
+            onHeading={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box2.heading = v
+              })
+            }
+            onPercent={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box2.percent = v
+              })
+            }
+            onDesc={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box2.desc = v
+              })
+            }
+          />
+        )}
       </div>
     </div>
   )

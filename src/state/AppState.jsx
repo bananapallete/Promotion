@@ -24,6 +24,7 @@ function buildInitialState() {
     promotion: persisted?.promotion ?? DEFAULT_PROMOTION,
     survey: persisted?.survey ?? DEFAULT_SURVEY,
     sections: persisted?.sections ?? { sale: true, study: true, gift: true },
+    itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2 },
     activeProducts:
       persisted?.activeProducts ??
       PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
@@ -76,6 +77,10 @@ export function AppProvider({ children }) {
     setState((s) => ({ ...s, sections: { ...s.sections, [key]: !s.sections[key] } }))
   }, [])
 
+  const setItemCount = useCallback((key, count) => {
+    setState((s) => ({ ...s, itemCounts: { ...s.itemCounts, [key]: count } }))
+  }, [])
+
   const toggleProduct = useCallback((code) => {
     setState((s) => ({
       ...s,
@@ -106,6 +111,7 @@ export function AppProvider({ children }) {
       updatePromotion,
       updateSurvey,
       toggleSection,
+      setItemCount,
       toggleProduct,
       setGiftImage,
       setQrImage,
@@ -118,6 +124,7 @@ export function AppProvider({ children }) {
       updatePromotion,
       updateSurvey,
       toggleSection,
+      setItemCount,
       toggleProduct,
       setGiftImage,
       setQrImage,
@@ -134,6 +141,7 @@ function buildInitialStateDefaults() {
     promotion: DEFAULT_PROMOTION,
     survey: DEFAULT_SURVEY,
     sections: { sale: true, study: true, gift: true },
+    itemCounts: { sale: 2, study: 2 },
     activeProducts: PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
     giftImage: null,
     qrImage: null,

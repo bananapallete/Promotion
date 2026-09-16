@@ -2,9 +2,13 @@ import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
-function StudyBox({ data, icon, compact, onHeading, onDesc }) {
+function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
   return (
-    <div className={`benefit-box benefit-box--study ${compact ? 'benefit-box--m' : 'benefit-box--l'}`}>
+    <div
+      className={`benefit-box benefit-box--study ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
+        single ? 'benefit-box--single' : ''
+      }`}
+    >
       <div className="benefit-box__glow benefit-box__glow--gold" aria-hidden="true" />
       <Editable
         as="p"
@@ -27,7 +31,7 @@ function StudyBox({ data, icon, compact, onHeading, onDesc }) {
   )
 }
 
-export default function StudyBlock({ compact }) {
+export default function StudyBlock({ compact, single }) {
   const { lang, promotion, updatePromotion } = useAppState()
   const study = promotion[lang].study
 
@@ -53,6 +57,7 @@ export default function StudyBlock({ compact }) {
           data={study.box1}
           icon={'\u{1F4BB}'}
           compact={compact}
+          single={single}
           onHeading={(v) =>
             updatePromotion(lang, (d) => {
               d.study.box1.heading = v
@@ -64,21 +69,23 @@ export default function StudyBlock({ compact }) {
             })
           }
         />
-        <StudyBox
-          data={study.box2}
-          icon={'\u{1F393}'}
-          compact={compact}
-          onHeading={(v) =>
-            updatePromotion(lang, (d) => {
-              d.study.box2.heading = v
-            })
-          }
-          onDesc={(v) =>
-            updatePromotion(lang, (d) => {
-              d.study.box2.desc = v
-            })
-          }
-        />
+        {!single && (
+          <StudyBox
+            data={study.box2}
+            icon={'\u{1F393}'}
+            compact={compact}
+            onHeading={(v) =>
+              updatePromotion(lang, (d) => {
+                d.study.box2.heading = v
+              })
+            }
+            onDesc={(v) =>
+              updatePromotion(lang, (d) => {
+                d.study.box2.desc = v
+              })
+            }
+          />
+        )}
       </div>
     </div>
   )

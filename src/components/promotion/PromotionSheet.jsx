@@ -9,13 +9,13 @@ import Divider from './Divider.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
 export default function PromotionSheet() {
-  const { lang, sections } = useAppState()
+  const { lang, sections, itemCounts } = useAppState()
   const activeCount = Object.values(sections).filter(Boolean).length
   const compact = activeCount >= 3
 
   const blocks = [
-    sections.sale && <SaleBlock key="sale" compact={compact} />,
-    sections.study && <StudyBlock key="study" compact={compact} />,
+    sections.sale && <SaleBlock key="sale" compact={compact} single={itemCounts.sale === 1} />,
+    sections.study && <StudyBlock key="study" compact={compact} single={itemCounts.study === 1} />,
     sections.gift && <GiftBlock key="gift" compact={compact} />,
   ].filter(Boolean)
 
