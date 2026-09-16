@@ -107,10 +107,14 @@
 
 .survey-section__label {
   flex: none;
-  width: 100px;
+  width: 55px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.survey-sheet[data-lang='en'] .survey-section__label {
+  width: 111px;
 }
 
 .survey-section__index {
@@ -133,16 +137,20 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 25px;
   border-left: 0.5px solid color-mix(in srgb, var(--app-accent) 75%, transparent);
   padding: 15px 0 0 35px;
+}
+
+.survey-section__body--options {
+  gap: 20px;
 }
 
 /* ---------- field grid ---------- */
 .survey-field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px 25px;
+  gap: 35px 25px;
 }
 
 .survey-field {
@@ -168,7 +176,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 20px;
+  gap: 8px;
+}
+
+.survey-options--consent {
+  gap: 10px;
 }
 
 .survey-option {

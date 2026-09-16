@@ -51,9 +51,9 @@ export function EditableOptionGroup({ options, onChange, lang }) {
   )
 }
 
-export function StaticOptionGroup({ options }) {
+export function StaticOptionGroup({ options, className }) {
   return (
-    <div className="survey-options">
+    <div className={`survey-options ${className || ''}`}>
       {options.map((opt) => (
         <span className="survey-option" key={opt.id}>
           <span className="survey-option__box" aria-hidden="true" />

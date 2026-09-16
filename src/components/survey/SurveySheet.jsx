@@ -63,7 +63,7 @@ export default function SurveySheet() {
             <FieldGrid fields={labels.fields01} />
           </SurveySection>
 
-          <SurveySection index="02" title={labels.section02}>
+          <SurveySection index="02" title={labels.section02} bodyClassName="survey-section__body--options">
             <EditableOptionGroup
               lang={lang}
               options={data.interestOptions}
@@ -81,7 +81,7 @@ export default function SurveySheet() {
           </SurveySection>
 
           <SurveySection index="04" title={labels.section04}>
-            <StaticOptionGroup options={data.consentOptions} />
+            <StaticOptionGroup options={data.consentOptions} className="survey-options--consent" />
             <FieldGrid fields={labels.fields04} />
           </SurveySection>
 

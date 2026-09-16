@@ -2,9 +2,9 @@ import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
-function SaleBox({ data, badge, onHeading, onPercent, onDesc }) {
+function SaleBox({ data, badge, compact, onHeading, onPercent, onDesc }) {
   return (
-    <div className="benefit-box">
+    <div className={`benefit-box ${compact ? 'benefit-box--m' : 'benefit-box--l'}`}>
       <div className={`benefit-box__glow benefit-box__glow--${badge}`} aria-hidden="true" />
       <Editable
         as="p"
@@ -61,6 +61,7 @@ export default function SaleBlock({ compact }) {
         <SaleBox
           data={sale.box1}
           badge="gold"
+          compact={compact}
           onHeading={(v) =>
             updatePromotion(lang, (d) => {
               d.sale.box1.heading = v
@@ -80,6 +81,7 @@ export default function SaleBlock({ compact }) {
         <SaleBox
           data={sale.box2}
           badge="silver"
+          compact={compact}
           onHeading={(v) =>
             updatePromotion(lang, (d) => {
               d.sale.box2.heading = v
