@@ -183,7 +183,6 @@
 .survey-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .survey-field__label {

@@ -332,10 +332,10 @@
 /* ---------- body ---------- */
 .promo-body {
   flex: 1;
-  padding: 22px 25px 0;
+  padding: 12px 25px 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .promo-body__empty {
