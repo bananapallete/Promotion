@@ -23,8 +23,8 @@ function buildInitialState() {
     lang: persisted?.lang ?? 'kr',
     promotion: persisted?.promotion ?? DEFAULT_PROMOTION,
     survey: persisted?.survey ?? DEFAULT_SURVEY,
-    sections: persisted?.sections ?? { sale: true, study: true, gift: true },
-    itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2 },
+    sections: persisted?.sections ?? { sale: true, study: true, gift: true, notice: true },
+    itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2, gift: 2 },
     activeProducts:
       persisted?.activeProducts ??
       PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
@@ -140,8 +140,8 @@ function buildInitialStateDefaults() {
     lang: 'kr',
     promotion: DEFAULT_PROMOTION,
     survey: DEFAULT_SURVEY,
-    sections: { sale: true, study: true, gift: true },
-    itemCounts: { sale: 2, study: 2 },
+    sections: { sale: true, study: true, gift: true, notice: true },
+    itemCounts: { sale: 2, study: 2, gift: 2 },
     activeProducts: PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
     giftImage: null,
     qrImage: null,

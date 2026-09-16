@@ -2,8 +2,8 @@ import { PRODUCT_LIST, useAppState } from '../../state/AppState.jsx'
 import { UI } from '../../i18n/ui.js'
 
 const SECTION_LABELS = {
-  kr: { sale: 'Sale', study: 'Study', gift: 'Gift' },
-  en: { sale: 'Sale', study: 'Study', gift: 'Gift' },
+  kr: { sale: 'Sale', study: 'Study', gift: 'Gift', notice: 'Notice' },
+  en: { sale: 'Sale', study: 'Study', gift: 'Gift', notice: 'Notice' },
 }
 
 export default function SectionControls() {

@@ -156,6 +156,18 @@
   backdrop-filter: blur(2px);
 }
 
+.gift-panel__image .ghost-btn,
+.qr-panel__code-wrap .ghost-btn {
+  display: none;
+}
+
+.gift-panel__image:hover .ghost-btn,
+.gift-panel__image:focus-within .ghost-btn,
+.qr-panel__code-wrap:hover .ghost-btn,
+.qr-panel__code-wrap:focus-within .ghost-btn {
+  display: inline-flex;
+}
+
 .ghost-btn:hover {
   background: rgba(0, 0, 0, 0.55);
 }
@@ -582,27 +594,6 @@
 }
 
 /* ---------- gift ---------- */
-.promo-block--gift {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.promo-block--gift-m {
-  min-height: 295px;
-}
-
-.promo-block--gift-l {
-  min-height: 407px;
-}
-
-.promo-block__row--fill {
-  flex: 1;
-  display: flex;
-  gap: 8px;
-  min-height: 0;
-}
-
 .gift-panel {
   position: relative;
   flex: 1;
@@ -670,6 +661,11 @@
 
 .gift-panel__image-placeholder {
   font-size: 42px;
+}
+
+.gift-panel--single .gift-panel__image {
+  width: 220px;
+  max-width: 220px;
 }
 
 .qr-panel {

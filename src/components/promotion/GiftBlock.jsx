@@ -13,7 +13,7 @@ function readFileAsDataUrl(file) {
   })
 }
 
-export default function GiftBlock({ compact }) {
+export default function GiftBlock({ compact, single }) {
   const { lang, promotion, updatePromotion, giftImage, qrImage, setGiftImage, setQrImage } =
     useAppState()
   const t = UI[lang]
@@ -42,7 +42,7 @@ export default function GiftBlock({ compact }) {
   }
 
   return (
-    <div className={`promo-block promo-block--gift ${compact ? 'promo-block--gift-m' : 'promo-block--gift-l'}`}>
+    <div className="promo-block">
       <CategoryHeader
         title={gift.title}
         subtitle={gift.subtitle}
@@ -58,8 +58,8 @@ export default function GiftBlock({ compact }) {
           })
         }
       />
-      <div className="promo-block__row promo-block__row--fill">
-        <div className="gift-panel">
+      <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
+        <div className={`gift-panel ${single ? 'gift-panel--single' : ''}`}>
           <div className="gift-panel__glow" aria-hidden="true" />
           <Editable
             as="p"
@@ -104,110 +104,67 @@ export default function GiftBlock({ compact }) {
             />
           </div>
         </div>
-        <div className="qr-panel">
-          <Editable
-            as="p"
-            multiline
-            className="qr-panel__heading"
-            value={gift.qr.heading}
-            onChange={(v) =>
-              updatePromotion(lang, (d) => {
-                d.gift.qr.heading = v
-              })
-            }
-          />
-          <Editable
-            as="p"
-            multiline
-            className="qr-panel__desc"
-            value={gift.qr.desc}
-            onChange={(v) =>
-              updatePromotion(lang, (d) => {
-                d.gift.qr.desc = v
-              })
-            }
-          />
-          <Editable
-            as="p"
-            className="qr-panel__scan"
-            value={gift.qr.scanText}
-            onChange={(v) =>
-              updatePromotion(lang, (d) => {
-                d.gift.qr.scanText = v
-              })
-            }
-          />
-          <div className="qr-panel__code-wrap">
-            <div className="qr-panel__code">
-              {qrImage ? (
-                <img src={qrImage} alt="QR" />
-              ) : (
-                <span className="qr-panel__code-placeholder" aria-hidden="true">
-                  ▦
-                </span>
-              )}
-            </div>
-            <button
-              type="button"
-              className="ghost-btn ghost-btn--light no-print qr-panel__upload-btn"
-              onClick={() => qrInputRef.current?.click()}
-            >
-              {t.uploadQr}
-            </button>
-            <input
-              ref={qrInputRef}
-              type="file"
-              accept="image/*"
-              className="visually-hidden"
-              onChange={handleQrFile}
+        {!single && (
+          <div className="qr-panel">
+            <Editable
+              as="p"
+              multiline
+              className="qr-panel__heading"
+              value={gift.qr.heading}
+              onChange={(v) =>
+                updatePromotion(lang, (d) => {
+                  d.gift.qr.heading = v
+                })
+              }
             />
+            <Editable
+              as="p"
+              multiline
+              className="qr-panel__desc"
+              value={gift.qr.desc}
+              onChange={(v) =>
+                updatePromotion(lang, (d) => {
+                  d.gift.qr.desc = v
+                })
+              }
+            />
+            <Editable
+              as="p"
+              className="qr-panel__scan"
+              value={gift.qr.scanText}
+              onChange={(v) =>
+                updatePromotion(lang, (d) => {
+                  d.gift.qr.scanText = v
+                })
+              }
+            />
+            <div className="qr-panel__code-wrap">
+              <div className="qr-panel__code">
+                {qrImage ? (
+                  <img src={qrImage} alt="QR" />
+                ) : (
+                  <span className="qr-panel__code-placeholder" aria-hidden="true">
+                    ▦
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="ghost-btn ghost-btn--light no-print qr-panel__upload-btn"
+                onClick={() => qrInputRef.current?.click()}
+              >
+                {t.uploadQr}
+              </button>
+              <input
+                ref={qrInputRef}
+                type="file"
+                accept="image/*"
+                className="visually-hidden"
+                onChange={handleQrFile}
+              />
+            </div>
           </div>
-        </div>
-      </div>
-      <NoticeBlock lang={lang} />
-    </div>
-  )
-}
-
-function NoticeBlock({ lang }) {
-  const { promotion, updatePromotion } = useAppState()
-  const notice = promotion[lang].notice
-
-  return (
-    <div className="notice-block">
-      <Editable
-        as="p"
-        className="notice-block__title"
-        value={notice.title}
-        onChange={(v) =>
-          updatePromotion(lang, (d) => {
-            d.notice.title = v
-          })
-        }
-      />
-      <div className="notice-block__cols">
-        <Editable
-          as="p"
-          multiline
-          className="notice-block__col"
-          value={notice.col1}
-          onChange={(v) =>
-            updatePromotion(lang, (d) => {
-              d.notice.col1 = v
-            })
-          }
-        />
-        <Editable
-          as="p"
-          multiline
-          className="notice-block__col"
-          value={notice.col2}
-          onChange={(v) =>
-            updatePromotion(lang, (d) => {
-              d.notice.col2 = v
-            })
-          }
-        />
+        )}
       </div>
     </div>
   )
