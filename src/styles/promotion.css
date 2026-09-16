@@ -384,10 +384,6 @@
   height: 203px;
 }
 
-.promo-block__row:has(.benefit-box--single) {
-  height: auto;
-}
-
 .benefit-box {
   position: relative;
   flex: 1;
@@ -454,32 +450,84 @@
 }
 
 .benefit-badge {
-  position: relative;
-  align-self: flex-end;
-  margin-top: auto;
-  margin-bottom: 8px;
-  width: 92px;
-  height: 78px;
+  position: absolute;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
 }
 
-.benefit-badge--single {
+/* 2-item mode: bottom-anchored, exact Sale box coordinates per M/L */
+.benefit-badge--2m {
+  right: 20.9px;
+  bottom: -18.7px;
+  width: 150px;
+  height: 130px;
+}
+
+.benefit-badge--2l {
+  right: 17.5px;
+  bottom: 36.2px;
+  width: 155px;
+  height: 134px;
+}
+
+/* 1-item mode: top-anchored, same coordinates for M and L */
+.benefit-badge--1m {
+  right: 35px;
+  top: 16.2px;
   width: 220px;
   height: 190px;
   gap: 6px;
 }
 
-.benefit-badge--single .benefit-badge__up {
-  font-size: 14.3px;
+.benefit-badge--1l {
+  right: 35px;
+  top: 28.6px;
+  width: 220px;
+  height: 190px;
+  gap: 6px;
 }
 
-.benefit-badge--single .benefit-badge__pct {
-  font-size: 43px;
+.benefit-badge--2m .benefit-badge__up {
+  font-size: 9.8px;
+  letter-spacing: -0.39px;
+}
+
+.benefit-badge--2l .benefit-badge__up {
+  font-size: 10.1px;
+  letter-spacing: -0.4px;
+}
+
+.benefit-badge--1m .benefit-badge__up,
+.benefit-badge--1l .benefit-badge__up {
+  font-size: 14.3px;
+  letter-spacing: -0.57px;
+}
+
+.benefit-badge--2m .benefit-badge__pct-num {
+  font-size: 29.65px;
+}
+.benefit-badge--2m .benefit-badge__pct-sign {
+  font-size: 20.9px;
+}
+
+.benefit-badge--2l .benefit-badge__pct-num {
+  font-size: 30.64px;
+}
+.benefit-badge--2l .benefit-badge__pct-sign {
+  font-size: 21.6px;
+}
+
+.benefit-badge--1m .benefit-badge__pct-num,
+.benefit-badge--1l .benefit-badge__pct-num {
+  font-size: 43.5px;
+}
+.benefit-badge--1m .benefit-badge__pct-sign,
+.benefit-badge--1l .benefit-badge__pct-sign {
+  font-size: 30.7px;
 }
 
 .benefit-badge--gold {
@@ -493,7 +541,6 @@
 }
 
 .benefit-badge__up {
-  font-size: 9px;
   font-weight: 600;
   color: rgba(70, 40, 0, 0.75);
 }
@@ -504,7 +551,6 @@
 
 .benefit-badge__pct {
   font-family: 'Poppins', sans-serif;
-  font-size: 30px;
   font-weight: 800;
   color: rgba(70, 30, 0, 0.85);
   display: inline-flex;

@@ -17,16 +17,20 @@ function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc })
         value={data.heading}
         onChange={onHeading}
       />
-      <div className={`benefit-badge benefit-badge--${badge} ${single ? 'benefit-badge--single' : ''}`}>
+      <div
+        className={`benefit-badge benefit-badge--${badge} benefit-badge--${single ? '1' : '2'}${
+          compact ? 'm' : 'l'
+        }`}
+      >
         <span className="benefit-badge__up">Up to</span>
         <span className="benefit-badge__pct">
           <Editable
             as="span"
-            className="benefit-badge__pct-input"
+            className="benefit-badge__pct-input benefit-badge__pct-num"
             value={data.percent}
             onChange={onPercent}
           />
-          %
+          <span className="benefit-badge__pct-sign">%</span>
         </span>
       </div>
       <Editable
