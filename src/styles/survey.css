@@ -193,8 +193,8 @@
 }
 
 .survey-field__line {
-  height: 0.75px;
-  background: color-mix(in srgb, var(--category-text) 20%, transparent);
+  height: 10px;
+  border-bottom: 0.75px solid color-mix(in srgb, var(--category-text) 20%, transparent);
 }
 
 /* ---------- options ---------- */
