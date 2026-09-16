@@ -29,6 +29,11 @@
   --gold-b: #c98a2b;
   --silver-a: #f4f4f4;
   --silver-b: #9aa0a6;
+
+  --survey-card-bg: #f7f4f3;
+  --survey-label: #733232;
+  --survey-divider: rgba(115, 50, 50, 0.75);
+  --survey-notice-bg: rgba(160, 125, 125, 0.25);
 }
 
 :root[data-theme='dark'] {
@@ -62,6 +67,11 @@
   --gold-b: #8a5a1c;
   --silver-a: #cfcfcf;
   --silver-b: #6c7075;
+
+  --survey-card-bg: #221f22;
+  --survey-label: #c05559;
+  --survey-divider: rgba(192, 85, 89, 0.75);
+  --survey-notice-bg: rgba(192, 85, 89, 0.2);
 }
 
 * {

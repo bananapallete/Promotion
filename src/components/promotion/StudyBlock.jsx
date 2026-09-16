@@ -4,7 +4,7 @@ import { useAppState } from '../../state/AppState.jsx'
 import studyLaptopImg from '../../assets/figma/study-laptop.png'
 import studyGraduationCapImg from '../../assets/figma/study-graduation-cap.png'
 
-function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
+function StudyBox({ data, icon, mirror, compact, single, onHeading, onDesc }) {
   return (
     <div
       className={`benefit-box benefit-box--study ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
@@ -15,18 +15,23 @@ function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
       <Editable
         as="p"
         multiline
-        className="benefit-box__heading"
-        value={data.heading}
-        onChange={onHeading}
-      />
-      <Editable
-        as="p"
-        multiline
         className="benefit-box__desc benefit-box__desc--study"
         value={data.desc}
         onChange={onDesc}
       />
-      <img className="benefit-box__icon" src={icon} alt="" aria-hidden="true" />
+      <div
+        className={`benefit-box__photo ${mirror ? 'benefit-box__photo--mirror' : ''}`}
+        aria-hidden="true"
+      >
+        <img src={icon} alt="" />
+      </div>
+      <Editable
+        as="p"
+        multiline
+        className="benefit-box__heading"
+        value={data.heading}
+        onChange={onHeading}
+      />
     </div>
   )
 }
@@ -73,6 +78,7 @@ export default function StudyBlock({ compact, single }) {
           <StudyBox
             data={study.box2}
             icon={studyGraduationCapImg}
+            mirror
             compact={compact}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
