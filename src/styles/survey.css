@@ -214,12 +214,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  padding-right: 11px;
 }
 
 .survey-option__box {
   width: 11px;
   height: 11px;
-  border: 1px solid var(--app-accent);
+  border: 1px solid var(--survey-label);
   flex: none;
 }
 
