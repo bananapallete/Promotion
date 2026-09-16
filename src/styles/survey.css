@@ -33,6 +33,8 @@
   max-width: none;
   object-fit: cover;
   mix-blend-mode: plus-lighter;
+  mask-image: linear-gradient(to right, transparent 0%, black 19%, black 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 19%, black 100%);
   pointer-events: none;
 }
 
