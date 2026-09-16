@@ -8,6 +8,7 @@ export default function SurveyHeader() {
   return (
     <div className="survey-header" data-lang={lang}>
       <div className="survey-header__glow" aria-hidden="true" />
+      <p className="survey-header__eyebrow">{header.eyebrow}</p>
       <Editable
         as="p"
         className="survey-header__title"
@@ -18,6 +19,7 @@ export default function SurveyHeader() {
           })
         }
       />
+      <span className="survey-header__rule" aria-hidden="true" />
       <Editable
         as="p"
         multiline

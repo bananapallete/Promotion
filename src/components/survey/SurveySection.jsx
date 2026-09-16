@@ -1,6 +1,6 @@
-export default function SurveySection({ index, title, children, tall }) {
+export default function SurveySection({ index, title, children, variant }) {
   return (
-    <div className={`survey-section ${tall ? 'survey-section--tall' : ''}`}>
+    <div className={`survey-section ${variant === 'notice' ? 'survey-section--notice' : ''}`}>
       <div className="survey-section__label">
         {index && <span className="survey-section__index">{index}</span>}
         <span className="survey-section__title">{title}</span>

@@ -124,8 +124,10 @@ export const DEFAULT_PROMOTION = {
 export const DEFAULT_SURVEY = {
   kr: {
     header: {
-      title: '고객 감사 프로모션 설문지',
-      subtitle: '아래 정보를 작성해 주시면 상담과 견적 안내에 큰 도움이 됩니다.',
+      eyebrow: '마이다스 26주년 특별 프로모션',
+      title: '구매 상담 신청서',
+      subtitle:
+        '26주년 고객 감사 프로모션의 특별 혜택 적용을 위해 아래 고객 정보와 구매 희망 내용을 작성해 주세요.',
     },
     interestOptions: [
       { id: 'civil', label: 'CIVIL NX' },
@@ -152,8 +154,10 @@ export const DEFAULT_SURVEY = {
   },
   en: {
     header: {
-      title: 'Customer Appreciation Promotion Survey',
-      subtitle: 'Filling out the information below greatly helps with consultation and quotation.',
+      eyebrow: 'MIDAS 26th Anniversary Special Promotion',
+      title: 'Purchase Order Form',
+      subtitle:
+        'Please provide your contact details and purchase preferences below to receive the applicable benefits of our 26th Anniversary Special Promotion.',
     },
     interestOptions: [
       { id: 'civil', label: 'CIVIL NX' },

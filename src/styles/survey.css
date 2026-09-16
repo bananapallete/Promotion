@@ -14,15 +14,13 @@
   position: relative;
   flex: none;
   min-height: 198px;
-  padding: 34px 44px;
+  padding: 34px 44px 26px;
   color: #fff;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 10px;
   overflow: hidden;
   background: radial-gradient(
-    130% 150% at 30% 0%,
+    150% 220% at 82% 130%,
     var(--header-grad-a) 0%,
     var(--header-grad-b) 55%,
     var(--header-grad-c) 100%
@@ -32,34 +30,54 @@
 .survey-header__glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(55% 65% at 15% 15%, rgba(255, 255, 255, 0.16), transparent 70%);
+  background: radial-gradient(45% 60% at 78% 10%, rgba(255, 255, 255, 0.2), transparent 70%);
   pointer-events: none;
+}
+
+.survey-header__eyebrow {
+  position: relative;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 .survey-header__title {
   position: relative;
-  margin: 0;
-  font-weight: 800;
+  margin: 14px 0 0;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+  line-height: 1.2;
 }
 
 .survey-header[data-lang='kr'] .survey-header__title {
-  font-size: 26px;
+  font-size: 40px;
 }
 
 .survey-header[data-lang='en'] .survey-header__title {
-  font-size: 21px;
+  font-size: 34px;
   font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.survey-header__rule {
+  position: relative;
+  display: block;
+  width: 138px;
+  height: 1px;
+  margin: 18px 0 12px;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .survey-header__subtitle {
   position: relative;
   margin: 0;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 400;
   opacity: 0.85;
-  line-height: 1.5;
+  line-height: 1.6;
   max-width: 560px;
 }
 
@@ -69,38 +87,44 @@
   padding: 22px 25px 0;
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
 .survey-section {
   display: flex;
-  border-top: 1px solid var(--divider-color);
-  padding: 21px 0;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 35px;
+  padding: 20px 18px;
+  border-radius: 6px;
+  background: var(--category-bg);
+  border: 1px solid var(--category-border);
 }
 
-.survey-section:first-child {
-  border-top: none;
+.survey-section--notice {
+  background: color-mix(in srgb, var(--app-accent) 20%, transparent);
+  border: none;
 }
 
 .survey-section__label {
   flex: none;
-  width: 130px;
+  width: 100px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .survey-section__index {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--app-accent);
-  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .survey-section__title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--category-text);
+  color: var(--app-accent);
+  letter-spacing: -0.02em;
   line-height: 1.3;
 }
 
@@ -110,8 +134,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  border-left: 1px solid var(--divider-color);
-  padding-left: 24px;
+  border-left: 0.5px solid color-mix(in srgb, var(--app-accent) 75%, transparent);
+  padding: 15px 0 0 35px;
 }
 
 /* ---------- field grid ---------- */
@@ -128,8 +152,9 @@
 }
 
 .survey-field__label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--category-text);
 }
 
@@ -162,8 +187,9 @@
 }
 
 .survey-option__label {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--category-text);
   white-space: nowrap;
 }
@@ -207,33 +233,19 @@
 }
 
 /* ---------- notice ---------- */
-.survey-notice {
-  border-top: 1px solid var(--divider-color);
-  padding: 18px 0 24px;
-  display: flex;
-  gap: 20px;
-}
-
-.survey-notice__label {
-  flex: none;
-  width: 130px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--category-text);
-}
-
 .survey-notice__list {
   margin: 0;
   padding: 0;
   list-style: none;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .survey-notice__list li {
-  font-size: 10px;
-  color: color-mix(in srgb, var(--category-text) 65%, transparent);
-  line-height: 1.5;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--category-text) 60%, transparent);
+  line-height: 1.65;
 }

@@ -76,7 +76,7 @@ export default function SurveySheet() {
             <StaticOptionGroup options={data.purchaseTypeOptions} />
           </SurveySection>
 
-          <SurveySection index="03" title={labels.section03} tall>
+          <SurveySection index="03" title={labels.section03}>
             <FieldGrid fields={labels.fields03} />
           </SurveySection>
 
@@ -85,14 +85,13 @@ export default function SurveySheet() {
             <FieldGrid fields={labels.fields04} />
           </SurveySection>
 
-          <div className="survey-notice">
-            <span className="survey-notice__label">{labels.noticeLabel}</span>
+          <SurveySection title={labels.noticeLabel} variant="notice">
             <ul className="survey-notice__list">
               {data.notice.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
-          </div>
+          </SurveySection>
         </div>
         <div className="promo-footer">
           <span className="promo-footer__contact">{labels.footerContact}</span>
