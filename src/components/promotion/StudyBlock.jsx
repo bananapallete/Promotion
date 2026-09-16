@@ -12,13 +12,6 @@ function StudyBox({ data, icon, mirror, compact, single, onHeading, onDesc }) {
       }`}
     >
       <div className="benefit-box__glow benefit-box__glow--gold" aria-hidden="true" />
-      <Editable
-        as="p"
-        multiline
-        className="benefit-box__desc benefit-box__desc--study"
-        value={data.desc}
-        onChange={onDesc}
-      />
       <div
         className={`benefit-box__photo ${mirror ? 'benefit-box__photo--mirror' : ''}`}
         aria-hidden="true"
@@ -31,6 +24,13 @@ function StudyBox({ data, icon, mirror, compact, single, onHeading, onDesc }) {
         className="benefit-box__heading"
         value={data.heading}
         onChange={onHeading}
+      />
+      <Editable
+        as="p"
+        multiline
+        className="benefit-box__desc benefit-box__desc--study"
+        value={data.desc}
+        onChange={onDesc}
       />
     </div>
   )
