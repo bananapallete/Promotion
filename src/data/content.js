@@ -10,14 +10,14 @@ export const DEFAULT_PROMOTION = {
       title: '26주년 특별 할인 혜택',
       subtitle: '전 제품 신규 구매부터 추가 구매까지, 지금 만나볼 수 있는 슈퍼 혜택 라인업',
       box1: {
-        heading: '신규 구매\n할인',
+        heading: '신규\n구매',
         percent: '50',
-        desc: '9월 이내 CIVIL NX 풀버전 구매 시',
+        desc: '9월 30일까지 풀버전 구매 시',
       },
       box2: {
-        heading: '추가 구매\n할인',
+        heading: '추가\n구매',
         percent: '40',
-        desc: '300만원 이상 추가 구매 시 40%',
+        desc: '300만원 이상 구매 시',
       },
     },
     study: {
@@ -25,23 +25,23 @@ export const DEFAULT_PROMOTION = {
       subtitle: '제품을 260% 활용할 수 있도록 더욱 맞춤화된 교육 서비스까지 준비했습니다.',
       box1: {
         heading: 'Quest Hub\n온라인 학습 코스',
-        desc: '필요할 때 언제든, 원하는 내용만 골라\n학습할 수 있는 온라인 코스를 무료 제공합니다.',
+        desc: '구매 고객을 위한 온라인 학습 코스를\n무료로 제공합니다.',
       },
       box2: {
-        heading: '도입 맞춤형\n트레이닝',
-        desc: '마이다스 엔지니어가 직접 찾아가는 맞춤형\n트레이닝을 무료 제공합니다.',
+        heading: '맞춤형\n온보딩 트레이닝',
+        desc: '팀의 실무에 맞춘 CAE 실습 트레이닝을\n무료로 제공합니다.',
       },
     },
     gift: {
       title: '사은품과 구매 상담',
       subtitle: '임시텍스트가 한 줄로 작성되도록 완성부탁드립니다.',
       panel: {
-        heading: '제품 구매 시 300만원 상당의\n고성능 노트북 즉시 증정!',
-        note: '*CIVIL NX 풀버전 구매 선착순 3명에게만 제공 됩니다',
+        heading: 'Quest Hub\n온라인 학습 코스',
+        note: '*선착순 3명에게만 제공됩니다.',
       },
       qr: {
-        heading: '구매 혜택\n확인하기',
-        desc: '할인부터 교육 지원까지,\n조건에 맞는 혜택을 안내해드립니다.',
+        heading: '나에게 맞는\n혜택 찾기',
+        desc: '할인부터 교육 지원까지,\n구매에 맞는 혜택을 찾아보세요',
         scanText: 'QR코드 스캔 or 클릭',
       },
     },
