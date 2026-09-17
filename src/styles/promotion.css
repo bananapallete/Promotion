@@ -36,27 +36,15 @@
 .promo-rail__card {
   position: relative;
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  transition: opacity 0.15s ease;
-}
-
-.promo-rail__card::after {
-  content: '';
-  position: absolute;
-  right: -15px;
-  top: 50%;
-  width: 0;
-  height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 6px solid var(--app-border);
-  transform: translateY(-50%);
+  border: none;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 2px rgba(15, 15, 20, 0.04), 0 6px 16px rgba(15, 15, 20, 0.05);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
 .promo-rail__card--off {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .promo-rail__card-title {
@@ -67,10 +55,10 @@
 }
 
 .promo-rail__card-desc {
-  margin: 3px 0 8px;
+  margin: 3px 0 10px;
   font-size: 10.5px;
   color: var(--app-muted);
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .promo-rail__card-head {
@@ -87,20 +75,23 @@
 
 .count-toggle {
   display: inline-flex;
-  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
   border-radius: 999px;
-  overflow: hidden;
+  padding: 2px;
+  gap: 2px;
 }
 
 .count-toggle__btn {
   border: none;
-  background: var(--app-surface-2);
+  background: transparent;
   color: var(--app-muted);
   font-size: 11px;
   font-weight: 700;
   width: 22px;
   height: 22px;
+  border-radius: 999px;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .count-toggle__btn:disabled {
@@ -169,12 +160,18 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--app-text);
+  color: var(--app-muted);
   background: var(--app-surface-2);
-  border: 1px solid var(--app-border);
+  border: none;
   border-radius: 999px;
-  padding: 4px 10px 4px 8px;
+  padding: 5px 10px 5px 8px;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.chip-check:has(input:checked) {
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-surface-2));
+  color: var(--app-accent);
 }
 
 .chip-check input {
@@ -182,13 +179,13 @@
 }
 
 .ghost-btn {
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: rgba(0, 0, 0, 0.35);
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
-  padding: 5px 9px;
+  padding: 6px 11px;
   cursor: pointer;
   backdrop-filter: blur(2px);
 }
@@ -207,10 +204,6 @@
 
 .ghost-btn:hover {
   background: rgba(0, 0, 0, 0.55);
-}
-
-.ghost-btn--light {
-  border-color: rgba(255, 255, 255, 0.35);
 }
 
 /* ---------- sheet shell ---------- */

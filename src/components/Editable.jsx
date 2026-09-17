@@ -47,6 +47,12 @@ export default function Editable({
     [multiline, value],
   )
 
+  const handlePaste = useCallback((e) => {
+    e.preventDefault()
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain')
+    document.execCommand('insertText', false, text)
+  }, [])
+
   return (
     <As
       ref={ref}
@@ -61,6 +67,7 @@ export default function Editable({
       aria-multiline={multiline}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
     />
   )
 }

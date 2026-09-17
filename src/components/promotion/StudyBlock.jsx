@@ -31,7 +31,7 @@ function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
         as="p"
         multiline
         className="benefit-box__heading"
-        value={data.heading}
+        value={compact ? data.headingM : data.headingL}
         onChange={onHeading}
       />
       <Editable
@@ -74,7 +74,7 @@ export default function StudyBlock({ compact, single }) {
           single={single}
           onHeading={(v) =>
             updatePromotion(lang, (d) => {
-              d.study.box1.heading = v
+              d.study.box1[compact ? 'headingM' : 'headingL'] = v
             })
           }
           onDesc={(v) =>
@@ -90,7 +90,7 @@ export default function StudyBlock({ compact, single }) {
             compact={compact}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.study.box2.heading = v
+                d.study.box2[compact ? 'headingM' : 'headingL'] = v
               })
             }
             onDesc={(v) =>
