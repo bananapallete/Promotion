@@ -24,28 +24,11 @@
   );
 }
 
-.survey-header__smoke {
+.survey-header__bg {
   position: absolute;
-  left: 192px;
-  bottom: -235.85px;
-  width: 882px;
-  height: 492.29px;
-  max-width: none;
-  object-fit: cover;
-  mix-blend-mode: plus-lighter;
-  mask-image: linear-gradient(to right, transparent 0%, black 19%, black 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 19%, black 100%);
-  pointer-events: none;
-}
-
-.survey-header__ribbon {
-  position: absolute;
-  left: 495.99px;
-  bottom: -14.28px;
-  width: 254.1px;
-  height: 125.9px;
-  max-width: none;
-  border-radius: 6px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   pointer-events: none;
 }
@@ -171,6 +154,11 @@
 
 .survey-section__body--options {
   gap: 20px;
+  padding-bottom: 15px;
+}
+
+.survey-section__body--consult {
+  padding-bottom: 15px;
 }
 
 /* ---------- field grid ---------- */

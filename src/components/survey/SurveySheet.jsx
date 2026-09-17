@@ -80,7 +80,11 @@ export default function SurveySheet() {
             <FieldGrid fields={labels.fields03} />
           </SurveySection>
 
-          <SurveySection index="04" title={labels.section04}>
+          <SurveySection
+            index="04"
+            title={labels.section04}
+            bodyClassName="survey-section__body--consult"
+          >
             <StaticOptionGroup options={data.consentOptions} className="survey-options--consent" />
             <FieldGrid fields={labels.fields04} />
           </SurveySection>
