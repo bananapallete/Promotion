@@ -143,6 +143,12 @@ export const DEFAULT_SURVEY = {
       section03: '구매 및 견적 상세',
       section04: '구매 의향 상담 요청',
     },
+    sectionIndexes: {
+      section01: '01',
+      section02: '02',
+      section03: '03',
+      section04: '04',
+    },
     fields01: ['성함', '회사/기관명', '직함', '전화번호', '이메일'],
     fields03: [
       '선택 제품 / 패키지',
@@ -195,6 +201,12 @@ export const DEFAULT_SURVEY = {
       section02: 'Purchase Interest',
       section03: 'Purchase & Quotation Details',
       section04: 'Purchase Intent / Consultation',
+    },
+    sectionIndexes: {
+      section01: '01',
+      section02: '02',
+      section03: '03',
+      section04: '04',
     },
     fields01: ['Full Name', 'Company/Organization', 'Job Title', 'Phone', 'Email'],
     fields03: [

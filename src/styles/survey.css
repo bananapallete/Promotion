@@ -13,6 +13,27 @@
   font-family: 'Pretendard', sans-serif;
 }
 
+/* ---------- click-to-edit-popup text ---------- */
+.popup-text-wrap {
+  display: contents;
+}
+
+.popup-text-btn {
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.popup-text-btn:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--app-accent) 45%, transparent);
+}
+
 /* ---------- header ---------- */
 .survey-header {
   position: relative;
@@ -332,6 +353,11 @@
 .option-popup__input:focus {
   outline: 2px solid var(--app-accent);
   outline-offset: 1px;
+}
+
+.option-popup__input--multiline {
+  resize: vertical;
+  line-height: 1.5;
 }
 
 .option-popup__actions {

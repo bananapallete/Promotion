@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Editable from '../Editable.jsx'
+import PopupText from './PopupText.jsx'
 import OptionEditPopup from './OptionEditPopup.jsx'
 
 function splitParenthetical(text) {
@@ -43,7 +43,8 @@ export default function FieldGrid({ fields, onChange, lang, specialIndex }) {
           {i === specialIndex ? (
             <SpecialFieldLabel lang={lang} value={label} onChange={(v) => onChange(i, v)} />
           ) : (
-            <Editable
+            <PopupText
+              lang={lang}
               as="span"
               className="survey-field__label"
               value={label}

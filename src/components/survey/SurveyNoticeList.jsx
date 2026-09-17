@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { UI } from '../../i18n/ui.js'
 import OptionEditPopup from './OptionEditPopup.jsx'
 
 export default function SurveyNoticeList({ lang, notice, onChange }) {
-  const t = UI[lang]
   const [editingIndex, setEditingIndex] = useState(null)
 
   const updateLine = (i, value) => {
@@ -12,10 +10,6 @@ export default function SurveyNoticeList({ lang, notice, onChange }) {
 
   const removeLine = (i) => {
     onChange(notice.filter((_, idx) => idx !== i))
-  }
-
-  const addLine = (value) => {
-    onChange([...notice, value])
   }
 
   return (
@@ -37,24 +31,6 @@ export default function SurveyNoticeList({ lang, notice, onChange }) {
           )}
         </li>
       ))}
-      <li className="survey-notice__item-wrap">
-        <button
-          type="button"
-          className="survey-notice__add no-print"
-          onClick={() => setEditingIndex('__new__')}
-        >
-          + {t.addNotice}
-        </button>
-        {editingIndex === '__new__' && (
-          <OptionEditPopup
-            lang={lang}
-            initialValue={t.newNotice}
-            canDelete={false}
-            onSave={(v) => addLine(v)}
-            onClose={() => setEditingIndex(null)}
-          />
-        )}
-      </li>
     </ul>
   )
 }

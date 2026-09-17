@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { UI } from '../../i18n/ui.js'
 
-export default function OptionEditPopup({ lang, initialValue, canDelete, onSave, onDelete, onClose }) {
+export default function OptionEditPopup({
+  lang,
+  initialValue,
+  canDelete,
+  onSave,
+  onDelete,
+  onClose,
+  multiline = false,
+}) {
   const [value, setValue] = useState(initialValue)
   const inputRef = useRef(null)
   const t = UI[lang]
@@ -20,7 +28,13 @@ export default function OptionEditPopup({ lang, initialValue, canDelete, onSave,
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') onClose()
+    if (!multiline && e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit(e)
+    }
   }
+
+  const Field = multiline ? 'textarea' : 'input'
 
   return (
     <div className="option-popup__overlay no-print" onMouseDown={onClose}>
@@ -29,10 +43,11 @@ export default function OptionEditPopup({ lang, initialValue, canDelete, onSave,
         onMouseDown={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <input
+        <Field
           ref={inputRef}
-          className="option-popup__input"
-          type="text"
+          className={`option-popup__input ${multiline ? 'option-popup__input--multiline' : ''}`}
+          type={multiline ? undefined : 'text'}
+          rows={multiline ? 4 : undefined}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}

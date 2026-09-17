@@ -33,6 +33,16 @@ export const UI = {
       gift: '사은품 · QR 카드 영역',
       notice: '하단 안내문 영역',
     },
+    surveyRail: {
+      interest: '관심 제품',
+      interestDesc: '02번 체크박스 목록',
+      purchaseType: '구매 형태',
+      purchaseTypeDesc: '02번 우측 체크박스 목록',
+      consent: '동의 항목',
+      consentDesc: '04번 체크박스 목록',
+      notice: '안내사항',
+      noticeDesc: '하단 안내문 목록',
+    },
   },
   en: {
     brand: 'MIDAS 26th Anniversary Promotion / Survey Builder',
@@ -67,6 +77,16 @@ export const UI = {
       study: 'Training cards',
       gift: 'Gift & QR cards',
       notice: 'Bottom notice',
+    },
+    surveyRail: {
+      interest: 'Purchase Interest',
+      interestDesc: 'Section 02 checkbox list',
+      purchaseType: 'Purchase Type',
+      purchaseTypeDesc: 'Section 02 right-side checkboxes',
+      consent: 'Consent Items',
+      consentDesc: 'Section 04 checkbox list',
+      notice: 'Notice',
+      noticeDesc: 'Bottom notice list',
     },
   },
 }

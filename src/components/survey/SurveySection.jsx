@@ -1,11 +1,29 @@
-import Editable from '../Editable.jsx'
+import PopupText from './PopupText.jsx'
 
-export default function SurveySection({ index, title, onTitleChange, children, variant, bodyClassName }) {
+export default function SurveySection({
+  lang,
+  index,
+  onIndexChange,
+  title,
+  onTitleChange,
+  children,
+  variant,
+  bodyClassName,
+}) {
   return (
     <div className={`survey-section ${variant === 'notice' ? 'survey-section--notice' : ''}`}>
       <div className="survey-section__label">
-        {index && <span className="survey-section__index">{index}</span>}
-        <Editable
+        {index && (
+          <PopupText
+            lang={lang}
+            as="span"
+            className="survey-section__index"
+            value={index}
+            onChange={onIndexChange}
+          />
+        )}
+        <PopupText
+          lang={lang}
           as="span"
           className="survey-section__title"
           value={title}
