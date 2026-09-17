@@ -131,7 +131,7 @@ button {
 
 .editable:focus {
   box-shadow: 0 0 0 2px var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  background-color: color-mix(in srgb, var(--app-accent) 10%, transparent);
 }
 
 .visually-hidden {
