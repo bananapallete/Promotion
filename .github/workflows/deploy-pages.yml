@@ -26,6 +26,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_SHEET_LOG_URL: ${{ secrets.SHEET_LOG_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

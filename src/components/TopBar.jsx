@@ -1,5 +1,6 @@
 import { useAppState } from '../state/AppState.jsx'
 import { UI } from '../i18n/ui.js'
+import { logPrintEvent } from '../lib/trackUsage.js'
 
 export default function TopBar() {
   const { theme, lang, toggleTheme, toggleLang, resetAll } = useAppState()
@@ -10,6 +11,7 @@ export default function TopBar() {
   }
 
   const handlePrint = () => {
+    logPrintEvent()
     window.print()
   }
 
