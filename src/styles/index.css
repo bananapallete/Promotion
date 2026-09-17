@@ -93,14 +93,14 @@ body {
 }
 
 html[lang='en'] body {
-  font-family: 'Poppins', 'Pretendard Variable', -apple-system, sans-serif;
+  font-family: 'Poppins', 'Pretendard', -apple-system, sans-serif;
 }
 
 body {
   min-height: 100vh;
   background: var(--app-bg);
   color: var(--app-text);
-  font-family: 'Pretendard Variable', 'Poppins', -apple-system, sans-serif;
+  font-family: 'Pretendard', 'Poppins', -apple-system, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
