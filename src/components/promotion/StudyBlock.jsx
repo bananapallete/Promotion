@@ -1,23 +1,32 @@
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
-import studyLaptopImg from '../../assets/figma/study-laptop.png'
-import studyGraduationCapImg from '../../assets/figma/study-graduation-cap.png'
+import studySingleMLaptop from '../../assets/figma/benefit-bg/study-single-m-laptop.png'
+import studySingleLLaptop from '../../assets/figma/benefit-bg/study-single-l-laptop.png'
+import studyDoubleMLaptop from '../../assets/figma/benefit-bg/study-double-m-laptop.png'
+import studyDoubleMCap from '../../assets/figma/benefit-bg/study-double-m-cap.png'
+import studyDoubleLLaptop from '../../assets/figma/benefit-bg/study-double-l-laptop.png'
+import studyDoubleLCap from '../../assets/figma/benefit-bg/study-double-l-cap.png'
 
-function StudyBox({ data, icon, mirror, compact, single, onHeading, onDesc }) {
+function getStudyBg({ icon, compact, single }) {
+  if (single) {
+    return compact ? studySingleMLaptop : studySingleLLaptop
+  }
+  if (icon === 'cap') {
+    return compact ? studyDoubleMCap : studyDoubleLCap
+  }
+  return compact ? studyDoubleMLaptop : studyDoubleLLaptop
+}
+
+function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
+  const bg = getStudyBg({ icon, compact, single })
   return (
     <div
       className={`benefit-box benefit-box--study ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
         single ? 'benefit-box--single' : ''
       }`}
+      style={{ backgroundImage: `url(${bg})` }}
     >
-      <div className="benefit-box__glow benefit-box__glow--gold" aria-hidden="true" />
-      <div
-        className={`benefit-box__photo ${mirror ? 'benefit-box__photo--mirror' : ''}`}
-        aria-hidden="true"
-      >
-        <img src={icon} alt="" />
-      </div>
       <Editable
         as="p"
         multiline
@@ -60,7 +69,7 @@ export default function StudyBlock({ compact, single }) {
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
         <StudyBox
           data={study.box1}
-          icon={studyLaptopImg}
+          icon="laptop"
           compact={compact}
           single={single}
           onHeading={(v) =>
@@ -77,8 +86,7 @@ export default function StudyBlock({ compact, single }) {
         {!single && (
           <StudyBox
             data={study.box2}
-            icon={studyGraduationCapImg}
-            mirror
+            icon="cap"
             compact={compact}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {

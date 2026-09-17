@@ -197,12 +197,32 @@
   gap: 10px;
 }
 
+.survey-option-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .survey-option {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding-right: 11px;
+  padding: 0 11px 0 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.survey-option--editable {
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.survey-option--editable:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--app-accent) 45%, transparent);
 }
 
 .survey-option__box {
@@ -228,40 +248,8 @@
   margin-left: 2px;
 }
 
-.survey-option__remove {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 14px;
-  height: 14px;
-  display: grid;
-  place-items: center;
-  border: none;
-  border-radius: 50%;
-  background: var(--app-surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  color: var(--app-muted);
-  cursor: pointer;
-  font-size: 11px;
-  line-height: 1;
-  padding: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.1s ease;
-}
-
-.survey-option:hover .survey-option__remove,
-.survey-option:focus-within .survey-option__remove {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.survey-option__remove:hover {
-  color: var(--app-accent);
-}
-
 .survey-option__add {
-  display: none;
+  display: inline-flex;
   border: 1px dashed var(--app-border);
   background: transparent;
   color: var(--app-muted);
@@ -272,14 +260,78 @@
   cursor: pointer;
 }
 
-.survey-options:hover .survey-option__add,
-.survey-options:focus-within .survey-option__add {
-  display: inline-flex;
-}
-
 .survey-option__add:hover {
   border-color: var(--app-accent);
   color: var(--app-accent);
+}
+
+/* ---------- option edit popup ---------- */
+.option-popup__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 16, 16, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-popup {
+  background: var(--app-surface);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  padding: 16px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-popup__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--app-text);
+  background: var(--app-surface-2);
+}
+
+.option-popup__input:focus {
+  outline: none;
+  border-color: var(--app-accent);
+}
+
+.option-popup__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.option-popup__btn {
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
+  color: var(--app-text);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.option-popup__btn--danger {
+  margin-right: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--app-accent);
+}
+
+.option-popup__btn--primary {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+  color: var(--app-accent-contrast);
 }
 
 /* ---------- notice ---------- */

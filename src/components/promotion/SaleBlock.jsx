@@ -1,15 +1,32 @@
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
+import saleSingleMGold from '../../assets/figma/benefit-bg/sale-single-m-gold.png'
+import saleSingleLGold from '../../assets/figma/benefit-bg/sale-single-l-gold.png'
+import saleDoubleMGold from '../../assets/figma/benefit-bg/sale-double-m-gold.png'
+import saleDoubleMSilver from '../../assets/figma/benefit-bg/sale-double-m-silver.png'
+import saleDoubleLGold from '../../assets/figma/benefit-bg/sale-double-l-gold.png'
+import saleDoubleLSilver from '../../assets/figma/benefit-bg/sale-double-l-silver.png'
+
+function getSaleBg({ badge, compact, single }) {
+  if (single) {
+    return compact ? saleSingleMGold : saleSingleLGold
+  }
+  if (badge === 'silver') {
+    return compact ? saleDoubleMSilver : saleDoubleLSilver
+  }
+  return compact ? saleDoubleMGold : saleDoubleLGold
+}
 
 function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc }) {
+  const bg = getSaleBg({ badge, compact, single })
   return (
     <div
       className={`benefit-box ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
         single ? 'benefit-box--single' : ''
       }`}
+      style={{ backgroundImage: `url(${bg})` }}
     >
-      <div className={`benefit-box__glow benefit-box__glow--${badge}`} aria-hidden="true" />
       <Editable
         as="p"
         multiline

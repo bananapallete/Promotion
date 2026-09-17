@@ -73,7 +73,15 @@ export default function SurveySheet() {
                 })
               }
             />
-            <StaticOptionGroup options={data.purchaseTypeOptions} />
+            <StaticOptionGroup
+              lang={lang}
+              options={data.purchaseTypeOptions}
+              onChange={(next) =>
+                updateSurvey(lang, (d) => {
+                  d.purchaseTypeOptions = next
+                })
+              }
+            />
           </SurveySection>
 
           <SurveySection index="03" title={labels.section03}>
@@ -85,7 +93,16 @@ export default function SurveySheet() {
             title={labels.section04}
             bodyClassName="survey-section__body--consult"
           >
-            <StaticOptionGroup options={data.consentOptions} className="survey-options--consent" />
+            <StaticOptionGroup
+              lang={lang}
+              options={data.consentOptions}
+              className="survey-options--consent"
+              onChange={(next) =>
+                updateSurvey(lang, (d) => {
+                  d.consentOptions = next
+                })
+              }
+            />
             <FieldGrid fields={labels.fields04} />
           </SurveySection>
 

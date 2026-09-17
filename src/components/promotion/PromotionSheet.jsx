@@ -22,26 +22,28 @@ export default function PromotionSheet() {
   ].filter(Boolean)
 
   return (
-    <div className="sheet-wrap">
+    <div className="promo-editor">
       <SectionControls />
-      <div id="promotion-sheet" className="sheet promo-sheet" data-lang={lang}>
-        <Header />
-        <div className="promo-body">
-          {blocks.map((block, i) => (
-            <Fragment key={block.key}>
-              {block}
-              {i < blocks.length - 1 && <Divider />}
-            </Fragment>
-          ))}
-          {blocks.length === 0 && (
-            <div className="promo-body__empty">
-              {lang === 'kr'
-                ? 'Sale / Study / Gift / Notice 섹션이 모두 꺼져 있습니다.'
-                : 'All Sale / Study / Gift / Notice sections are turned off.'}
-            </div>
-          )}
+      <div className="sheet-wrap">
+        <div id="promotion-sheet" className="sheet promo-sheet" data-lang={lang}>
+          <Header />
+          <div className="promo-body">
+            {blocks.map((block, i) => (
+              <Fragment key={block.key}>
+                {block}
+                {i < blocks.length - 1 && <Divider />}
+              </Fragment>
+            ))}
+            {blocks.length === 0 && (
+              <div className="promo-body__empty">
+                {lang === 'kr'
+                  ? 'Sale / Study / Gift / Notice 섹션이 모두 꺼져 있습니다.'
+                  : 'All Sale / Study / Gift / Notice sections are turned off.'}
+              </div>
+            )}
+          </div>
+          <Footer />
         </div>
-        <Footer />
       </div>
     </div>
   )

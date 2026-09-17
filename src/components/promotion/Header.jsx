@@ -2,8 +2,7 @@ import Editable from '../Editable.jsx'
 import { PRODUCT_LIST, useAppState } from '../../state/AppState.jsx'
 import headerFlatLightImg from '../../assets/figma/header-flat-light.png'
 import headerFlatDarkImg from '../../assets/figma/header-flat-dark.png'
-import headerBgImg from '../../assets/figma/header-bg.png'
-import giftAccentImg from '../../assets/figma/header-gift-accent.png'
+import headerBgEnImg from '../../assets/figma/header-bg-en.png'
 import civilIcon from '../../assets/figma/products/civil.svg'
 import genIcon from '../../assets/figma/products/gen.svg'
 import gtsIcon from '../../assets/figma/products/gts.svg'
@@ -33,9 +32,7 @@ export default function Header() {
         />
       ) : (
         <>
-          <img className="promo-header__bg" src={headerBgImg} alt="" aria-hidden="true" />
-          <div className="promo-header__scrim" aria-hidden="true" />
-          <img className="promo-header__gift-accent" src={giftAccentImg} alt="" aria-hidden="true" />
+          <img className="promo-header__bg" src={headerBgEnImg} alt="" aria-hidden="true" />
           <div className="promo-header__glow" aria-hidden="true" />
           <div className="promo-header__title">
             <p className="promo-header__title-line1">{titleLines[0]}</p>

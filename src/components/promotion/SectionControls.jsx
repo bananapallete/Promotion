@@ -13,52 +13,53 @@ export default function SectionControls() {
   const labels = SECTION_LABELS[lang]
 
   return (
-    <div className="promo-controls no-print">
-      <div className="promo-controls__group">
-        {Object.keys(sections).map((key) => (
-          <span key={key} className="promo-controls__section">
-            <label className="switch">
+    <div className="promo-rail no-print">
+      <div className="promo-rail__card">
+        <p className="promo-rail__card-title">{t.products}</p>
+        <p className="promo-rail__card-desc">{t.productsHint}</p>
+        <div className="promo-rail__chips">
+          {PRODUCT_LIST.map((code) => (
+            <label key={code} className="chip-check">
               <input
                 type="checkbox"
-                checked={sections[key]}
-                onChange={() => toggleSection(key)}
+                checked={activeProducts[code]}
+                onChange={() => toggleProduct(code)}
               />
+              <span>{code}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {Object.keys(sections).map((key) => (
+        <div key={key} className={`promo-rail__card ${sections[key] ? '' : 'promo-rail__card--off'}`}>
+          <div className="promo-rail__card-head">
+            <label className="switch">
+              <input type="checkbox" checked={sections[key]} onChange={() => toggleSection(key)} />
               <span className="switch__track">
                 <span className="switch__thumb" />
               </span>
               <span className="switch__label">{labels[key]}</span>
             </label>
-            {key in itemCounts && (
-              <span className="count-toggle">
-                {[1, 2].map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
-                    disabled={!sections[key]}
-                    onClick={() => setItemCount(key, count)}
-                  >
-                    {count}
-                  </button>
-                ))}
-              </span>
-            )}
-          </span>
-        ))}
-      </div>
-      <div className="promo-controls__group">
-        <span className="promo-controls__caption">{t.products}</span>
-        {PRODUCT_LIST.map((code) => (
-          <label key={code} className="chip-check">
-            <input
-              type="checkbox"
-              checked={activeProducts[code]}
-              onChange={() => toggleProduct(code)}
-            />
-            <span>{code}</span>
-          </label>
-        ))}
-      </div>
+          </div>
+          <p className="promo-rail__card-desc">{t.sectionDesc[key]}</p>
+          {key in itemCounts && (
+            <span className="count-toggle">
+              {[1, 2].map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
+                  disabled={!sections[key]}
+                  onClick={() => setItemCount(key, count)}
+                >
+                  {count}
+                </button>
+              ))}
+            </span>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

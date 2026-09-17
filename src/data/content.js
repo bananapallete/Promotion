@@ -62,21 +62,21 @@ export const DEFAULT_PROMOTION = {
   en: {
     header: {
       label: 'Label',
-      date: '2026.01.01 (Thu) - 01.31 (Sat)',
+      date: '2026.01.01 (Mon) - 01.01 (Fri)',
     },
     sale: {
       title: '26th Anniversary Special Discount',
       subtitle:
         'Super benefit lineup available now, from new purchases to additional purchases on all products',
       box1: {
-        heading: 'New Purchase\nDiscount',
+        heading: 'NEW\nPURCHASE',
         percent: '50',
-        desc: 'For CIVIL NX full version purchases within September',
+        desc: 'Full-version purchases by Sep. 30',
       },
       box2: {
-        heading: 'Additional Purchase\nDiscount',
+        heading: 'ADDITIONAL\nPURCHASE',
         percent: '40',
-        desc: '40% off additional purchases over $3,000',
+        desc: 'On purchases of KRW 3M+',
       },
     },
     study: {
@@ -85,23 +85,23 @@ export const DEFAULT_PROMOTION = {
         'We have prepared even more customized training services to help you utilize the product 260% more.',
       box1: {
         heading: 'Quest Hub\nOnline Learning Courses',
-        desc: 'Free online courses available anytime, so you can\nlearn only what you need, whenever you need it.',
+        desc: 'Free access to online learning courses for purchasing customers',
       },
       box2: {
-        heading: 'Onsite Customized\nTraining',
-        desc: 'Free customized on-site training delivered directly\nby MIDAS engineers.',
+        heading: 'Customized\nOnboarding Training',
+        desc: 'Complimentary hands-on CAE training tailored to your team\'s practical needs',
       },
     },
     gift: {
       title: 'Gifts and Purchase Consultation',
       subtitle: 'Please complete so that the placeholder text is written in a single line.',
       panel: {
-        heading: 'Get a high-performance laptop worth\n$3,000 instantly with your purchase!',
+        heading: 'Quest Hub\nOnline Learning Courses',
         note: '*Limited to the first 3 customers.',
       },
       qr: {
         heading: 'Find Your\nBest Offer',
-        desc: 'From discounts to training support, find the\nbenefits that fit your purchase',
+        desc: 'From discounts to training support,\nfind the benefits that fit your purchase',
         scanText: 'Scan or Click',
       },
     },

@@ -5,46 +5,83 @@
   gap: 14px;
   padding: 16px 0 40px;
   width: 794px;
-  max-width: 100%;
+  flex: none;
 }
 
 .sheet {
   width: 794px;
-  max-width: 100%;
+  flex: none;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.18);
   border-radius: 6px;
 }
 
 /* ---------- controls (screen only) ---------- */
-.promo-controls {
-  width: 100%;
+.promo-editor {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px;
-  padding: 10px 14px;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.promo-rail {
+  flex: none;
+  width: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  position: sticky;
+  top: 16px;
+}
+
+.promo-rail__card {
+  position: relative;
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 10px;
+  padding: 10px 12px;
+  transition: opacity 0.15s ease;
 }
 
-.promo-controls__group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+.promo-rail__card::after {
+  content: '';
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid var(--app-border);
+  transform: translateY(-50%);
 }
 
-.promo-controls__caption {
+.promo-rail__card--off {
+  opacity: 0.55;
+}
+
+.promo-rail__card-title {
+  margin: 0;
   font-size: 12px;
   font-weight: 700;
   color: var(--app-muted);
-  margin-right: 2px;
 }
 
-.promo-controls__section {
-  display: inline-flex;
+.promo-rail__card-desc {
+  margin: 3px 0 8px;
+  font-size: 10.5px;
+  color: var(--app-muted);
+  line-height: 1.3;
+}
+
+.promo-rail__card-head {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.promo-rail__chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -212,32 +249,9 @@
 
 .promo-header__bg {
   position: absolute;
-  left: 1.08px;
-  top: -101.17px;
-  width: 1107.64px;
-  height: 618.22px;
-  max-width: none;
-  pointer-events: none;
-}
-
-.promo-header__scrim {
-  position: absolute;
-  left: -6.22px;
-  top: 152.69px;
-  width: 808.52px;
-  height: 180.05px;
-  background: linear-gradient(180deg, transparent 0%, var(--header-grad-c) 100%);
-  pointer-events: none;
-}
-
-.promo-header__gift-accent {
-  position: absolute;
-  left: 355.39px;
-  top: 109.69px;
-  width: 396.6px;
-  height: 196.5px;
-  max-width: none;
-  border-radius: 6px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   pointer-events: none;
 }
@@ -289,6 +303,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.promo-header[data-lang='en'] .promo-header__meta {
+  flex: 1;
+  margin-top: 20px;
+  justify-content: space-between;
 }
 
 .promo-header__row {
@@ -417,6 +437,14 @@
   letter-spacing: -0.02em;
 }
 
+.promo-sheet[data-lang='en'] .category-header__title {
+  line-height: 1.2;
+}
+
+.promo-sheet[data-lang='en'] .category-header__subtitle {
+  line-height: 1.3;
+}
+
 /* ---------- benefit rows (sale / study) ---------- */
 .promo-block__row {
   display: flex;
@@ -436,10 +464,10 @@
   flex: 1;
   min-width: 0;
   border-radius: 6px;
-  background: var(--card-red);
+  background: var(--card-red) center / cover no-repeat;
   border: 1px solid var(--card-border);
   overflow: hidden;
-  padding: 22px 22px 20px;
+  padding: 18px 22px 20px;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -449,25 +477,20 @@
   padding-top: 27px;
 }
 
-.benefit-box__glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.55;
-}
-
-.benefit-box__glow--gold,
-.benefit-box__glow--silver {
-  background: radial-gradient(65% 90% at 100% 0%, rgba(232, 63, 62, 0.35), transparent 70%);
-}
-
-.benefit-box__heading {
+.benefit-box__heading,
+.gift-panel__heading,
+.qr-panel__heading {
   position: relative;
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 22px;
   line-height: 1.35;
   letter-spacing: -0.02em;
+}
+
+.gift-panel__heading,
+.qr-panel__heading {
+  max-width: 62%;
 }
 
 .benefit-box--l .benefit-box__heading {
@@ -583,16 +606,6 @@
   font-size: 30.7px;
 }
 
-.benefit-badge--gold {
-  background: url('../assets/figma/badge-gold.png') bottom / cover no-repeat;
-  box-shadow: 0 8px 20px rgba(200, 130, 20, 0.35);
-}
-
-.benefit-badge--silver {
-  background: url('../assets/figma/badge-silver.png') bottom / cover no-repeat;
-  box-shadow: 0 8px 20px rgba(90, 95, 100, 0.3);
-}
-
 .benefit-badge__up {
   font-weight: 600;
   background-image: linear-gradient(128deg, var(--gold-text-a) 12.5%, var(--gold-text-b) 93.5%);
@@ -629,30 +642,6 @@
   min-width: 0.6em;
   display: inline-block;
   text-align: right;
-}
-
-.benefit-box__photo {
-  position: absolute;
-  right: -1%;
-  top: 50%;
-  width: 43%;
-  aspect-ratio: 147.89 / 121.78;
-  transform: translateY(-50%) rotate(-4.76deg);
-  pointer-events: none;
-}
-
-.benefit-box__photo--mirror {
-  right: -7%;
-  width: 46%;
-  aspect-ratio: 170.64 / 140.51;
-  transform: translateY(-50%) scaleX(-1);
-}
-
-.benefit-box__photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
 }
 
 .benefit-box__desc--study {
@@ -693,25 +682,6 @@
   background: radial-gradient(70% 90% at 100% 0%, rgba(232, 63, 62, 0.28), transparent 70%);
   pointer-events: none;
 }
-
-.gift-panel__heading {
-  position: relative;
-  margin: 0;
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1.35;
-  letter-spacing: -0.02em;
-  max-width: 62%;
-}
-
-.promo-sheet[data-lang='en'] .gift-panel__heading {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 18px;
-  line-height: 1.15;
-  letter-spacing: -0.18px;
-}
-
 
 .gift-panel__note {
   position: relative;
@@ -770,24 +740,6 @@
   background: radial-gradient(60% 75% at -15% 25%, rgba(232, 63, 62, 0.3), transparent 70%);
   pointer-events: none;
 }
-
-.qr-panel__heading {
-  margin: 0;
-  font-weight: 700;
-  font-size: 22px;
-  line-height: 1.35;
-  letter-spacing: -0.02em;
-  max-width: 62%;
-}
-
-.promo-sheet[data-lang='en'] .qr-panel__heading {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: 18px;
-  line-height: 1.15;
-  letter-spacing: -0.18px;
-}
-
 
 .qr-panel__desc {
   margin: auto 0 0;
@@ -894,6 +846,16 @@
   font-weight: 400;
   opacity: 0.6;
   letter-spacing: -0.16px;
+}
+
+.promo-sheet[data-lang='en'] .notice-block__col {
+  font-size: 7px;
+  line-height: 1.2;
+}
+
+.promo-sheet[data-lang='en'] .notice-block {
+  padding: 5px 19px 6px;
+  gap: 2px;
 }
 
 /* ---------- footer ---------- */

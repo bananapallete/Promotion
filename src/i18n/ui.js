@@ -21,6 +21,13 @@ export const UI = {
     editHint: '클릭해서 텍스트를 수정하세요',
     sectionOn: '표시',
     sectionOff: '숨김',
+    productsHint: '헤더에 표시할 제품 배지',
+    sectionDesc: {
+      sale: '할인 카드 영역',
+      study: '교육 서비스 카드 영역',
+      gift: '사은품 · QR 카드 영역',
+      notice: '하단 안내문 영역',
+    },
   },
   en: {
     brand: 'MIDAS 26th Anniversary Promotion / Survey Builder',
@@ -44,5 +51,12 @@ export const UI = {
     editHint: 'Click to edit text',
     sectionOn: 'On',
     sectionOff: 'Off',
+    productsHint: 'Product badges shown in header',
+    sectionDesc: {
+      sale: 'Discount cards',
+      study: 'Training cards',
+      gift: 'Gift & QR cards',
+      notice: 'Bottom notice',
+    },
   },
 }
