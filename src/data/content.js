@@ -140,7 +140,7 @@ export const DEFAULT_SURVEY = {
     sectionTitles: {
       section01: '고객 정보',
       section02: '관심 제품 선택',
-      section03: '구매 및 견적 상세',
+      section03: '구매 및\n견적 상세',
       section04: '구매 의향 상담 요청',
     },
     sectionIndexes: {

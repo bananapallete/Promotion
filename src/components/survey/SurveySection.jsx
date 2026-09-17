@@ -25,6 +25,7 @@ export default function SurveySection({
         <PopupText
           lang={lang}
           as="span"
+          multiline
           className="survey-section__title"
           value={title}
           onChange={onTitleChange}
