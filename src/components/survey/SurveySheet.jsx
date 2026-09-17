@@ -64,7 +64,12 @@ export default function SurveySheet() {
             title={data.sectionTitles.section03}
             onTitleChange={(v) => setField(['sectionTitles', 'section03'], v)}
           >
-            <FieldGrid fields={data.fields03} onChange={(i, v) => setListItem('fields03', i, v)} />
+            <FieldGrid
+              fields={data.fields03}
+              onChange={(i, v) => setListItem('fields03', i, v)}
+              lang={lang}
+              specialIndex={5}
+            />
           </SurveySection>
 
           <SurveySection

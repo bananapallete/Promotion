@@ -9,6 +9,10 @@
   border-radius: 6px;
 }
 
+.survey-sheet[data-lang='en'] {
+  font-family: 'Pretendard', sans-serif;
+}
+
 /* ---------- header ---------- */
 .survey-header {
   position: relative;
@@ -178,6 +182,31 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--category-text);
+}
+
+.survey-field__label-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.survey-field__label--special {
+  display: inline;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #733232;
+  text-align: left;
+  cursor: pointer;
+  white-space: normal;
+}
+
+.survey-field__label-paren {
+  font-weight: 400;
 }
 
 .survey-field__line {
