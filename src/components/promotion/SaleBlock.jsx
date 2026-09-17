@@ -3,6 +3,8 @@ import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 import saleSingleMGold from '../../assets/figma/benefit-bg/sale-single-m-gold.png'
 import saleSingleLGold from '../../assets/figma/benefit-bg/sale-single-l-gold.png'
+import saleSingleMSilver from '../../assets/figma/benefit-bg/sale-single-m-silver.png'
+import saleSingleLSilver from '../../assets/figma/benefit-bg/sale-single-l-silver.png'
 import saleDoubleMGold from '../../assets/figma/benefit-bg/sale-double-m-gold.png'
 import saleDoubleMSilver from '../../assets/figma/benefit-bg/sale-double-m-silver.png'
 import saleDoubleLGold from '../../assets/figma/benefit-bg/sale-double-l-gold.png'
@@ -10,6 +12,9 @@ import saleDoubleLSilver from '../../assets/figma/benefit-bg/sale-double-l-silve
 
 function getSaleBg({ badge, compact, single }) {
   if (single) {
+    if (badge === 'silver') {
+      return compact ? saleSingleMSilver : saleSingleLSilver
+    }
     return compact ? saleSingleMGold : saleSingleLGold
   }
   if (badge === 'silver') {
@@ -61,9 +66,11 @@ function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc })
   )
 }
 
-export default function SaleBlock({ compact, single }) {
+export default function SaleBlock({ compact, single, keepSide = 'left' }) {
   const { lang, promotion, updatePromotion } = useAppState()
   const sale = promotion[lang].sale
+  const showBox1 = !single || keepSide !== 'right'
+  const showBox2 = !single || keepSide === 'right'
 
   return (
     <div className="promo-block">
@@ -83,32 +90,35 @@ export default function SaleBlock({ compact, single }) {
         }
       />
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
-        <SaleBox
-          data={sale.box1}
-          badge="gold"
-          compact={compact}
-          single={single}
-          onHeading={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box1[compact ? 'headingM' : 'headingL'] = v
-            })
-          }
-          onPercent={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box1.percent = v
-            })
-          }
-          onDesc={(v) =>
-            updatePromotion(lang, (d) => {
-              d.sale.box1.desc = v
-            })
-          }
-        />
-        {!single && (
+        {showBox1 && (
+          <SaleBox
+            data={sale.box1}
+            badge="gold"
+            compact={compact}
+            single={single}
+            onHeading={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box1[compact ? 'headingM' : 'headingL'] = v
+              })
+            }
+            onPercent={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box1.percent = v
+              })
+            }
+            onDesc={(v) =>
+              updatePromotion(lang, (d) => {
+                d.sale.box1.desc = v
+              })
+            }
+          />
+        )}
+        {showBox2 && (
           <SaleBox
             data={sale.box2}
             badge="silver"
             compact={compact}
+            single={single}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
                 d.sale.box2[compact ? 'headingM' : 'headingL'] = v

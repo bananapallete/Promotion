@@ -45,6 +45,7 @@ function buildInitialState() {
     survey: deepMerge(DEFAULT_SURVEY, persisted?.survey),
     sections: persisted?.sections ?? { sale: true, study: true, gift: true, notice: true },
     itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2, gift: 2 },
+    keepSide: persisted?.keepSide ?? { sale: 'left', study: 'left' },
     activeProducts:
       persisted?.activeProducts ??
       PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
@@ -100,6 +101,10 @@ export function AppProvider({ children }) {
     setState((s) => ({ ...s, itemCounts: { ...s.itemCounts, [key]: count } }))
   }, [])
 
+  const setKeepSide = useCallback((key, side) => {
+    setState((s) => ({ ...s, keepSide: { ...s.keepSide, [key]: side } }))
+  }, [])
+
   const toggleProduct = useCallback((code) => {
     setState((s) => ({
       ...s,
@@ -127,6 +132,7 @@ export function AppProvider({ children }) {
       updateSurvey,
       toggleSection,
       setItemCount,
+      setKeepSide,
       toggleProduct,
       setQrImage,
       resetAll,
@@ -139,6 +145,7 @@ export function AppProvider({ children }) {
       updateSurvey,
       toggleSection,
       setItemCount,
+      setKeepSide,
       toggleProduct,
       setQrImage,
       resetAll,
@@ -155,6 +162,7 @@ function buildInitialStateDefaults() {
     survey: DEFAULT_SURVEY,
     sections: { sale: true, study: true, gift: true, notice: true },
     itemCounts: { sale: 2, study: 2, gift: 2 },
+    keepSide: { sale: 'left', study: 'left' },
     activeProducts: PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
     qrImage: null,
   }

@@ -10,13 +10,27 @@ import Divider from './Divider.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
 export default function PromotionSheet() {
-  const { lang, sections, itemCounts } = useAppState()
+  const { lang, sections, itemCounts, keepSide } = useAppState()
   const contentCount = ['sale', 'study', 'gift'].filter((key) => sections[key]).length
   const compact = contentCount >= 3
 
   const blocks = [
-    sections.sale && <SaleBlock key="sale" compact={compact} single={itemCounts.sale === 1} />,
-    sections.study && <StudyBlock key="study" compact={compact} single={itemCounts.study === 1} />,
+    sections.sale && (
+      <SaleBlock
+        key="sale"
+        compact={compact}
+        single={itemCounts.sale === 1}
+        keepSide={keepSide.sale}
+      />
+    ),
+    sections.study && (
+      <StudyBlock
+        key="study"
+        compact={compact}
+        single={itemCounts.study === 1}
+        keepSide={keepSide.study}
+      />
+    ),
     sections.gift && <GiftBlock key="gift" compact={compact} single={itemCounts.gift === 1} />,
     sections.notice && <NoticeBlock key="notice" />,
   ].filter(Boolean)

@@ -6,9 +6,20 @@ const SECTION_LABELS = {
   en: { sale: 'Sale', study: 'Study', gift: 'Gift', notice: 'Notice' },
 }
 
+const SIDE_PICKER_KEYS = ['sale', 'study']
+
 export default function SectionControls() {
-  const { lang, sections, toggleSection, itemCounts, setItemCount, activeProducts, toggleProduct } =
-    useAppState()
+  const {
+    lang,
+    sections,
+    toggleSection,
+    itemCounts,
+    setItemCount,
+    keepSide,
+    setKeepSide,
+    activeProducts,
+    toggleProduct,
+  } = useAppState()
   const t = UI[lang]
   const labels = SECTION_LABELS[lang]
 
@@ -44,19 +55,42 @@ export default function SectionControls() {
           </div>
           <p className="promo-rail__card-desc">{t.sectionDesc[key]}</p>
           {key in itemCounts && (
-            <span className="count-toggle">
-              {[1, 2].map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
-                  disabled={!sections[key]}
-                  onClick={() => setItemCount(key, count)}
-                >
-                  {count}
-                </button>
-              ))}
-            </span>
+            <>
+              <p className="promo-rail__count-label">{t.cardCount}</p>
+              <span className="count-toggle">
+                {[1, 2].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
+                    disabled={!sections[key]}
+                    onClick={() => setItemCount(key, count)}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </span>
+              {itemCounts[key] === 1 && SIDE_PICKER_KEYS.includes(key) && (
+                <span className="side-toggle">
+                  <button
+                    type="button"
+                    className={`side-toggle__btn ${keepSide[key] === 'left' ? 'is-active' : ''}`}
+                    disabled={!sections[key]}
+                    onClick={() => setKeepSide(key, 'left')}
+                  >
+                    {t.keepLeft}
+                  </button>
+                  <button
+                    type="button"
+                    className={`side-toggle__btn ${keepSide[key] === 'right' ? 'is-active' : ''}`}
+                    disabled={!sections[key]}
+                    onClick={() => setKeepSide(key, 'right')}
+                  >
+                    {t.keepRight}
+                  </button>
+                </span>
+              )}
+            </>
           )}
         </div>
       ))}

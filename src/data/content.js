@@ -10,14 +10,14 @@ export const DEFAULT_PROMOTION = {
       title: '26주년 특별 할인 혜택',
       subtitle: '전 제품 신규 구매부터 추가 구매까지, 지금 만나볼 수 있는 슈퍼 혜택 라인업',
       box1: {
-        headingM: '신규\n구매',
-        headingL: '신규 구매',
+        headingM: '신규 구매\n할인',
+        headingL: '신규 구매 할인',
         percent: '50',
         desc: '9월 30일까지 풀버전 구매 시',
       },
       box2: {
-        headingM: '추가\n구매',
-        headingL: '추가 구매',
+        headingM: '추가 구매\n할인',
+        headingL: '추가 구매 할인',
         percent: '40',
         desc: '300만원 이상 구매 시',
       },

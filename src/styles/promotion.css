@@ -15,6 +15,10 @@
   border-radius: 6px;
 }
 
+:root[data-theme='dark'] .sheet {
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
 /* ---------- controls (screen only) ---------- */
 .promo-editor {
   display: flex;
@@ -100,6 +104,44 @@
 }
 
 .count-toggle__btn.is-active {
+  background: var(--app-accent);
+  color: var(--app-accent-contrast);
+}
+
+.promo-rail__count-label {
+  margin: 8px 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--app-muted);
+}
+
+.side-toggle {
+  display: inline-flex;
+  background: var(--app-surface-2);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.side-toggle__btn {
+  border: none;
+  background: transparent;
+  color: var(--app-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.side-toggle__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.side-toggle__btn.is-active {
   background: var(--app-accent);
   color: var(--app-accent-contrast);
 }
