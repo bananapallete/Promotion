@@ -47,7 +47,10 @@
   transition: opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
-.promo-rail__card--off {
+.promo-rail__card--off .promo-rail__card-desc,
+.promo-rail__card--off .promo-rail__count-label,
+.promo-rail__card--off .count-toggle,
+.promo-rail__card--off .side-toggle {
   opacity: 0.5;
 }
 
@@ -165,7 +168,7 @@
   width: 32px;
   height: 18px;
   border-radius: 999px;
-  background: var(--app-border);
+  background: color-mix(in srgb, var(--app-accent) 35%, var(--app-border));
   position: relative;
   transition: background-color 0.15s ease;
 }
