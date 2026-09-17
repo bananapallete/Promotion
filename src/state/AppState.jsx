@@ -6,6 +6,26 @@ const STORAGE_KEY = 'midas-promotion-builder-v1'
 
 const AppStateContext = createContext(null)
 
+// Merges persisted (possibly stale/older-schema) data onto the current
+// defaults so newly-added fields are always present. Arrays are taken
+// wholesale from `override` when present (they're user-editable lists, not
+// fixed shapes); objects are merged key-by-key following `base`'s shape, so
+// keys removed from the schema are dropped and keys added to it fall back
+// to their default instead of leaving `undefined` that would crash render.
+function deepMerge(base, override) {
+  if (Array.isArray(base)) {
+    return Array.isArray(override) ? override : base
+  }
+  if (base && typeof base === 'object' && override && typeof override === 'object') {
+    const result = {}
+    for (const key of Object.keys(base)) {
+      result[key] = deepMerge(base[key], override[key])
+    }
+    return result
+  }
+  return override !== undefined ? override : base
+}
+
 function loadPersisted() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
@@ -21,8 +41,8 @@ function buildInitialState() {
   return {
     theme: persisted?.theme ?? 'light',
     lang: persisted?.lang ?? 'kr',
-    promotion: persisted?.promotion ?? DEFAULT_PROMOTION,
-    survey: persisted?.survey ?? DEFAULT_SURVEY,
+    promotion: deepMerge(DEFAULT_PROMOTION, persisted?.promotion),
+    survey: deepMerge(DEFAULT_SURVEY, persisted?.survey),
     sections: persisted?.sections ?? { sale: true, study: true, gift: true, notice: true },
     itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2, gift: 2 },
     activeProducts:
