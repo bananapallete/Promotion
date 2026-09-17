@@ -36,7 +36,7 @@ function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc })
         as="p"
         multiline
         className="benefit-box__heading"
-        value={compact ? data.headingM : data.headingL}
+        value={single ? data.headingL : data.headingM}
         onChange={onHeading}
       />
       <div
@@ -98,7 +98,7 @@ export default function SaleBlock({ compact, single, keepSide = 'left' }) {
             single={single}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.sale.box1[compact ? 'headingM' : 'headingL'] = v
+                d.sale.box1[single ? 'headingL' : 'headingM'] = v
               })
             }
             onPercent={(v) =>
@@ -121,7 +121,7 @@ export default function SaleBlock({ compact, single, keepSide = 'left' }) {
             single={single}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.sale.box2[compact ? 'headingM' : 'headingL'] = v
+                d.sale.box2[single ? 'headingL' : 'headingM'] = v
               })
             }
             onPercent={(v) =>
