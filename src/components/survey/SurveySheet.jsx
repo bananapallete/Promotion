@@ -3,6 +3,7 @@ import SurveyHeader from './SurveyHeader.jsx'
 import SurveySection from './SurveySection.jsx'
 import FieldGrid from './FieldRow.jsx'
 import { EditableOptionGroup, StaticOptionGroup } from './OptionGroup.jsx'
+import SurveyNoticeList from './SurveyNoticeList.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 
 export default function SurveySheet() {
@@ -90,17 +91,15 @@ export default function SurveySheet() {
             onTitleChange={(v) => setField(['noticeLabel'], v)}
             variant="notice"
           >
-            <ul className="survey-notice__list">
-              {data.notice.map((line, i) => (
-                <Editable
-                  key={i}
-                  as="li"
-                  value={line}
-                  onChange={(v) => setListItem('notice', i, v)}
-                  style={{ whiteSpace: 'normal' }}
-                />
-              ))}
-            </ul>
+            <SurveyNoticeList
+              lang={lang}
+              notice={data.notice}
+              onChange={(next) =>
+                updateSurvey(lang, (d) => {
+                  d.notice = next
+                })
+              }
+            />
           </SurveySection>
         </div>
         <div className="promo-footer">

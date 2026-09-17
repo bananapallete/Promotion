@@ -358,10 +358,47 @@
   gap: 2px;
 }
 
-.survey-notice__list li {
+.survey-notice__item-wrap {
+  position: relative;
+}
+
+.survey-notice__item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
   font-size: 8px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: color-mix(in srgb, var(--category-text) 60%, transparent);
   line-height: 1.65;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.survey-notice__item:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--app-accent) 45%, transparent);
+}
+
+.survey-notice__add {
+  display: inline-flex;
+  border: none;
+  background: var(--app-surface-2);
+  color: var(--app-muted);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  margin-top: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.survey-notice__add:hover {
+  background: color-mix(in srgb, var(--app-accent) 14%, var(--app-surface-2));
+  color: var(--app-accent);
 }
