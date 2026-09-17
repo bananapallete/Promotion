@@ -48,7 +48,6 @@ function buildInitialState() {
     activeProducts:
       persisted?.activeProducts ??
       PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
-    giftImage: persisted?.giftImage ?? null,
     qrImage: persisted?.qrImage ?? null,
   }
 }
@@ -108,10 +107,6 @@ export function AppProvider({ children }) {
     }))
   }, [])
 
-  const setGiftImage = useCallback((dataUrl) => {
-    setState((s) => ({ ...s, giftImage: dataUrl }))
-  }, [])
-
   const setQrImage = useCallback((dataUrl) => {
     setState((s) => ({ ...s, qrImage: dataUrl }))
   }, [])
@@ -133,7 +128,6 @@ export function AppProvider({ children }) {
       toggleSection,
       setItemCount,
       toggleProduct,
-      setGiftImage,
       setQrImage,
       resetAll,
     }),
@@ -146,7 +140,6 @@ export function AppProvider({ children }) {
       toggleSection,
       setItemCount,
       toggleProduct,
-      setGiftImage,
       setQrImage,
       resetAll,
     ],
@@ -163,7 +156,6 @@ function buildInitialStateDefaults() {
     sections: { sale: true, study: true, gift: true, notice: true },
     itemCounts: { sale: 2, study: 2, gift: 2 },
     activeProducts: PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
-    giftImage: null,
     qrImage: null,
   }
 }

@@ -190,13 +190,10 @@
   backdrop-filter: blur(2px);
 }
 
-.gift-panel__image .ghost-btn,
 .qr-panel__code-wrap .ghost-btn {
   display: none;
 }
 
-.gift-panel__image:hover .ghost-btn,
-.gift-panel__image:focus-within .ghost-btn,
 .qr-panel__code-wrap:hover .ghost-btn,
 .qr-panel__code-wrap:focus-within .ghost-btn {
   display: inline-flex;
@@ -609,30 +606,10 @@
   overflow: hidden;
   padding: 22px 22px 20px;
   color: #fff;
-  background: linear-gradient(90deg, var(--gift-grad-from) 0%, var(--gift-grad-to) 45.731%);
+  background: var(--gift-grad-from) center / cover no-repeat;
   border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
-}
-
-.gift-panel__texture {
-  position: absolute;
-  right: -67.53px;
-  top: -3.37px;
-  width: 308.87px;
-  height: 153.66px;
-  max-width: none;
-  object-fit: cover;
-  transform: scaleX(-1);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.gift-panel__glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(70% 90% at 100% 0%, rgba(232, 63, 62, 0.28), transparent 70%);
-  pointer-events: none;
 }
 
 .gift-panel__note {
@@ -643,35 +620,6 @@
   font-weight: 500;
 }
 
-.gift-panel__image {
-  position: absolute;
-  right: 0;
-  top: 68%;
-  transform: translateY(-50%);
-  width: 40%;
-  max-width: 190px;
-  aspect-ratio: 1 / 1;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 6px;
-  overflow: hidden;
-}
-
-.gift-panel__image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gift-panel--single .gift-panel__image {
-  width: 220px;
-  max-width: 220px;
-}
-
 .qr-panel {
   position: relative;
   width: 279px;
@@ -680,17 +628,10 @@
   overflow: hidden;
   padding: 20px 18px;
   color: #fff;
-  background: var(--qr-bg);
+  background: var(--qr-bg) center / cover no-repeat;
   border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
-}
-
-.qr-panel__glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(60% 75% at -15% 25%, rgba(232, 63, 62, 0.3), transparent 70%);
-  pointer-events: none;
 }
 
 .qr-panel__desc {
@@ -744,10 +685,6 @@
   font-size: 7px;
   padding: 4px 6px;
   white-space: nowrap;
-}
-
-.gift-panel__image .ghost-btn {
-  position: relative;
 }
 
 /* ---------- notice ---------- */

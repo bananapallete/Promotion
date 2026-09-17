@@ -3,9 +3,20 @@ import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
 import { UI } from '../../i18n/ui.js'
-import giftDefaultImg from '../../assets/figma/gift-laptop.png'
 import qrDefaultImg from '../../assets/figma/qr-code.svg'
-import giftTextureImg from '../../assets/figma/header-bg.png'
+import giftSingleM from '../../assets/figma/benefit-bg/gift-single-m.png'
+import giftSingleL from '../../assets/figma/benefit-bg/gift-single-l.png'
+import giftDoubleM from '../../assets/figma/benefit-bg/gift-double-m.png'
+import giftDoubleL from '../../assets/figma/benefit-bg/gift-double-l.png'
+import qrDoubleM from '../../assets/figma/benefit-bg/qr-double-m.png'
+import qrDoubleL from '../../assets/figma/benefit-bg/qr-double-l.png'
+
+function getGiftBg({ compact, single }) {
+  if (single) {
+    return compact ? giftSingleM : giftSingleL
+  }
+  return compact ? giftDoubleM : giftDoubleL
+}
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -17,25 +28,10 @@ function readFileAsDataUrl(file) {
 }
 
 export default function GiftBlock({ compact, single }) {
-  const { lang, promotion, updatePromotion, giftImage, qrImage, setGiftImage, setQrImage } =
-    useAppState()
+  const { lang, promotion, updatePromotion, qrImage, setQrImage } = useAppState()
   const t = UI[lang]
   const gift = promotion[lang].gift
-  const giftInputRef = useRef(null)
   const qrInputRef = useRef(null)
-
-  const handleGiftUploadClick = () => {
-    if (window.confirm(t.giftConfirm)) {
-      giftInputRef.current?.click()
-    }
-  }
-
-  const handleGiftFile = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setGiftImage(await readFileAsDataUrl(file))
-  }
 
   const handleQrFile = async (e) => {
     const file = e.target.files?.[0]
@@ -62,9 +58,10 @@ export default function GiftBlock({ compact, single }) {
         }
       />
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
-        <div className={`gift-panel ${single ? 'gift-panel--single' : ''}`}>
-          <img className="gift-panel__texture" src={giftTextureImg} alt="" aria-hidden="true" />
-          <div className="gift-panel__glow" aria-hidden="true" />
+        <div
+          className={`gift-panel ${single ? 'gift-panel--single' : ''}`}
+          style={{ backgroundImage: `url(${getGiftBg({ compact, single })})` }}
+        >
           <Editable
             as="p"
             multiline
@@ -86,27 +83,12 @@ export default function GiftBlock({ compact, single }) {
               })
             }
           />
-          <div className="gift-panel__image">
-            <img src={giftImage || giftDefaultImg} alt="gift" />
-            <button
-              type="button"
-              className="ghost-btn no-print"
-              onClick={handleGiftUploadClick}
-            >
-              {t.uploadGift}
-            </button>
-            <input
-              ref={giftInputRef}
-              type="file"
-              accept="image/*"
-              className="visually-hidden"
-              onChange={handleGiftFile}
-            />
-          </div>
         </div>
         {!single && (
-          <div className="qr-panel">
-            <div className="qr-panel__glow" aria-hidden="true" />
+          <div
+            className="qr-panel"
+            style={{ backgroundImage: `url(${compact ? qrDoubleM : qrDoubleL})` }}
+          >
             <Editable
               as="p"
               multiline
@@ -145,7 +127,7 @@ export default function GiftBlock({ compact, single }) {
               </div>
               <button
                 type="button"
-                className="ghost-btn ghost-btn--light no-print qr-panel__upload-btn"
+                className="ghost-btn no-print qr-panel__upload-btn"
                 onClick={() => qrInputRef.current?.click()}
               >
                 {t.uploadQr}
