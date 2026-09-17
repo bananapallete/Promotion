@@ -206,12 +206,10 @@
 }
 
 .survey-field__label-wrap {
-  position: relative;
-  display: inline-block;
+  display: contents;
 }
 
 .survey-field__label--special {
-  display: inline;
   border: none;
   background: none;
   margin: 0;
@@ -292,6 +290,7 @@
 
 .survey-option__blank {
   display: inline-block;
+  align-self: flex-end;
   width: 60px;
   height: 1px;
   background: color-mix(in srgb, var(--category-text) 30%, transparent);
