@@ -35,13 +35,42 @@ function SpecialFieldLabel({ lang, value, onChange }) {
   )
 }
 
-export default function FieldGrid({ fields, onChange, lang, specialIndex }) {
+function RemovableFieldLabel({ lang, value, onChange, onRemove }) {
+  const [editing, setEditing] = useState(false)
+
+  return (
+    <span className="survey-field__label-wrap">
+      <button type="button" className="popup-text-btn survey-field__label" onClick={() => setEditing(true)}>
+        {value}
+      </button>
+      {editing && (
+        <OptionEditPopup
+          lang={lang}
+          initialValue={value}
+          canDelete
+          onSave={onChange}
+          onDelete={onRemove}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </span>
+  )
+}
+
+export default function FieldGrid({ fields, onChange, lang, specialIndex, removable, onRemove }) {
   return (
     <div className="survey-field-grid">
       {fields.map((label, i) => (
         <div className="survey-field" key={i}>
           {i === specialIndex ? (
             <SpecialFieldLabel lang={lang} value={label} onChange={(v) => onChange(i, v)} />
+          ) : removable ? (
+            <RemovableFieldLabel
+              lang={lang}
+              value={label}
+              onChange={(v) => onChange(i, v)}
+              onRemove={() => onRemove(i)}
+            />
           ) : (
             <PopupText
               lang={lang}

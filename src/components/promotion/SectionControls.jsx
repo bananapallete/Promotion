@@ -71,24 +71,27 @@ export default function SectionControls() {
                 ))}
               </span>
               {itemCounts[key] === 1 && SIDE_PICKER_KEYS.includes(key) && (
-                <span className="side-toggle">
-                  <button
-                    type="button"
-                    className={`side-toggle__btn ${keepSide[key] === 'left' ? 'is-active' : ''}`}
-                    disabled={!sections[key]}
-                    onClick={() => setKeepSide(key, 'left')}
-                  >
-                    {t.keepLeft}
-                  </button>
-                  <button
-                    type="button"
-                    className={`side-toggle__btn ${keepSide[key] === 'right' ? 'is-active' : ''}`}
-                    disabled={!sections[key]}
-                    onClick={() => setKeepSide(key, 'right')}
-                  >
-                    {t.keepRight}
-                  </button>
-                </span>
+                <>
+                  <p className="promo-rail__count-label">{t.designLabel}</p>
+                  <span className="side-toggle">
+                    <button
+                      type="button"
+                      className={`side-toggle__btn ${keepSide[key] === 'left' ? 'is-active' : ''}`}
+                      disabled={!sections[key]}
+                      onClick={() => setKeepSide(key, 'left')}
+                    >
+                      {t.keepLeft}
+                    </button>
+                    <button
+                      type="button"
+                      className={`side-toggle__btn ${keepSide[key] === 'right' ? 'is-active' : ''}`}
+                      disabled={!sections[key]}
+                      onClick={() => setKeepSide(key, 'right')}
+                    >
+                      {t.keepRight}
+                    </button>
+                  </span>
+                </>
               )}
             </>
           )}

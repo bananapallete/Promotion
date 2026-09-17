@@ -17,8 +17,21 @@ export default function SurveyControls() {
       d.notice.push(t.newNotice)
     })
 
+  const addField = () =>
+    updateSurvey(lang, (d) => {
+      d.fields01.push(t.newField)
+    })
+
   return (
     <div className="promo-rail no-print">
+      <div className="promo-rail__card">
+        <p className="promo-rail__card-title">{r.customerInfo}</p>
+        <p className="promo-rail__card-desc">{r.customerInfoDesc}</p>
+        <button type="button" className="survey-option__add" onClick={addField}>
+          + {t.addField}
+        </button>
+      </div>
+
       <div className="promo-rail__card">
         <p className="promo-rail__card-title">{r.interest}</p>
         <p className="promo-rail__card-desc">{r.interestDesc}</p>

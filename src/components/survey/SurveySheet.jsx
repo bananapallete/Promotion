@@ -21,6 +21,11 @@ export default function SurveySheet() {
       d[key][index] = value
     })
 
+  const removeListItem = (key, index) =>
+    updateSurvey(lang, (d) => {
+      d[key].splice(index, 1)
+    })
+
   return (
     <div className="promo-editor">
       <SurveyControls />
@@ -39,6 +44,8 @@ export default function SurveySheet() {
                 fields={data.fields01}
                 onChange={(i, v) => setListItem('fields01', i, v)}
                 lang={lang}
+                removable
+                onRemove={(i) => removeListItem('fields01', i)}
               />
             </SurveySection>
 
