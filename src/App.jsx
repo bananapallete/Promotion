@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import TopBar from './components/TopBar.jsx'
 import PromotionSheet from './components/promotion/PromotionSheet.jsx'
 import SurveySheet from './components/survey/SurveySheet.jsx'
 import { useAppState } from './state/AppState.jsx'
 import { UI } from './i18n/ui.js'
+import { logVisitEvent } from './lib/trackUsage.js'
 import './styles/layout.css'
 import './styles/promotion.css'
 import './styles/survey.css'
@@ -11,6 +13,10 @@ import './styles/print.css'
 function App() {
   const { lang } = useAppState()
   const t = UI[lang]
+
+  useEffect(() => {
+    logVisitEvent()
+  }, [])
 
   return (
     <div className="app-shell">
