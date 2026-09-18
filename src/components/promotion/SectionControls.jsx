@@ -101,18 +101,6 @@ export default function SectionControls() {
           )}
           {key === 'gift' && (
             <>
-              <label className="switch switch--sub promo-rail__subswitch">
-                <input
-                  type="checkbox"
-                  checked={giftQr}
-                  disabled={!sections.gift}
-                  onChange={toggleGiftQr}
-                />
-                <span className="switch__track">
-                  <span className="switch__thumb" />
-                </span>
-                <span className="switch__label">{t.qrToggle}</span>
-              </label>
               <p className="promo-rail__count-label">{t.designLabel}</p>
               <span className="side-toggle">
                 <button
@@ -132,6 +120,18 @@ export default function SectionControls() {
                   {t.keepRight}
                 </button>
               </span>
+              <label className="switch switch--sub promo-rail__subswitch">
+                <input
+                  type="checkbox"
+                  checked={giftQr}
+                  disabled={!sections.gift}
+                  onChange={toggleGiftQr}
+                />
+                <span className="switch__track">
+                  <span className="switch__thumb" />
+                </span>
+                <span className="switch__label">{t.qrToggle}</span>
+              </label>
             </>
           )}
         </div>
