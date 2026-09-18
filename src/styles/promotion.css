@@ -66,6 +66,16 @@
   line-height: 1.35;
 }
 
+.promo-rail__card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.promo-rail__card-top .promo-rail__card-desc {
+  margin: 0;
+}
+
 .promo-rail__card-head {
   display: flex;
   align-items: center;

@@ -67,16 +67,18 @@ export default function SectionControls() {
 
       {Object.keys(sections).map((key) => (
         <div key={key} className={`promo-rail__card ${sections[key] ? '' : 'promo-rail__card--off'}`}>
-          <div className="promo-rail__card-head">
-            <label className="switch">
-              <input type="checkbox" checked={sections[key]} onChange={() => toggleSection(key)} />
-              <span className="switch__track">
-                <span className="switch__thumb" />
-              </span>
-              <span className="switch__label">{labels[key]}</span>
-            </label>
+          <div className="promo-rail__card-top">
+            <div className="promo-rail__card-head">
+              <label className="switch">
+                <input type="checkbox" checked={sections[key]} onChange={() => toggleSection(key)} />
+                <span className="switch__track">
+                  <span className="switch__thumb" />
+                </span>
+                <span className="switch__label">{labels[key]}</span>
+              </label>
+            </div>
+            <p className="promo-rail__card-desc">{t.sectionDesc[key]}</p>
           </div>
-          <p className="promo-rail__card-desc">{t.sectionDesc[key]}</p>
           {key in itemCounts && (
             <>
               <div className="promo-rail__group">
