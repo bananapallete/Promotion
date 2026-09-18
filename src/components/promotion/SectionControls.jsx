@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { PRODUCT_LIST, useAppState } from '../../state/AppState.jsx'
 import { UI } from '../../i18n/ui.js'
 
@@ -7,6 +8,15 @@ const SECTION_LABELS = {
 }
 
 const SIDE_PICKER_KEYS = ['sale', 'study']
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
 export default function SectionControls() {
   const {
@@ -23,9 +33,18 @@ export default function SectionControls() {
     toggleGiftQr,
     giftDesign,
     setGiftDesign,
+    setQrImage,
   } = useAppState()
   const t = UI[lang]
   const labels = SECTION_LABELS[lang]
+  const qrInputRef = useRef(null)
+
+  const handleQrFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setQrImage(await readFileAsDataUrl(file))
+  }
 
   return (
     <div className="promo-rail no-print">
@@ -132,6 +151,21 @@ export default function SectionControls() {
                 </span>
                 <span className="switch__label">{t.qrToggle}</span>
               </label>
+              <button
+                type="button"
+                className="promo-rail__upload-btn"
+                disabled={!sections.gift || !giftQr}
+                onClick={() => qrInputRef.current?.click()}
+              >
+                {t.uploadQr}
+              </button>
+              <input
+                ref={qrInputRef}
+                type="file"
+                accept="image/*"
+                className="visually-hidden"
+                onChange={handleQrFile}
+              />
             </>
           )}
         </div>

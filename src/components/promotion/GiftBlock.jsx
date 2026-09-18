@@ -1,7 +1,7 @@
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
-import qrDefaultImg from '../../assets/figma/qr-code.svg'
+import qrDefaultImg from '../../assets/figma/qr-code-default.png'
 import giftSingleM from '../../assets/figma/benefit-bg/gift-single-m.png'
 import giftSingleL from '../../assets/figma/benefit-bg/gift-single-l.png'
 import giftDoubleM from '../../assets/figma/benefit-bg/gift-double-m.png'
@@ -25,7 +25,7 @@ function getGiftBg({ compact, single, design }) {
 }
 
 export default function GiftBlock({ compact }) {
-  const { lang, promotion, updatePromotion, giftQr, giftDesign } = useAppState()
+  const { lang, promotion, updatePromotion, giftQr, giftDesign, qrImage } = useAppState()
   const gift = promotion[lang].gift
   const single = !giftQr
 
@@ -112,7 +112,7 @@ export default function GiftBlock({ compact }) {
             />
             <div className="qr-panel__code-wrap">
               <div className="qr-panel__code">
-                <img src={qrDefaultImg} alt="QR" />
+                <img src={qrImage || qrDefaultImg} alt="QR" />
               </div>
             </div>
           </div>
