@@ -13,8 +13,6 @@ import giftDoubleLB from '../../assets/figma/benefit-bg/gift-double-l-b.png'
 import qrDoubleM from '../../assets/figma/benefit-bg/qr-double-m.png'
 import qrDoubleL from '../../assets/figma/benefit-bg/qr-double-l.png'
 
-// gift-single-m-b.png is a derived crop of gift-single-l-b.png (no dedicated
-// asset was provided for that slot) — swap it out if a real one arrives.
 const GIFT_BG = {
   A: { singleM: giftSingleM, singleL: giftSingleL, doubleM: giftDoubleM, doubleL: giftDoubleL },
   B: { singleM: giftSingleMB, singleL: giftSingleLB, doubleM: giftDoubleMB, doubleL: giftDoubleLB },
