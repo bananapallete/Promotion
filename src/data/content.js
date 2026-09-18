@@ -101,7 +101,7 @@ export const DEFAULT_PROMOTION = {
       box2: {
         headingM: 'Customized\nOnboarding Training',
         headingL: 'Customized Onboarding Training',
-        desc: 'Complimentary hands-on CAE training tailored to your team\'s practical needs',
+        desc: 'Complimentary hands-on CAE training \ntailored to your team\'s practical needs',
       },
     },
     gift: {
