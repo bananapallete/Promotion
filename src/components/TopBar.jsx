@@ -24,9 +24,6 @@ export default function TopBar() {
         <span className="topbar__title">{t.brand}</span>
       </div>
       <div className="topbar__actions">
-        <button type="button" className="topbar__btn" onClick={toggleLang}>
-          {t.langToggle}
-        </button>
         <label className="switch topbar__theme-switch">
           <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
           <span className="switch__track">
@@ -34,6 +31,9 @@ export default function TopBar() {
           </span>
           <span className="switch__label">{theme === 'dark' ? t.darkMode : t.lightMode}</span>
         </label>
+        <button type="button" className="topbar__btn" onClick={toggleLang}>
+          {t.langToggle}
+        </button>
         <button type="button" className="topbar__btn" onClick={handleReset}>
           {t.reset}
         </button>
