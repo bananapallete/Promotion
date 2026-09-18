@@ -3,6 +3,8 @@ export const PRODUCT_LIST = ['CIVIL', 'GEN', 'GTS', 'SWS', 'GXD']
 export const DEFAULT_PROMOTION = {
   kr: {
     header: {
+      eyebrow: '마이다스 26주년',
+      title: '고객 감사 프로모션',
       label: '임시 텍스트',
       date: '2026.01.01 (월) - 01.01 (금)',
     },
@@ -65,6 +67,8 @@ export const DEFAULT_PROMOTION = {
   },
   en: {
     header: {
+      eyebrow: 'MIDAS 26th Anniversary Special Promotion',
+      title: 'Customer Appreciation Promotion',
       label: 'Label',
       date: '2026.01.01 (Mon) - 01.01 (Fri)',
     },

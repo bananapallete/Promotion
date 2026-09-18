@@ -74,14 +74,14 @@ export default function SectionControls() {
                   </button>
                 ))}
               </span>
-              {itemCounts[key] === 1 && SIDE_PICKER_KEYS.includes(key) && (
+              {SIDE_PICKER_KEYS.includes(key) && (
                 <>
                   <p className="promo-rail__count-label">{t.designLabel}</p>
                   <span className="side-toggle">
                     <button
                       type="button"
                       className={`side-toggle__btn ${keepSide[key] === 'left' ? 'is-active' : ''}`}
-                      disabled={!sections[key]}
+                      disabled={!sections[key] || itemCounts[key] !== 1}
                       onClick={() => setKeepSide(key, 'left')}
                     >
                       {t.keepLeft}
@@ -89,7 +89,7 @@ export default function SectionControls() {
                     <button
                       type="button"
                       className={`side-toggle__btn ${keepSide[key] === 'right' ? 'is-active' : ''}`}
-                      disabled={!sections[key]}
+                      disabled={!sections[key] || itemCounts[key] !== 1}
                       onClick={() => setKeepSide(key, 'right')}
                     >
                       {t.keepRight}

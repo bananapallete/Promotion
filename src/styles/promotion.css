@@ -267,21 +267,93 @@
   position: relative;
   height: 296px;
   flex: none;
-  padding: 34px 44px 26px;
   color: #fff;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   background-color: var(--header-grad-c);
 }
 
-.promo-header__flat-bg {
+.promo-header__bg {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background-size: cover;
+  background-position: center;
   pointer-events: none;
+}
+
+:root[data-theme='dark'] .promo-header__bg {
+  filter: brightness(0.55) saturate(0.75) contrast(1.05);
+}
+
+.promo-header__gift {
+  position: absolute;
+  right: 42px;
+  bottom: 0;
+  width: 397px;
+  height: 196px;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 30%),
+    linear-gradient(to right, transparent 0%, #000 18%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 30%),
+    linear-gradient(to right, transparent 0%, #000 18%);
+  mask-composite: intersect;
+}
+
+.promo-header__content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 44px 26px;
+}
+
+.promo-header__eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.promo-header__leaf {
+  height: 22px;
+  width: auto;
+  flex: none;
+}
+
+.promo-header__leaf--right {
+  transform: scaleX(-1);
+}
+
+.promo-header__eyebrow {
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.14px;
+  color: #fff;
+}
+
+.promo-header__title {
+  margin: 8px 0 0;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 700;
+  font-size: 55px;
+  line-height: 1.05;
+  letter-spacing: -0.55px;
+  color: #fff;
+  max-width: 620px;
+}
+
+.promo-header[data-lang='en'] .promo-header__title {
+  font-family: 'Poppins', 'Pretendard', sans-serif;
+  font-weight: 600;
+  font-size: 39px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  max-width: 507px;
 }
 
 .promo-header__meta {
@@ -291,12 +363,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.promo-header[data-lang='en'] .promo-header__meta {
-  flex: 1;
-  margin-top: 123px;
-  justify-content: space-between;
 }
 
 .promo-header__row {
