@@ -69,7 +69,7 @@
 .promo-rail__card-top {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
 }
 
 .promo-rail__card-top .promo-rail__card-desc {
