@@ -48,9 +48,7 @@
 }
 
 .promo-rail__card--off .promo-rail__card-desc,
-.promo-rail__card--off .promo-rail__count-label,
-.promo-rail__card--off .count-toggle,
-.promo-rail__card--off .side-toggle {
+.promo-rail__card--off .promo-rail__group {
   opacity: 0.5;
 }
 
@@ -80,8 +78,22 @@
   gap: 6px;
 }
 
+.promo-rail__group {
+  margin-top: 16px;
+}
+
+.promo-rail__group-title {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--app-muted);
+}
+
 .count-toggle {
   display: inline-flex;
+  align-items: center;
+  height: 26px;
+  box-sizing: border-box;
   background: var(--app-surface-2);
   border-radius: 999px;
   padding: 2px;
@@ -111,20 +123,15 @@
   color: #ffffff;
 }
 
-.promo-rail__count-label {
-  margin: 8px 0 4px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--app-muted);
-}
-
 .side-toggle {
   display: inline-flex;
+  align-items: center;
+  height: 26px;
+  box-sizing: border-box;
   background: var(--app-surface-2);
   border-radius: 999px;
   padding: 2px;
   gap: 2px;
-  margin-top: 6px;
 }
 
 .side-toggle__btn {
@@ -133,7 +140,8 @@
   color: var(--app-muted);
   font-size: 10.5px;
   font-weight: 700;
-  padding: 4px 10px;
+  height: 100%;
+  padding: 0 10px;
   border-radius: 999px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -152,6 +160,7 @@
 .switch {
   display: inline-flex;
   align-items: center;
+  height: 26px;
   gap: 6px;
   cursor: pointer;
   user-select: none;
@@ -201,7 +210,6 @@
 
 .promo-rail__subswitch {
   display: flex;
-  margin-top: 10px;
 }
 
 .promo-rail__subswitch .switch__track {
@@ -218,19 +226,18 @@
   transform: translateX(12px);
 }
 
-.promo-rail__subswitch .switch__label {
-  font-size: 11.5px;
-  font-weight: 700;
-}
-
 .promo-rail__upload-btn {
   margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  box-sizing: border-box;
   border: none;
   background: var(--app-surface-2);
   color: var(--app-text);
   font-size: 11px;
   font-weight: 700;
-  padding: 6px 10px;
+  padding: 0 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -252,6 +259,7 @@
   justify-content: center;
   gap: 5px;
   width: 100%;
+  height: 26px;
   box-sizing: border-box;
   font-size: 12px;
   font-weight: 700;
@@ -259,7 +267,7 @@
   background: var(--app-surface-2);
   border: none;
   border-radius: 999px;
-  padding: 7px 8px;
+  padding: 0 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }

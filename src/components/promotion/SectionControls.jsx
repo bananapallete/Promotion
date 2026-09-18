@@ -79,23 +79,25 @@ export default function SectionControls() {
           <p className="promo-rail__card-desc">{t.sectionDesc[key]}</p>
           {key in itemCounts && (
             <>
-              <p className="promo-rail__count-label">{t.cardCount}</p>
-              <span className="count-toggle">
-                {[1, 2].map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
-                    disabled={!sections[key]}
-                    onClick={() => setItemCount(key, count)}
-                  >
-                    {count}
-                  </button>
-                ))}
-              </span>
+              <div className="promo-rail__group">
+                <p className="promo-rail__group-title">{t.cardCount}</p>
+                <span className="count-toggle">
+                  {[1, 2].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      className={`count-toggle__btn ${itemCounts[key] === count ? 'is-active' : ''}`}
+                      disabled={!sections[key]}
+                      onClick={() => setItemCount(key, count)}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </span>
+              </div>
               {SIDE_PICKER_KEYS.includes(key) && (
-                <>
-                  <p className="promo-rail__count-label">{t.designLabel}</p>
+                <div className="promo-rail__group">
+                  <p className="promo-rail__group-title">{t.designLabel}</p>
                   <span className="side-toggle">
                     <button
                       type="button"
@@ -114,58 +116,63 @@ export default function SectionControls() {
                       {t.keepRight}
                     </button>
                   </span>
-                </>
+                </div>
               )}
             </>
           )}
           {key === 'gift' && (
             <>
-              <p className="promo-rail__count-label">{t.designLabel}</p>
-              <span className="side-toggle">
-                <button
-                  type="button"
-                  className={`side-toggle__btn ${giftDesign === 'A' ? 'is-active' : ''}`}
-                  disabled={!sections.gift}
-                  onClick={() => setGiftDesign('A')}
-                >
-                  {t.keepLeft}
-                </button>
-                <button
-                  type="button"
-                  className={`side-toggle__btn ${giftDesign === 'B' ? 'is-active' : ''}`}
-                  disabled={!sections.gift}
-                  onClick={() => setGiftDesign('B')}
-                >
-                  {t.keepRight}
-                </button>
-              </span>
-              <label className="switch switch--sub promo-rail__subswitch">
-                <input
-                  type="checkbox"
-                  checked={giftQr}
-                  disabled={!sections.gift}
-                  onChange={toggleGiftQr}
-                />
-                <span className="switch__track">
-                  <span className="switch__thumb" />
+              <div className="promo-rail__group">
+                <p className="promo-rail__group-title">{t.designLabel}</p>
+                <span className="side-toggle">
+                  <button
+                    type="button"
+                    className={`side-toggle__btn ${giftDesign === 'A' ? 'is-active' : ''}`}
+                    disabled={!sections.gift}
+                    onClick={() => setGiftDesign('A')}
+                  >
+                    {t.keepLeft}
+                  </button>
+                  <button
+                    type="button"
+                    className={`side-toggle__btn ${giftDesign === 'B' ? 'is-active' : ''}`}
+                    disabled={!sections.gift}
+                    onClick={() => setGiftDesign('B')}
+                  >
+                    {t.keepRight}
+                  </button>
                 </span>
-                <span className="switch__label">{t.qrToggle}</span>
-              </label>
-              <button
-                type="button"
-                className="promo-rail__upload-btn"
-                disabled={!sections.gift || !giftQr}
-                onClick={() => qrInputRef.current?.click()}
-              >
-                {t.uploadQr}
-              </button>
-              <input
-                ref={qrInputRef}
-                type="file"
-                accept="image/*"
-                className="visually-hidden"
-                onChange={handleQrFile}
-              />
+              </div>
+              <div className="promo-rail__group">
+                <p className="promo-rail__group-title">{t.qrToggle}</p>
+                <label className="switch switch--sub promo-rail__subswitch">
+                  <input
+                    type="checkbox"
+                    checked={giftQr}
+                    disabled={!sections.gift}
+                    onChange={toggleGiftQr}
+                    aria-label={t.qrToggle}
+                  />
+                  <span className="switch__track">
+                    <span className="switch__thumb" />
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  className="promo-rail__upload-btn"
+                  disabled={!sections.gift || !giftQr}
+                  onClick={() => qrInputRef.current?.click()}
+                >
+                  {t.uploadQr}
+                </button>
+                <input
+                  ref={qrInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="visually-hidden"
+                  onChange={handleQrFile}
+                />
+              </div>
             </>
           )}
         </div>
