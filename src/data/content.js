@@ -94,12 +94,12 @@ export const DEFAULT_PROMOTION = {
       subtitle:
         'We have prepared even more customized training services to help you utilize the product 260% more.',
       box1: {
-        headingM: 'Quest Hub\nOnline Learning Courses',
+        headingM: 'Quest Hub\nOnline Learning\nCourses',
         headingL: 'Quest Hub Online Learning Courses',
         desc: 'Free access to online learning courses for purchasing customers',
       },
       box2: {
-        headingM: 'Customized\nOnboarding Training',
+        headingM: 'Customized\nOnboarding\nTraining',
         headingL: 'Customized Onboarding Training',
         desc: 'Complimentary hands-on CAE training \ntailored to your team\'s practical needs',
       },
