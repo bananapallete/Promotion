@@ -479,6 +479,14 @@
   line-height: 1.3;
 }
 
+.promo-sheet[data-lang='en'] .category-header__subtitle,
+.promo-sheet[data-lang='en'] .benefit-box__desc,
+.promo-sheet[data-lang='en'] .gift-panel__note,
+.promo-sheet[data-lang='en'] .qr-panel__desc,
+.promo-sheet[data-lang='en'] .qr-panel__scan {
+  font-family: 'Pretendard', sans-serif;
+}
+
 /* ---------- benefit rows (sale / study) ---------- */
 .promo-block__row {
   display: flex;
@@ -511,9 +519,7 @@
   padding-top: 27px;
 }
 
-.benefit-box__heading,
-.gift-panel__heading,
-.qr-panel__heading {
+.benefit-box__heading {
   position: relative;
   margin: 0;
   font-weight: 600;
@@ -524,6 +530,12 @@
 
 .gift-panel__heading,
 .qr-panel__heading {
+  position: relative;
+  margin: 0;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
   max-width: 62%;
 }
 
