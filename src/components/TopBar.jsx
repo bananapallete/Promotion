@@ -27,14 +27,13 @@ export default function TopBar() {
         <button type="button" className="topbar__btn" onClick={toggleLang}>
           {t.langToggle}
         </button>
-        <button
-          type="button"
-          className="topbar__btn topbar__btn--theme"
-          onClick={toggleTheme}
-          aria-pressed={theme === 'dark'}
-        >
-          {theme === 'dark' ? `☀️ ${t.lightMode}` : `🌙 ${t.darkMode}`}
-        </button>
+        <label className="switch topbar__theme-switch">
+          <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} />
+          <span className="switch__track">
+            <span className="switch__thumb" />
+          </span>
+          <span className="switch__label">{theme === 'dark' ? t.darkMode : t.lightMode}</span>
+        </label>
         <button type="button" className="topbar__btn" onClick={handleReset}>
           {t.reset}
         </button>

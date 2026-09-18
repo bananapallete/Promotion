@@ -5,8 +5,8 @@
 }
 
 .topbar {
-  --topbar-blue: #3182f6;
-  --topbar-blue-strong: #1b64da;
+  --topbar-blue: var(--ui-blue);
+  --topbar-blue-strong: var(--ui-blue-strong);
   --topbar-track: #f2f4f6;
   --topbar-track-hover: #e5e8eb;
 

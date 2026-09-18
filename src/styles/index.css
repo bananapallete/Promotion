@@ -38,6 +38,9 @@
   --survey-label: #733232;
   --survey-divider: rgba(115, 50, 50, 0.75);
   --survey-notice-bg: rgba(160, 125, 125, 0.25);
+
+  --ui-blue: #3182f6;
+  --ui-blue-strong: #1b64da;
 }
 
 :root[data-theme='dark'] {
