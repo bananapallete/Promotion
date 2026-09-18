@@ -31,7 +31,7 @@ export default function PromotionSheet() {
         keepSide={keepSide.study}
       />
     ),
-    sections.gift && <GiftBlock key="gift" compact={compact} single={itemCounts.gift === 1} />,
+    sections.gift && <GiftBlock key="gift" compact={compact} />,
     sections.notice && <NoticeBlock key="notice" />,
   ].filter(Boolean)
 

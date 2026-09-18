@@ -199,6 +199,29 @@
   color: var(--app-text);
 }
 
+.promo-rail__subswitch {
+  margin-top: 10px;
+}
+
+.promo-rail__subswitch .switch__track {
+  width: 28px;
+  height: 16px;
+}
+
+.promo-rail__subswitch .switch__thumb {
+  width: 12px;
+  height: 12px;
+}
+
+.promo-rail__subswitch input:checked + .switch__track .switch__thumb {
+  transform: translateX(12px);
+}
+
+.promo-rail__subswitch .switch__label {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
 .chip-check {
   display: inline-flex;
   align-items: center;

@@ -44,12 +44,14 @@ function buildInitialState() {
     promotion: deepMerge(DEFAULT_PROMOTION, persisted?.promotion),
     survey: deepMerge(DEFAULT_SURVEY, persisted?.survey),
     sections: persisted?.sections ?? { sale: true, study: true, gift: true, notice: true },
-    itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2, gift: 2 },
+    itemCounts: persisted?.itemCounts ?? { sale: 2, study: 2 },
     keepSide: persisted?.keepSide ?? { sale: 'left', study: 'left' },
     activeProducts:
       persisted?.activeProducts ??
       PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
     qrImage: persisted?.qrImage ?? null,
+    giftQr: persisted?.giftQr ?? true,
+    giftDesign: persisted?.giftDesign ?? 'A',
   }
 }
 
@@ -116,6 +118,14 @@ export function AppProvider({ children }) {
     setState((s) => ({ ...s, qrImage: dataUrl }))
   }, [])
 
+  const toggleGiftQr = useCallback(() => {
+    setState((s) => ({ ...s, giftQr: !s.giftQr }))
+  }, [])
+
+  const setGiftDesign = useCallback((design) => {
+    setState((s) => ({ ...s, giftDesign: design }))
+  }, [])
+
   const resetAll = useCallback(() => {
     setState((s) => ({
       ...buildInitialStateDefaults(),
@@ -135,6 +145,8 @@ export function AppProvider({ children }) {
       setKeepSide,
       toggleProduct,
       setQrImage,
+      toggleGiftQr,
+      setGiftDesign,
       resetAll,
     }),
     [
@@ -148,6 +160,8 @@ export function AppProvider({ children }) {
       setKeepSide,
       toggleProduct,
       setQrImage,
+      toggleGiftQr,
+      setGiftDesign,
       resetAll,
     ],
   )
@@ -161,10 +175,12 @@ function buildInitialStateDefaults() {
     promotion: DEFAULT_PROMOTION,
     survey: DEFAULT_SURVEY,
     sections: { sale: true, study: true, gift: true, notice: true },
-    itemCounts: { sale: 2, study: 2, gift: 2 },
+    itemCounts: { sale: 2, study: 2 },
     keepSide: { sale: 'left', study: 'left' },
     activeProducts: PRODUCT_LIST.reduce((acc, code) => ({ ...acc, [code]: true }), {}),
     qrImage: null,
+    giftQr: true,
+    giftDesign: 'A',
   }
 }
 

@@ -19,6 +19,10 @@ export default function SectionControls() {
     setKeepSide,
     activeProducts,
     toggleProduct,
+    giftQr,
+    toggleGiftQr,
+    giftDesign,
+    setGiftDesign,
   } = useAppState()
   const t = UI[lang]
   const labels = SECTION_LABELS[lang]
@@ -93,6 +97,41 @@ export default function SectionControls() {
                   </span>
                 </>
               )}
+            </>
+          )}
+          {key === 'gift' && (
+            <>
+              <label className="switch switch--sub promo-rail__subswitch">
+                <input
+                  type="checkbox"
+                  checked={giftQr}
+                  disabled={!sections.gift}
+                  onChange={toggleGiftQr}
+                />
+                <span className="switch__track">
+                  <span className="switch__thumb" />
+                </span>
+                <span className="switch__label">{t.qrToggle}</span>
+              </label>
+              <p className="promo-rail__count-label">{t.designLabel}</p>
+              <span className="side-toggle">
+                <button
+                  type="button"
+                  className={`side-toggle__btn ${giftDesign === 'A' ? 'is-active' : ''}`}
+                  disabled={!sections.gift}
+                  onClick={() => setGiftDesign('A')}
+                >
+                  {t.keepLeft}
+                </button>
+                <button
+                  type="button"
+                  className={`side-toggle__btn ${giftDesign === 'B' ? 'is-active' : ''}`}
+                  disabled={!sections.gift}
+                  onClick={() => setGiftDesign('B')}
+                >
+                  {t.keepRight}
+                </button>
+              </span>
             </>
           )}
         </div>

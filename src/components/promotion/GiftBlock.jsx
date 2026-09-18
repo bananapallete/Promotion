@@ -11,11 +11,19 @@ import giftDoubleL from '../../assets/figma/benefit-bg/gift-double-l.png'
 import qrDoubleM from '../../assets/figma/benefit-bg/qr-double-m.png'
 import qrDoubleL from '../../assets/figma/benefit-bg/qr-double-l.png'
 
-function getGiftBg({ compact, single }) {
+// Design B reuses design A's artwork as a placeholder until its own
+// backgrounds are provided — swap these four imports for the real assets.
+const GIFT_BG = {
+  A: { singleM: giftSingleM, singleL: giftSingleL, doubleM: giftDoubleM, doubleL: giftDoubleL },
+  B: { singleM: giftSingleM, singleL: giftSingleL, doubleM: giftDoubleM, doubleL: giftDoubleL },
+}
+
+function getGiftBg({ compact, single, design }) {
+  const set = GIFT_BG[design] || GIFT_BG.A
   if (single) {
-    return compact ? giftSingleM : giftSingleL
+    return compact ? set.singleM : set.singleL
   }
-  return compact ? giftDoubleM : giftDoubleL
+  return compact ? set.doubleM : set.doubleL
 }
 
 function readFileAsDataUrl(file) {
@@ -27,11 +35,13 @@ function readFileAsDataUrl(file) {
   })
 }
 
-export default function GiftBlock({ compact, single }) {
-  const { lang, promotion, updatePromotion, qrImage, setQrImage } = useAppState()
+export default function GiftBlock({ compact }) {
+  const { lang, promotion, updatePromotion, qrImage, setQrImage, giftQr, giftDesign } =
+    useAppState()
   const t = UI[lang]
   const gift = promotion[lang].gift
   const qrInputRef = useRef(null)
+  const single = !giftQr
 
   const handleQrFile = async (e) => {
     const file = e.target.files?.[0]
@@ -60,7 +70,7 @@ export default function GiftBlock({ compact, single }) {
       <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
         <div
           className={`gift-panel ${single ? 'gift-panel--single' : ''}`}
-          style={{ backgroundImage: `url(${getGiftBg({ compact, single })})` }}
+          style={{ backgroundImage: `url(${getGiftBg({ compact, single, design: giftDesign })})` }}
         >
           <Editable
             as="p"
