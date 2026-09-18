@@ -1,7 +1,8 @@
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
-import qrDefaultImg from '../../assets/figma/qr-code-default.png'
+import qrDefaultKr from '../../assets/figma/qr-code-default-kr.png'
+import qrDefaultEn from '../../assets/figma/qr-code-default-en.png'
 import giftSingleM from '../../assets/figma/benefit-bg/gift-single-m.png'
 import giftSingleL from '../../assets/figma/benefit-bg/gift-single-l.png'
 import giftDoubleM from '../../assets/figma/benefit-bg/gift-double-m.png'
@@ -30,6 +31,7 @@ export default function GiftBlock({ compact }) {
   const { lang, promotion, updatePromotion, giftQr, giftDesign, qrImage } = useAppState()
   const gift = promotion[lang].gift
   const single = !giftQr
+  const qrDefaultImg = lang === 'en' ? qrDefaultEn : qrDefaultKr
 
   return (
     <div className="promo-block">
