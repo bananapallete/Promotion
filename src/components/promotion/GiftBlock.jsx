@@ -6,14 +6,18 @@ import giftSingleM from '../../assets/figma/benefit-bg/gift-single-m.png'
 import giftSingleL from '../../assets/figma/benefit-bg/gift-single-l.png'
 import giftDoubleM from '../../assets/figma/benefit-bg/gift-double-m.png'
 import giftDoubleL from '../../assets/figma/benefit-bg/gift-double-l.png'
+import giftSingleMB from '../../assets/figma/benefit-bg/gift-single-m-b.png'
+import giftSingleLB from '../../assets/figma/benefit-bg/gift-single-l-b.png'
+import giftDoubleMB from '../../assets/figma/benefit-bg/gift-double-m-b.png'
+import giftDoubleLB from '../../assets/figma/benefit-bg/gift-double-l-b.png'
 import qrDoubleM from '../../assets/figma/benefit-bg/qr-double-m.png'
 import qrDoubleL from '../../assets/figma/benefit-bg/qr-double-l.png'
 
-// Design B reuses design A's artwork as a placeholder until its own
-// backgrounds are provided — swap these four imports for the real assets.
+// gift-single-m-b.png is a derived crop of gift-single-l-b.png (no dedicated
+// asset was provided for that slot) — swap it out if a real one arrives.
 const GIFT_BG = {
   A: { singleM: giftSingleM, singleL: giftSingleL, doubleM: giftDoubleM, doubleL: giftDoubleL },
-  B: { singleM: giftSingleM, singleL: giftSingleL, doubleM: giftDoubleM, doubleL: giftDoubleL },
+  B: { singleM: giftSingleMB, singleL: giftSingleLB, doubleM: giftDoubleMB, doubleL: giftDoubleLB },
 }
 
 function getGiftBg({ compact, single, design }) {
