@@ -280,29 +280,6 @@
   pointer-events: none;
 }
 
-:root[data-theme='dark'] .promo-header__bg {
-  filter: brightness(0.55) saturate(0.75) contrast(1.05);
-}
-
-.promo-header__gift {
-  position: absolute;
-  right: 42px;
-  bottom: 0;
-  width: 397px;
-  height: 196px;
-  background-size: cover;
-  background-position: center;
-  pointer-events: none;
-  -webkit-mask-image:
-    linear-gradient(to bottom, transparent 0%, #000 30%),
-    linear-gradient(to right, transparent 0%, #000 18%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to bottom, transparent 0%, #000 30%),
-    linear-gradient(to right, transparent 0%, #000 18%);
-  mask-composite: intersect;
-}
-
 .promo-header__content {
   position: relative;
   z-index: 1;

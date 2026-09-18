@@ -1,7 +1,7 @@
 import Editable from '../Editable.jsx'
 import { PRODUCT_LIST, useAppState } from '../../state/AppState.jsx'
-import headerBgImg from '../../assets/figma/header-bg.png'
-import headerGiftImg from '../../assets/figma/header-gift-accent.png'
+import headerBgLightImg from '../../assets/figma/header-bg-light.png'
+import headerBgDarkImg from '../../assets/figma/header-bg-dark.png'
 import headerLeafImg from '../../assets/figma/header-leaf.svg'
 import civilIcon from '../../assets/figma/products/civil.svg'
 import genIcon from '../../assets/figma/products/gen.svg'
@@ -12,21 +12,17 @@ import gxdIcon from '../../assets/figma/products/gxd.svg'
 const PRODUCT_ICONS = { CIVIL: civilIcon, GEN: genIcon, GTS: gtsIcon, SWS: swsIcon, GXD: gxdIcon }
 
 export default function Header() {
-  const { lang, promotion, updatePromotion, activeProducts } = useAppState()
+  const { lang, theme, promotion, updatePromotion, activeProducts } = useAppState()
   const content = promotion[lang]
 
   const activeCodes = PRODUCT_LIST.filter((code) => activeProducts[code])
+  const bgSrc = theme === 'dark' ? headerBgDarkImg : headerBgLightImg
 
   return (
     <div className="promo-header" data-lang={lang}>
       <div
         className="promo-header__bg"
-        style={{ backgroundImage: `url(${headerBgImg})` }}
-        aria-hidden="true"
-      />
-      <div
-        className="promo-header__gift"
-        style={{ backgroundImage: `url(${headerGiftImg})` }}
+        style={{ backgroundImage: `url(${bgSrc})` }}
         aria-hidden="true"
       />
       <div className="promo-header__content">
