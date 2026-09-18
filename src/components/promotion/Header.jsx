@@ -27,7 +27,12 @@ export default function Header() {
       />
       <div className="promo-header__content">
         <div className="promo-header__eyebrow-row">
-          <img className="promo-header__leaf" src={headerLeafImg} alt="" aria-hidden="true" />
+          <img
+            className="promo-header__leaf promo-header__leaf--left"
+            src={headerLeafImg}
+            alt=""
+            aria-hidden="true"
+          />
           <Editable
             as="span"
             className="promo-header__eyebrow"
@@ -58,38 +63,36 @@ export default function Header() {
           }
           ariaLabel="Header title"
         />
-        <div className="promo-header__meta">
-          <div className="promo-header__row">
-            <span className="promo-header__pill">
-              <Editable
-                value={content.header.label}
-                onChange={(v) =>
-                  updatePromotion(lang, (draft) => {
-                    draft.header.label = v
-                  })
-                }
-                ariaLabel="Header label"
-              />
+        <div className="promo-header__row">
+          <span className="promo-header__pill">
+            <Editable
+              value={content.header.label}
+              onChange={(v) =>
+                updatePromotion(lang, (draft) => {
+                  draft.header.label = v
+                })
+              }
+              ariaLabel="Header label"
+            />
+          </span>
+          <span className="promo-header__date">
+            <Editable
+              value={content.header.date}
+              onChange={(v) =>
+                updatePromotion(lang, (draft) => {
+                  draft.header.date = v
+                })
+              }
+              ariaLabel="Header date"
+            />
+          </span>
+        </div>
+        <div className="promo-header__products">
+          {activeCodes.map((code) => (
+            <span key={code} className="product-badge">
+              <img src={PRODUCT_ICONS[code]} alt={code} />
             </span>
-            <span className="promo-header__date">
-              <Editable
-                value={content.header.date}
-                onChange={(v) =>
-                  updatePromotion(lang, (draft) => {
-                    draft.header.date = v
-                  })
-                }
-                ariaLabel="Header date"
-              />
-            </span>
-          </div>
-          <div className="promo-header__products">
-            {activeCodes.map((code) => (
-              <span key={code} className="product-badge">
-                <img src={PRODUCT_ICONS[code]} alt={code} />
-              </span>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
     </div>

@@ -290,6 +290,7 @@
 }
 
 .promo-header__eyebrow-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -299,6 +300,14 @@
   height: 22px;
   width: auto;
   flex: none;
+}
+
+.promo-header__leaf--left {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  margin-right: 6px;
+  transform: translateY(-50%);
 }
 
 .promo-header__leaf--right {
@@ -333,19 +342,12 @@
   max-width: 507px;
 }
 
-.promo-header__meta {
-  position: relative;
-  z-index: 1;
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .promo-header__row {
+  margin-top: 20px;
   display: flex;
   align-items: center;
   gap: 12px;
+  font-family: 'Pretendard', sans-serif;
 }
 
 .promo-header__pill {
@@ -364,6 +366,7 @@
 }
 
 .promo-header__products {
+  margin-top: auto;
   display: flex;
   gap: 8.1px;
 }
