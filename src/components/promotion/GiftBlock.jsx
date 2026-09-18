@@ -1,8 +1,6 @@
-import { useRef } from 'react'
 import Editable from '../Editable.jsx'
 import CategoryHeader from './CategoryHeader.jsx'
 import { useAppState } from '../../state/AppState.jsx'
-import { UI } from '../../i18n/ui.js'
 import qrDefaultImg from '../../assets/figma/qr-code.svg'
 import giftSingleM from '../../assets/figma/benefit-bg/gift-single-m.png'
 import giftSingleL from '../../assets/figma/benefit-bg/gift-single-l.png'
@@ -26,29 +24,10 @@ function getGiftBg({ compact, single, design }) {
   return compact ? set.doubleM : set.doubleL
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
 export default function GiftBlock({ compact }) {
-  const { lang, promotion, updatePromotion, qrImage, setQrImage, giftQr, giftDesign } =
-    useAppState()
-  const t = UI[lang]
+  const { lang, promotion, updatePromotion, giftQr, giftDesign } = useAppState()
   const gift = promotion[lang].gift
-  const qrInputRef = useRef(null)
   const single = !giftQr
-
-  const handleQrFile = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    setQrImage(await readFileAsDataUrl(file))
-  }
 
   return (
     <div className="promo-block">
@@ -133,22 +112,8 @@ export default function GiftBlock({ compact }) {
             />
             <div className="qr-panel__code-wrap">
               <div className="qr-panel__code">
-                <img src={qrImage || qrDefaultImg} alt="QR" />
+                <img src={qrDefaultImg} alt="QR" />
               </div>
-              <button
-                type="button"
-                className="ghost-btn no-print qr-panel__upload-btn"
-                onClick={() => qrInputRef.current?.click()}
-              >
-                {t.uploadQr}
-              </button>
-              <input
-                ref={qrInputRef}
-                type="file"
-                accept="image/*"
-                className="visually-hidden"
-                onChange={handleQrFile}
-              />
             </div>
           </div>
         )}
