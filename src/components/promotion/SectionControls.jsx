@@ -162,7 +162,7 @@ export default function SectionControls() {
                 <button
                   type="button"
                   className="promo-rail__upload-btn"
-                  disabled={!sections.gift || !giftQr}
+                  disabled
                   onClick={() => qrInputRef.current?.click()}
                 >
                   {t.uploadQr}
