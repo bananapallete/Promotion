@@ -13,6 +13,7 @@ export default function PromotionSheet() {
   const { lang, sections, itemCounts, keepSide } = useAppState()
   const contentCount = ['sale', 'study', 'gift'].filter((key) => sections[key]).length
   const compact = contentCount >= 3
+  const solo = contentCount === 1
 
   const blocks = [
     sections.sale && (
@@ -20,6 +21,7 @@ export default function PromotionSheet() {
         key="sale"
         compact={compact}
         single={itemCounts.sale === 1}
+        solo={solo}
         keepSide={keepSide.sale}
       />
     ),
@@ -28,6 +30,7 @@ export default function PromotionSheet() {
         key="study"
         compact={compact}
         single={itemCounts.study === 1}
+        solo={solo}
         keepSide={keepSide.study}
       />
     ),

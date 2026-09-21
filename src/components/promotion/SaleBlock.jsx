@@ -9,8 +9,13 @@ import saleDoubleMGold from '../../assets/figma/benefit-bg/sale-double-m-gold.pn
 import saleDoubleMSilver from '../../assets/figma/benefit-bg/sale-double-m-silver.png'
 import saleDoubleLGold from '../../assets/figma/benefit-bg/sale-double-l-gold.png'
 import saleDoubleLSilver from '../../assets/figma/benefit-bg/sale-double-l-silver.png'
+import saleSoloGold from '../../assets/figma/benefit-bg/sale-solo-gold.png'
+import saleSoloSilver from '../../assets/figma/benefit-bg/sale-solo-silver.png'
 
-function getSaleBg({ badge, compact, single }) {
+function getSaleBg({ badge, compact, single, solo }) {
+  if (solo && single) {
+    return badge === 'silver' ? saleSoloSilver : saleSoloGold
+  }
   if (single) {
     if (badge === 'silver') {
       return compact ? saleSingleMSilver : saleSingleLSilver
@@ -23,25 +28,26 @@ function getSaleBg({ badge, compact, single }) {
   return compact ? saleDoubleMGold : saleDoubleLGold
 }
 
-function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc }) {
-  const bg = getSaleBg({ badge, compact, single })
+function SaleBox({ data, badge, compact, single, solo, onHeading, onPercent, onDesc }) {
+  const bg = getSaleBg({ badge, compact, single, solo })
+  const isSolo = solo && single
   return (
     <div
       className={`benefit-box ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
         single ? 'benefit-box--single' : ''
-      }`}
+      } ${isSolo ? 'benefit-box--solo' : ''}`}
       style={{ backgroundImage: `url(${bg})` }}
     >
       <Editable
         as="p"
         multiline
         className="benefit-box__heading"
-        value={single ? data.headingL : data.headingM}
+        value={isSolo ? data.headingXL : single ? data.headingL : data.headingM}
         onChange={onHeading}
       />
       <div
         className={`benefit-badge benefit-badge--${badge} benefit-badge--${single ? '1' : '2'}${
-          compact ? 'm' : 'l'
+          isSolo || compact ? 'm' : 'l'
         }`}
       >
         <span className="benefit-badge__up">Up to</span>
@@ -66,11 +72,12 @@ function SaleBox({ data, badge, compact, single, onHeading, onPercent, onDesc })
   )
 }
 
-export default function SaleBlock({ compact, single, keepSide = 'left' }) {
+export default function SaleBlock({ compact, single, solo, keepSide = 'left' }) {
   const { lang, promotion, updatePromotion } = useAppState()
   const sale = promotion[lang].sale
   const showBox1 = !single || keepSide !== 'right'
   const showBox2 = !single || keepSide === 'right'
+  const isSolo = solo && single
 
   return (
     <div className="promo-block">
@@ -89,16 +96,21 @@ export default function SaleBlock({ compact, single, keepSide = 'left' }) {
           })
         }
       />
-      <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
+      <div
+        className={`promo-block__row ${
+          isSolo ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
+        }`}
+      >
         {showBox1 && (
           <SaleBox
             data={sale.box1}
             badge="gold"
             compact={compact}
             single={single}
+            solo={solo}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.sale.box1[single ? 'headingL' : 'headingM'] = v
+                d.sale.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
               })
             }
             onPercent={(v) =>
@@ -119,9 +131,10 @@ export default function SaleBlock({ compact, single, keepSide = 'left' }) {
             badge="silver"
             compact={compact}
             single={single}
+            solo={solo}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.sale.box2[single ? 'headingL' : 'headingM'] = v
+                d.sale.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
               })
             }
             onPercent={(v) =>

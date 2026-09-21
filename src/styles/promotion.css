@@ -542,6 +542,10 @@
   height: 203px;
 }
 
+.promo-block__row--solo {
+  height: 245px;
+}
+
 .benefit-box {
   position: relative;
   flex: 1;
@@ -596,6 +600,16 @@
   font-size: 35px;
   letter-spacing: -0.35px;
   white-space: nowrap;
+}
+
+.benefit-box--solo .benefit-box__heading {
+  white-space: normal;
+}
+
+.promo-sheet[data-lang='en'] .benefit-box--solo .benefit-box__heading {
+  font-size: 28px;
+  letter-spacing: -0.28px;
+  line-height: 1.15;
 }
 
 .benefit-box--single:has(.benefit-badge) .benefit-box__desc {

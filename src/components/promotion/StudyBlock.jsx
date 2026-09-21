@@ -9,8 +9,13 @@ import studyDoubleMLaptop from '../../assets/figma/benefit-bg/study-double-m-lap
 import studyDoubleMCap from '../../assets/figma/benefit-bg/study-double-m-cap.png'
 import studyDoubleLLaptop from '../../assets/figma/benefit-bg/study-double-l-laptop.png'
 import studyDoubleLCap from '../../assets/figma/benefit-bg/study-double-l-cap.png'
+import studySoloLaptop from '../../assets/figma/benefit-bg/study-solo-laptop.png'
+import studySoloCap from '../../assets/figma/benefit-bg/study-solo-cap.png'
 
-function getStudyBg({ icon, compact, single }) {
+function getStudyBg({ icon, compact, single, solo }) {
+  if (solo && single) {
+    return icon === 'cap' ? studySoloCap : studySoloLaptop
+  }
   if (single) {
     if (icon === 'cap') {
       return compact ? studySingleMCap : studySingleLCap
@@ -23,20 +28,21 @@ function getStudyBg({ icon, compact, single }) {
   return compact ? studyDoubleMLaptop : studyDoubleLLaptop
 }
 
-function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
-  const bg = getStudyBg({ icon, compact, single })
+function StudyBox({ data, icon, compact, single, solo, onHeading, onDesc }) {
+  const bg = getStudyBg({ icon, compact, single, solo })
+  const isSolo = solo && single
   return (
     <div
       className={`benefit-box benefit-box--study ${compact ? 'benefit-box--m' : 'benefit-box--l'} ${
         single ? 'benefit-box--single' : ''
-      }`}
+      } ${isSolo ? 'benefit-box--solo' : ''}`}
       style={{ backgroundImage: `url(${bg})` }}
     >
       <Editable
         as="p"
         multiline
         className="benefit-box__heading"
-        value={single ? data.headingL : data.headingM}
+        value={isSolo ? data.headingXL : single ? data.headingL : data.headingM}
         onChange={onHeading}
       />
       <Editable
@@ -50,11 +56,12 @@ function StudyBox({ data, icon, compact, single, onHeading, onDesc }) {
   )
 }
 
-export default function StudyBlock({ compact, single, keepSide = 'left' }) {
+export default function StudyBlock({ compact, single, solo, keepSide = 'left' }) {
   const { lang, promotion, updatePromotion } = useAppState()
   const study = promotion[lang].study
   const showBox1 = !single || keepSide !== 'right'
   const showBox2 = !single || keepSide === 'right'
+  const isSolo = solo && single
 
   return (
     <div className="promo-block">
@@ -73,16 +80,21 @@ export default function StudyBlock({ compact, single, keepSide = 'left' }) {
           })
         }
       />
-      <div className={`promo-block__row ${compact ? 'promo-block__row--m' : 'promo-block__row--l'}`}>
+      <div
+        className={`promo-block__row ${
+          isSolo ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
+        }`}
+      >
         {showBox1 && (
           <StudyBox
             data={study.box1}
             icon="laptop"
             compact={compact}
             single={single}
+            solo={solo}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.study.box1[single ? 'headingL' : 'headingM'] = v
+                d.study.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
               })
             }
             onDesc={(v) =>
@@ -98,9 +110,10 @@ export default function StudyBlock({ compact, single, keepSide = 'left' }) {
             icon="cap"
             compact={compact}
             single={single}
+            solo={solo}
             onHeading={(v) =>
               updatePromotion(lang, (d) => {
-                d.study.box2[single ? 'headingL' : 'headingM'] = v
+                d.study.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
               })
             }
             onDesc={(v) =>

@@ -14,12 +14,14 @@ export const DEFAULT_PROMOTION = {
       box1: {
         headingM: '신규 구매\n할인',
         headingL: '신규 구매 할인',
+        headingXL: '마이다스 26주년 기념\n신규 구매 할인',
         percent: '50',
         desc: '9월 30일까지 풀버전 구매 시',
       },
       box2: {
         headingM: '추가 구매\n할인',
         headingL: '추가 구매 할인',
+        headingXL: '마이다스 26주년 기념\n추가 구매 할인',
         percent: '40',
         desc: '300만원 이상 구매 시',
       },
@@ -30,11 +32,13 @@ export const DEFAULT_PROMOTION = {
       box1: {
         headingM: 'Quest Hub\n온라인 학습 코스',
         headingL: 'Quest Hub 온라인 학습 코스',
+        headingXL: 'Quest Hub\n온라인 학습 코스',
         desc: '구매 고객을 위한 온라인 학습 코스를\n무료로 제공합니다.',
       },
       box2: {
         headingM: '맞춤형\n온보딩 트레이닝',
         headingL: '맞춤형 온보딩 트레이닝',
+        headingXL: '맞춤형\n온보딩 트레이닝',
         desc: '팀의 실무에 맞춘 CAE 실습 트레이닝을\n무료로 제공합니다.',
       },
     },
@@ -79,12 +83,14 @@ export const DEFAULT_PROMOTION = {
       box1: {
         headingM: 'NEW\nPURCHASE',
         headingL: 'NEW PURCHASE',
+        headingXL: 'MIDAS 26th Anniversary\nNEW PURCHASE',
         percent: '50',
         desc: 'Full-version purchases by Sep. 30',
       },
       box2: {
         headingM: 'ADDITIONAL\nPURCHASE',
         headingL: 'ADDITIONAL PURCHASE',
+        headingXL: 'MIDAS 26th Anniversary\nADDITIONAL PURCHASE',
         percent: '40',
         desc: 'On purchases of KRW 3M+',
       },
@@ -96,11 +102,13 @@ export const DEFAULT_PROMOTION = {
       box1: {
         headingM: 'Quest Hub\nOnline Learning\nCourses',
         headingL: 'Quest Hub Online Learning Courses',
+        headingXL: 'Quest Hub\nOnline Learning Courses',
         desc: 'Free access to online learning courses for purchasing customers',
       },
       box2: {
         headingM: 'Customized\nOnboarding\nTraining',
         headingL: 'Customized Onboarding Training',
+        headingXL: 'Customized\nOnboarding Training',
         desc: 'Complimentary hands-on CAE training \ntailored to your team\'s practical needs',
       },
     },
