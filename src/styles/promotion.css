@@ -865,6 +865,10 @@
   pointer-events: none;
 }
 
+[data-theme='light'] .notice-block__glow {
+  display: none;
+}
+
 .notice-block__title {
   margin: 0;
   text-align: left;
