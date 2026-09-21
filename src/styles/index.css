@@ -17,8 +17,9 @@
   --gift-grad-from: #180002;
   --gift-grad-to: #530209;
   --qr-bg: #222222;
-  --notice-bg: #252323;
-  --notice-text: #ffffff;
+  --notice-bg: #eaeaea;
+  --notice-text: #010101;
+  --notice-border: rgba(181, 181, 181, 0.15);
   --footer-bg: #111111;
   --footer-text: #ffffff;
   --header-grad-a: rgba(153, 0, 4, 1);
@@ -64,6 +65,7 @@
   --qr-bg: #1a1a1a;
   --notice-bg: #1c1a1a;
   --notice-text: #ffffff;
+  --notice-border: rgba(173, 128, 128, 0.18);
   --footer-bg: #68282e;
   --footer-text: #ffffff;
   --header-grad-a: rgba(78, 3, 5, 1);
