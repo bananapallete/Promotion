@@ -546,6 +546,12 @@
   height: 245px;
 }
 
+.promo-block__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .benefit-box {
   position: relative;
   flex: 1;

@@ -77,7 +77,58 @@ export default function SaleBlock({ compact, single, solo, keepSide = 'left' }) 
   const sale = promotion[lang].sale
   const showBox1 = !single || keepSide !== 'right'
   const showBox2 = !single || keepSide === 'right'
-  const isSolo = solo && single
+  const isSolo = solo
+  const stacked = solo && !single
+
+  const box1 = (
+    <SaleBox
+      data={sale.box1}
+      badge="gold"
+      compact={compact}
+      single={stacked ? true : single}
+      solo={solo}
+      onHeading={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
+        })
+      }
+      onPercent={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box1.percent = v
+        })
+      }
+      onDesc={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box1.desc = v
+        })
+      }
+    />
+  )
+
+  const box2 = (
+    <SaleBox
+      data={sale.box2}
+      badge="silver"
+      compact={compact}
+      single={stacked ? true : single}
+      solo={solo}
+      onHeading={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
+        })
+      }
+      onPercent={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box2.percent = v
+        })
+      }
+      onDesc={(v) =>
+        updatePromotion(lang, (d) => {
+          d.sale.box2.desc = v
+        })
+      }
+    />
+  )
 
   return (
     <div className="promo-block">
@@ -96,60 +147,21 @@ export default function SaleBlock({ compact, single, solo, keepSide = 'left' }) 
           })
         }
       />
-      <div
-        className={`promo-block__row ${
-          isSolo ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
-        }`}
-      >
-        {showBox1 && (
-          <SaleBox
-            data={sale.box1}
-            badge="gold"
-            compact={compact}
-            single={single}
-            solo={solo}
-            onHeading={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
-              })
-            }
-            onPercent={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box1.percent = v
-              })
-            }
-            onDesc={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box1.desc = v
-              })
-            }
-          />
-        )}
-        {showBox2 && (
-          <SaleBox
-            data={sale.box2}
-            badge="silver"
-            compact={compact}
-            single={single}
-            solo={solo}
-            onHeading={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
-              })
-            }
-            onPercent={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box2.percent = v
-              })
-            }
-            onDesc={(v) =>
-              updatePromotion(lang, (d) => {
-                d.sale.box2.desc = v
-              })
-            }
-          />
-        )}
-      </div>
+      {stacked ? (
+        <div className="promo-block__stack">
+          <div className="promo-block__row promo-block__row--solo">{box1}</div>
+          <div className="promo-block__row promo-block__row--solo">{box2}</div>
+        </div>
+      ) : (
+        <div
+          className={`promo-block__row ${
+            isSolo && single ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
+          }`}
+        >
+          {showBox1 && box1}
+          {showBox2 && box2}
+        </div>
+      )}
     </div>
   )
 }

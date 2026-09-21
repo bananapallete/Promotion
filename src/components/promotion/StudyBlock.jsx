@@ -61,7 +61,48 @@ export default function StudyBlock({ compact, single, solo, keepSide = 'left' })
   const study = promotion[lang].study
   const showBox1 = !single || keepSide !== 'right'
   const showBox2 = !single || keepSide === 'right'
-  const isSolo = solo && single
+  const isSolo = solo
+  const stacked = solo && !single
+
+  const box1 = (
+    <StudyBox
+      data={study.box1}
+      icon="laptop"
+      compact={compact}
+      single={stacked ? true : single}
+      solo={solo}
+      onHeading={(v) =>
+        updatePromotion(lang, (d) => {
+          d.study.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
+        })
+      }
+      onDesc={(v) =>
+        updatePromotion(lang, (d) => {
+          d.study.box1.desc = v
+        })
+      }
+    />
+  )
+
+  const box2 = (
+    <StudyBox
+      data={study.box2}
+      icon="cap"
+      compact={compact}
+      single={stacked ? true : single}
+      solo={solo}
+      onHeading={(v) =>
+        updatePromotion(lang, (d) => {
+          d.study.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
+        })
+      }
+      onDesc={(v) =>
+        updatePromotion(lang, (d) => {
+          d.study.box2.desc = v
+        })
+      }
+    />
+  )
 
   return (
     <div className="promo-block">
@@ -80,50 +121,21 @@ export default function StudyBlock({ compact, single, solo, keepSide = 'left' })
           })
         }
       />
-      <div
-        className={`promo-block__row ${
-          isSolo ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
-        }`}
-      >
-        {showBox1 && (
-          <StudyBox
-            data={study.box1}
-            icon="laptop"
-            compact={compact}
-            single={single}
-            solo={solo}
-            onHeading={(v) =>
-              updatePromotion(lang, (d) => {
-                d.study.box1[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
-              })
-            }
-            onDesc={(v) =>
-              updatePromotion(lang, (d) => {
-                d.study.box1.desc = v
-              })
-            }
-          />
-        )}
-        {showBox2 && (
-          <StudyBox
-            data={study.box2}
-            icon="cap"
-            compact={compact}
-            single={single}
-            solo={solo}
-            onHeading={(v) =>
-              updatePromotion(lang, (d) => {
-                d.study.box2[isSolo ? 'headingXL' : single ? 'headingL' : 'headingM'] = v
-              })
-            }
-            onDesc={(v) =>
-              updatePromotion(lang, (d) => {
-                d.study.box2.desc = v
-              })
-            }
-          />
-        )}
-      </div>
+      {stacked ? (
+        <div className="promo-block__stack">
+          <div className="promo-block__row promo-block__row--solo">{box1}</div>
+          <div className="promo-block__row promo-block__row--solo">{box2}</div>
+        </div>
+      ) : (
+        <div
+          className={`promo-block__row ${
+            isSolo && single ? 'promo-block__row--solo' : compact ? 'promo-block__row--m' : 'promo-block__row--l'
+          }`}
+        >
+          {showBox1 && box1}
+          {showBox2 && box2}
+        </div>
+      )}
     </div>
   )
 }
