@@ -294,7 +294,7 @@
 /* ---------- sheet shell ---------- */
 .promo-sheet {
   width: 794px;
-  min-height: 1123.6px;
+  height: 1123.6px;
   background: var(--sheet-bg);
   color: var(--category-text);
   display: flex;
@@ -306,8 +306,8 @@
 /* ---------- header ---------- */
 .promo-header {
   position: relative;
-  height: 296px;
-  flex: none;
+  flex: 0 1 296px;
+  min-height: 217.75px;
   color: #fff;
   overflow: hidden;
   background-color: var(--header-grad-c);
@@ -426,7 +426,7 @@
 
 /* ---------- body ---------- */
 .promo-body {
-  flex: 1;
+  flex: 1 0 auto;
   padding: 10px 25px 0;
   display: flex;
   flex-direction: column;
@@ -850,10 +850,8 @@
 /* ---------- notice ---------- */
 .notice-block {
   position: relative;
-  flex: 0 1 auto;
+  flex: none;
   min-height: 62px;
-  max-height: 100px;
-  overflow: hidden;
   background: var(--notice-bg);
   color: var(--notice-text);
   border: 1px solid var(--notice-border);

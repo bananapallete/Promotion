@@ -53,6 +53,7 @@
   .promo-sheet,
   .survey-sheet {
     width: 210mm !important;
+    height: 297mm !important;
     min-height: 297mm !important;
     page-break-after: always;
     break-after: page;
