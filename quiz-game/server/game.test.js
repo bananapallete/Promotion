@@ -302,3 +302,38 @@ test('원거리 캐릭터는 공격 중에도 느려지지 않는다 (설정에 
   const x0 = a.x; g.update(DT);
   assert.ok(Math.abs(a.x - x0 - 6 * DT) < 1e-6);
 });
+
+test('조준 미리보기: 자동 조준은 사거리 안의 가장 가까운 적, 없으면 null', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const near = g.join({ token: 'n', name: 'N', charId: 'blue' });
+  const far = g.join({ token: 'f', name: 'F', charId: 'blue' });
+  a.x = 20; a.y = 10; near.x = 21; near.y = 10; far.x = 22.5; far.y = 10;
+  assert.equal(g.aimPreview('a', null).targetId, 'n');
+  near.x = 25; // 사거리(1.2) 밖
+  far.x = 26;
+  assert.equal(g.aimPreview('a', null).targetId, null);
+  assert.equal(g.aimPreview('a', null).range, 1.2);
+});
+
+test('조준 미리보기: 직접 조준한 방향의 적을 가리키고, 실제 공격이 맞는 대상과 같다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const up = g.join({ token: 'u', name: 'U', charId: 'blue' });
+  const right = g.join({ token: 'r', name: 'R', charId: 'blue' });
+  a.x = 20; a.y = 10; up.x = 20; up.y = 9; right.x = 21; right.y = 10;
+  const pv = g.aimPreview('a', { x: 0, y: -1 });
+  assert.equal(pv.manual, true);
+  assert.equal(pv.targetId, 'u');
+  g.attack('a', { x: 0, y: -1 });
+  assert.ok(up.hp < 10 && right.hp === 10, '미리보기가 가리킨 대상만 맞음');
+});
+
+test('조준 미리보기: 3타 차례에는 늘어난 사거리를 보여준다', () => {
+  const { g, a, b } = setup();
+  b.cfg = { ...b.cfg, hp: 1000 }; b.hp = 1000;
+  assert.equal(g.aimPreview('a', null).range, 1.2);
+  for (let i = 0; i < 2; i++) { b.x = 21; b.y = 10; b.kx = b.ky = 0; g.attack('a', null); run(g, 0.4); }
+  assert.equal(g.aimPreview('a', null).step, 2);
+  assert.ok(Math.abs(g.aimPreview('a', null).range - 1.2 * 1.15) < 1e-9);
+});

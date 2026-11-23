@@ -52,6 +52,11 @@ setInterval(() => {
   const s = { ...game.snapshot(), lb: game.leaderboard() };
   scene.applyState(s);
   hud(s);
+  // 조준 표시: 공격 버튼을 드래그 중이면 그 방향(직접 조준), 아니면 자동 조준 대상
+  const dragLen = Math.hypot(atkVec.x, atkVec.y);
+  const dragging = atkId !== null && dragLen > 16;
+  const info = game.aimPreview(ME, dragging ? { x: atkVec.x / dragLen, y: atkVec.y / dragLen } : null);
+  scene.setAim(info && { id: ME, ...info, dragging });
 }, 50);
 
 function hud(s) {

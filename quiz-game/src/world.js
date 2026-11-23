@@ -40,6 +40,9 @@ export class WorldScene extends Phaser.Scene {
     this.add.text((WAIT.x + WAIT.w / 2) * BU, WORLD_H - 26, '대기 공간', { fontFamily: 'sans-serif', fontSize: '22px', color: '#c9d4df' }).setOrigin(0.5).setDepth(-90);
 
     this.zoneGfx = this.add.graphics().setDepth(-80);
+    this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
+    this.aim = null;
+    this.lockId = null;
     this.zoneTexts = [];
 
     for (const s of SPRITES) {
@@ -60,6 +63,73 @@ export class WorldScene extends Phaser.Scene {
     if (this.pending) this.applyState(this.pending);
   }
 
+  // ---------- 조준 표시 ----------
+  /** info: { id, dx, dy, manual, dragging, range, kind, radius, targetId } (null이면 숨김) */
+  setAim(info) { this.aim = info; }
+
+  _glowOn(v) {
+    if (v.glow || this.sys.game.renderer.type !== Phaser.WEBGL) return; // 글로우는 WebGL에서만
+    v.sprite.preFX.setPadding(24);
+    v.glow = v.sprite.preFX.addGlow(0xffffff, 0, 0, false, 0.12, 14);
+  }
+
+  _glowOff(v) {
+    if (!v) return;
+    v.pulse?.stop(); v.pulse = null;
+    if (v.glow) { v.sprite.preFX.remove(v.glow); v.glow = null; }
+  }
+
+  // 조준 대상이 생기거나 바뀔 때: 이전 대상의 빛을 끄고, 새 대상에 잠금 연출(수축하는 링 + 강한 빛 → 은은한 맥박)
+  _lockChange(oldId, newId) {
+    this._glowOff(this.views.get(oldId));
+    const v = this.views.get(newId);
+    if (!v) return;
+    this._glowOn(v);
+    if (v.glow) {
+      const glow = v.glow;
+      this.tweens.add({ targets: glow, outerStrength: { from: 16, to: 4 }, duration: 260, ease: 'Cubic.easeOut',
+        onComplete: () => { if (v.glow === glow) v.pulse = this.tweens.add({ targets: glow, outerStrength: { from: 2.5, to: 5 }, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); } });
+    }
+    const ring = this.add.graphics().setDepth(5200);
+    this.tweens.addCounter({ from: 0, to: 1, duration: 300, ease: 'Cubic.easeOut', onUpdate: (tw) => {
+      const k = tw.getValue();
+      ring.clear().lineStyle(5 - 2 * k, 0xffffff, 1 - 0.5 * k).strokeCircle(v.x, v.y, (2.4 - 1.6 * k) * BU);
+    }, onComplete: () => ring.destroy() });
+  }
+
+  _drawAim(now) {
+    const g = this.aimGfx;
+    g.clear();
+    const a = this.aim;
+    const me = a && this.views.get(a.id);
+    const tid = me && this.views.has(a.targetId) ? a.targetId : null;
+    if (tid !== this.lockId) { this._lockChange(this.lockId, tid); this.lockId = tid; }
+    if (!me) return;
+
+    const cx = me.x, cy = me.y, R = a.range * BU, ang = Math.atan2(a.dy, a.dx);
+    // 공격 사거리: 평소엔 옅게, 직접 조준 중엔 또렷하게
+    g.lineStyle(a.dragging ? 3 : 2, 0xffffff, a.dragging ? 0.6 : 0.2).strokeCircle(cx, cy, R);
+    if (a.dragging) { // 조준선: 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
+      if (a.kind === 'melee') {
+        const half = Math.PI / 3;
+        g.fillStyle(0xffffff, 0.22).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
+        g.lineStyle(3, 0xffffff, 0.8).beginPath().moveTo(cx, cy).lineTo(cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R).arc(cx, cy, R, ang - half, ang + half, false).lineTo(cx, cy).strokePath();
+      } else {
+        const w = a.radius * BU, nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w;
+        const ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R;
+        g.fillStyle(0xffffff, 0.22).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
+        g.lineStyle(3, 0xffffff, 0.8).lineBetween(cx + nx, cy + ny, ex + nx, ey + ny).lineBetween(cx - nx, cy - ny, ex - nx, ey - ny).lineBetween(ex + nx, ey + ny, ex - nx, ey - ny);
+      }
+      g.lineStyle(4, 0xffffff, 0.95).lineBetween(cx, cy, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R);
+    }
+    // 조준 중인 적: 발밑 링 (빛나는 테두리는 _lockChange가 스프라이트에 입힘)
+    const t = tid && this.views.get(tid);
+    if (t) {
+      const pulse = 0.5 + 0.5 * Math.sin(now / 160);
+      g.lineStyle(4, 0xffffff, 0.55 + 0.4 * pulse).strokeCircle(t.x, t.y, (0.78 + 0.05 * pulse) * BU);
+    }
+  }
+
   // ---------- 서버 상태 반영 ----------
   applyState(s) {
     if (!this.zoneGfx) { this.pending = s; return; }
@@ -75,7 +145,7 @@ export class WorldScene extends Phaser.Scene {
       if (v.x === undefined) { v.x = v.tx; v.y = v.ty; }
     }
     for (const [id, v] of this.views) {
-      if (!seen.has(id)) { v.root.forEach((o) => o.destroy()); this.views.delete(id); }
+      if (!seen.has(id)) { this._glowOff(v); v.root.forEach((o) => o.destroy()); this.views.delete(id); }
     }
     for (const e of s.ev || []) this.handleEvent(e);
   }
@@ -179,6 +249,7 @@ export class WorldScene extends Phaser.Scene {
       v.name.setPosition(bx, by - 3).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 24).setDepth(v.y + 1);
     }
+    this._drawAim(now);
     this.onFrame?.(this, delta);
   }
 }

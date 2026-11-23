@@ -177,38 +177,34 @@ export class Game {
     return [...this.players.values()].filter((o) => o !== p && o.connected);
   }
 
-  _tryAttack(p, aim) {
+  // 지금 공격을 하면 몇 타째인지, 그 타의 배율과 사거리
+  _comboState(p) {
     const a = p.cfg.attack;
-    if (this.t < p.nextAttackAt || p.stunned) return;
-    if (p.running && !a.canAttackWhileRunning) return;
-
-    // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
     const combo = a.combo;
     const step = combo && this.t - p.lastAttackAt <= COMBO_RESET_SEC ? p.comboStep : 0;
     const m = combo?.[step] || {};
-    const range = a.range * (m.range ?? 1);
+    return { combo, step, m, range: a.range * (m.range ?? 1) };
+  }
 
-    let dx, dy;
+  // 조준 방향: 직접 조준 > 사거리 안에서 가장 가까운 상대(자동 조준) > 바라보는 방향
+  _aimDir(p, aim, range) {
     const ax = Number(aim?.x) || 0, ay = Number(aim?.y) || 0;
     if (Math.hypot(ax, ay) > 0.2) {
-      const l = Math.hypot(ax, ay); dx = ax / l; dy = ay / l; // 직접 조준
-    } else {
-      let best = null, bestD = Infinity; // 자동 조준: 사거리 안에서 가장 가까운 상대
-      for (const o of this._enemies(p)) {
-        const d = Math.hypot(o.x - p.x, o.y - p.y);
-        if (d <= range && d < bestD) { best = o; bestD = d; }
-      }
-      if (best) { dx = (best.x - p.x) / bestD; dy = (best.y - p.y) / bestD; }
-      else { dx = p.face; dy = 0; } // 대상이 없으면 바라보는 방향으로 헛손질
+      const l = Math.hypot(ax, ay);
+      return { dx: ax / l, dy: ay / l, manual: true };
     }
-    if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
-    p.nextAttackAt = this.t + a.interval;
-    // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
-    p.attackUntil = this.t + (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000;
-    p.lastAttackAt = this.t;
-    p.comboStep = combo ? (step + 1) % combo.length : 0;
+    let best = null, bestD = Infinity;
+    for (const o of this._enemies(p)) {
+      const d = Math.hypot(o.x - p.x, o.y - p.y);
+      if (d <= range && d < bestD) { best = o; bestD = d; }
+    }
+    if (best) return { dx: (best.x - p.x) / bestD, dy: (best.y - p.y) / bestD, manual: false };
+    return { dx: p.face, dy: 0, manual: false };
+  }
 
-    // 맞는 대상 찾기
+  // 그 방향으로 공격했을 때 맞는 대상
+  _pickTarget(p, range, dx, dy) {
+    const a = p.cfg.attack;
     let target = null, tDist = Infinity;
     for (const o of this._enemies(p)) {
       const vx = o.x - p.x, vy = o.y - p.y;
@@ -222,6 +218,35 @@ export class Game {
         if (along <= range && perp <= o.cfg.radius && along < tDist) { target = o; tDist = along; }
       }
     }
+    return { target, tDist };
+  }
+
+  /** 조준 표시용: 지금 조준하면 어디를 향하고 누가 맞는지 (공격은 하지 않음) */
+  aimPreview(id, aim) {
+    const p = this.players.get(id);
+    if (!p) return null;
+    const { range, step } = this._comboState(p);
+    const dir = this._aimDir(p, aim, range);
+    const { target } = this._pickTarget(p, range, dir.dx, dir.dy);
+    return { dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, radius: p.cfg.radius, targetId: target ? target.id : null };
+  }
+
+  _tryAttack(p, aim) {
+    const a = p.cfg.attack;
+    if (this.t < p.nextAttackAt || p.stunned) return;
+    if (p.running && !a.canAttackWhileRunning) return;
+
+    // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
+    const { combo, step, m, range } = this._comboState(p);
+    const { dx, dy } = this._aimDir(p, aim, range);
+    if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
+    p.nextAttackAt = this.t + a.interval;
+    // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
+    p.attackUntil = this.t + (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000;
+    p.lastAttackAt = this.t;
+    p.comboStep = combo ? (step + 1) % combo.length : 0;
+
+    const { target, tDist } = this._pickTarget(p, range, dx, dy);
     this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, step, len: r2(target ? tDist : range) });
     if (target) this._hit(target, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1);
   }
