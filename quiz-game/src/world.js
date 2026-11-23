@@ -6,6 +6,7 @@ export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
 export const WORLD_W = MAP.w * BU;
 export const WORLD_H = MAP.h * BU;
 
+export const hooks = { spriteUrl: (s, m) => `characters/${s}/${m}.png` }; // 데모 페이지가 이미지 경로를 바꿔 끼울 수 있게
 const SPRITES = ['blue']; // 스프라이트 폴더 이름 (public/characters/<name>/)
 const SPR_SCALE = 0.34; // 256px 셀 → 화면. 몸 폭이 약 1.1BU가 되도록
 const FLASH_MS = 100; // 맞았을 때 하얗게 번쩍이는 시간
@@ -23,7 +24,7 @@ export class WorldScene extends Phaser.Scene {
   preload() {
     for (const s of SPRITES) {
       for (const m of Object.keys(SPRITE.motions)) {
-        this.load.spritesheet(`${s}-${m}`, `characters/${s}/${m}.png`, { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
+        this.load.spritesheet(`${s}-${m}`, hooks.spriteUrl(s, m), { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
       }
     }
   }
@@ -172,6 +173,7 @@ export class WorldScene extends Phaser.Scene {
       v.name.setPosition(bx, by - 3).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 24).setDepth(v.y + 1);
     }
+    this.onFrame?.(this, delta);
   }
 }
 

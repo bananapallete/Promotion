@@ -1,0 +1,113 @@
+<title>파란티 전투 데모</title>
+<style>
+  /* 한 가지 세계관(어두운 게임 화면)으로 고정한 단일 테마 */
+  :root {
+    --bg: #1d2433; --panel: #28324a; --panel-2: #151b29; --ink: #eef2f7; --mute: #9fb0c7;
+    --accent: #4cc2ff; --ok: #2ecc71; --bad: #ff6b6b; --warn: #ffd54a;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button, select { font: inherit; }
+
+  #stage { position: absolute; inset: 0; margin: auto; width: min(100vw, calc(100vh * 40 / 22)); height: min(100vh, calc(100vw * 22 / 40)); container-type: inline-size; }
+  #game, #game canvas { width: 100% !important; height: 100% !important; display: block; }
+  #hud { position: absolute; inset: 0; pointer-events: none; }
+
+  #me { position: absolute; top: 1.2cqw; left: max(16px, 1.2cqw); width: 22cqw; min-width: 150px; background: rgba(21,27,41,.82); border-radius: 12px; padding: 8px 10px; display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
+  #me .row { display: flex; justify-content: space-between; }
+  .bar { height: 7px; background: #0007; border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 100%; background: var(--ok); transition: width .1s; }
+  .bar.run > i { background: var(--accent); }
+  #flag { min-height: 14px; color: var(--warn); font-size: 12px; }
+
+  #banner { position: absolute; top: 1.2cqw; left: 50%; transform: translateX(-50%); max-width: 46%; background: rgba(29,36,51,.8); border-radius: 12px; padding: 6px 14px; text-align: center; }
+  #banner[hidden] { display: none; }
+  #qn { color: var(--accent); font-weight: 700; font-size: 11px; }
+  #qt { font-size: clamp(13px, 2.3cqw, 24px); font-weight: 800; }
+  #phase { position: absolute; bottom: 1cqw; left: 50%; transform: translateX(-50%); background: rgba(21,27,41,.8); padding: 3px 12px; border-radius: 99px; font-size: 12px; color: var(--mute); white-space: nowrap; }
+  #reveal { position: absolute; top: 5.5cqw; left: 50%; transform: translateX(-50%); padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: clamp(13px, 2cqw, 22px); white-space: nowrap; }
+  #reveal.ok { background: var(--ok); color: #06331a; }
+  #reveal.bad { background: var(--bad); color: #3b0b0b; }
+  #reveal[hidden] { display: none; }
+
+  #pad { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); bottom: max(22px, env(safe-area-inset-bottom, 0px)); width: 132px; height: 132px; border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff40; touch-action: none; }
+  #stick { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: #ffffffa0; }
+  .abtn { position: fixed; border-radius: 50%; border: 3px solid #ffffff60; color: #fff; font-weight: 800; touch-action: none; display: grid; place-items: center; cursor: pointer; }
+  #btnAtk { right: max(22px, env(safe-area-inset-right, 0px)); bottom: max(28px, env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
+  #btnRun { right: max(140px, calc(env(safe-area-inset-right, 0px) + 124px)); bottom: max(22px, env(safe-area-inset-bottom, 0px)); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
+  #btnRun.on { background: var(--accent); transform: scale(.94); }
+  #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
+
+  #gear { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; z-index: 20; }
+  #panel { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); width: min(340px, calc(100vw - 100px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); border-radius: 14px; padding: 12px 14px; z-index: 20; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+  #panel[hidden] { display: none; }
+  #panel h3 { margin: 10px 0 6px; font-size: 12px; color: var(--accent); letter-spacing: .04em; }
+  #panel h3:first-child { margin-top: 0; }
+  .row-inline { display: flex; gap: 6px; flex-wrap: wrap; }
+  #panel button, #panel select { padding: 8px 10px; border-radius: 9px; border: 0; background: #3a4766; color: var(--ink); font-size: 13px; cursor: pointer; }
+  #panel button.go { background: var(--accent); color: #05293b; font-weight: 700; }
+  #panel button.warn { background: #7a3340; }
+  #panel button.sel { outline: 2px solid var(--accent); }
+  #panel p { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
+
+  #rotate { position: fixed; left: 0; right: 0; top: 0; padding: 10px max(16px, env(safe-area-inset-left, 0px)); background: var(--warn); color: #3a2f00; font-weight: 800; text-align: center; font-size: 14px; z-index: 30; }
+  #rotate[hidden] { display: none; }
+</style>
+
+<div id="stage">
+  <div id="game"></div>
+  <div id="hud">
+    <div id="me">
+      <div class="row"><span>나</span><span id="score">0점</span></div>
+      <div class="bar" title="체력"><i id="hp"></i></div>
+      <div class="bar run" title="달리기"><i id="rg"></i></div>
+      <div id="flag"></div>
+    </div>
+    <div id="banner" hidden><div id="qn"></div><div id="qt"></div></div>
+    <div id="reveal" hidden></div>
+    <div id="phase"></div>
+  </div>
+</div>
+
+<div id="pad"><div id="stick"></div></div>
+<button id="btnRun" class="abtn" type="button">달리기</button>
+<button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
+
+<button id="gear" type="button" aria-label="테스트 패널">⚙</button>
+<div id="panel" hidden>
+  <h3>문제 출제</h3>
+  <div class="row-inline">
+    <button class="go" data-act="ask" data-id="1" type="button">1번 (O/X)</button>
+    <button class="go" data-act="ask" data-id="2" type="button">2번 (객관식)</button>
+    <button data-act="end" type="button">정답 공개</button>
+  </div>
+  <p>문제 1의 정답은 O(왼쪽), 문제 2의 정답은 4번(오른쪽 아래)이에요. 구역에 먼저 들어갈수록 보너스가 커요.</p>
+  <h3>더미 봇</h3>
+  <div class="row-inline">
+    <select id="b-mode"><option value="idle">가만히</option><option value="wander">배회</option><option value="aggro" selected>공격형</option></select>
+    <select id="b-char"><option value="blue">근접</option><option value="blue_ranged">원거리</option></select>
+    <button class="go" data-act="bot" type="button">추가</button>
+    <button class="warn" data-act="clear" type="button">전부 제거</button>
+  </div>
+  <h3>내 캐릭터</h3>
+  <div class="row-inline">
+    <button class="sel" data-act="char" data-id="blue" type="button">근접</button>
+    <button data-act="char" data-id="blue_ranged" type="button">원거리</button>
+  </div>
+  <h3>보기</h3>
+  <div class="row-inline">
+    <button class="sel" data-act="view" data-v="follow" type="button">내 캐릭터 따라가기</button>
+    <button data-act="view" data-v="all" type="button">맵 전체</button>
+  </div>
+  <h3>기타</h3>
+  <div class="row-inline">
+    <button data-act="gather" type="button">모두 대기 공간으로</button>
+    <button class="warn" data-act="reset" type="button">점수 초기화</button>
+  </div>
+</div>
+<div id="rotate" hidden>폰을 가로로 돌려서 해보세요</div>
+
+<script>
+/*BUNDLE*/
+</script>
