@@ -17,7 +17,24 @@
       "interval": 0.3333,
       "range": 1.2,
       "knockback": 0.5,
-      "canAttackWhileRunning": true
+      "canAttackWhileRunning": true,
+      "combo": [
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        }
+      ]
     }
   },
   "blue_ranged": {

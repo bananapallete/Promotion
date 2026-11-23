@@ -7,9 +7,9 @@ import { PHASE } from '../shared/constants.js';
 import idle from '../public/characters/blue/idle.png';
 import walk from '../public/characters/blue/walk.png';
 import run from '../public/characters/blue/run.png';
-import punch from '../public/characters/blue/punch.png';
+import combo from '../public/characters/blue/combo.png';
 
-hooks.spriteUrl = (_s, m) => ({ idle, walk, run, punch })[m];
+hooks.spriteUrl = (_s, m) => ({ idle, walk, run, combo })[m];
 
 const $ = (s) => document.querySelector(s);
 const ME = 'me';

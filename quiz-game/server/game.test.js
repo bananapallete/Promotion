@@ -225,3 +225,28 @@ test('기절한 캐릭터는 마지막 일격에도, 쓰러진 뒤에도 밀리�
   assert.ok(Math.abs(b.x - x0) < 0.05, `쓰러진 뒤 밀림: ${b.x - x0}`);
   assert.equal(b.hp, 0);
 });
+
+test('근접 콤보: 1타·2타(잽) → 3타(큰 휘두르기) 순서로 돌고, 쉬면 1타부터', () => {
+  const { g, a, b } = setup();
+  b.cfg = { ...b.cfg, hp: 1000 }; b.hp = 1000;
+  const steps = [];
+  for (let i = 0; i < 4; i++) {
+    g.attack('a', null);
+    steps.push(g.events.filter((e) => e.e === 'atk').at(-1).step);
+    run(g, 0.4); b.x = 21; b.y = 10; b.kx = b.ky = 0;
+  }
+  assert.deepEqual(steps, [0, 1, 2, 0]);
+  run(g, 1.5); // 오래 쉬면 초기화
+  g.attack('a', null);
+  assert.equal(g.events.filter((e) => e.e === 'atk').at(-1).step, 0);
+});
+
+test('콤보 배율: 3타만 피해·밀림·사거리를 키울 수 있다', () => {
+  const { g, a, b } = setup();
+  a.cfg = { ...a.cfg, attack: { ...a.cfg.attack, dmgMin: 2, dmgMax: 2, combo: [{}, {}, { dmg: 2, knockback: 2, range: 1.5 }] } };
+  b.cfg = { ...b.cfg, hp: 1000 }; b.hp = 1000;
+  const hit = (x) => { b.x = x; b.y = 10; b.kx = b.ky = 0; const h = b.hp; g.attack('a', null); const d = h - b.hp; run(g, 0.4); return d; };
+  assert.equal(hit(21), 2);   // 1타
+  assert.equal(hit(21), 2);   // 2타
+  assert.equal(hit(21.4), 4); // 3타: 피해 2배, 거리 1.4도 닿음(사거리 1.5)
+});

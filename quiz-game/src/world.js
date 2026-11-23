@@ -43,7 +43,11 @@ export class WorldScene extends Phaser.Scene {
     this.zoneTexts = [];
 
     for (const s of SPRITES) {
+      SPRITE.attackSteps.forEach((st, i) => {
+        this.anims.create({ key: `${s}-atk${i}`, frames: this.anims.generateFrameNumbers(`${s}-combo`, { frames: st.frames }), frameRate: st.fps, repeat: 0 });
+      });
       for (const [m, c] of Object.entries(SPRITE.motions)) {
+        if (!c.fps) continue; // combo는 위에서 단계별로 만들었음
         this.anims.create({
           key: `${s}-${m}`,
           frames: this.anims.generateFrameNumbers(`${s}-${m}`, { start: 0, end: c.frames - 1 }),
@@ -91,8 +95,9 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     const v = this.views.get(e.id);
     if (e.e === 'atk' && v) {
-      v.sprite.play(`${v.p.s}-punch`, false);
-      v.punchUntil = now + 260;
+      const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
+      v.sprite.play(`${v.p.s}-atk${step}`, false);
+      v.punchUntil = now + SPRITE.attackSteps[step].ms;
       const x0 = v.x, y0 = v.y - 0.55 * BU; // 가슴 높이에서 나가는 효과
       const len = e.len * BU;
       const line = this.add.graphics().setDepth(5000);
@@ -100,7 +105,8 @@ export class WorldScene extends Phaser.Scene {
         line.lineStyle(5, 0xffd54a, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
       } else {
         const a = Math.atan2(e.dy, e.dx);
-        line.lineStyle(7, 0xffffff, 1).beginPath().arc(x0, y0, 0.9 * BU, a - 0.7, a + 0.7).strokePath();
+        const big = step === 2; // 3타 휘두르기는 더 크고 굵은 궤적
+        line.lineStyle(big ? 12 : 7, 0xffffff, 1).beginPath().arc(x0, y0, (big ? 1.3 : 0.9) * BU, a - (big ? 1.0 : 0.7), a + (big ? 1.0 : 0.7)).strokePath();
       }
       this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
     } else if (e.e === 'hit' && v) {

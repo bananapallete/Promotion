@@ -36,13 +36,20 @@ export function zoneAt(type, x, y) {
 // 스프라이트 모션별 프레임 수 (tools/build_sheets.py 결과와 일치해야 함)
 export const SPRITE = {
   cell: 256,
-  anchor: [128, 232], // 셀 안의 발(그림자) 위치
+  anchor: [104, 232], // 셀 안의 발(그림자) 위치 (오른쪽에 주먹이 뻗을 공간을 남기려고 왼쪽으로 치우침)
   motions: {
     idle: { frames: 4, fps: 6, yoyo: true, loop: true },
     walk: { frames: 7, fps: 12, loop: true },
     run: { frames: 7, fps: 15, loop: true },
-    punch: { frames: 7, fps: 28, loop: false },
+    combo: { frames: 8 }, // 공격 시트: 아래 attackSteps로 나눠서 재생
   },
+  // 근접 3타 콤보: 잽 → 잽 → 반대 주먹으로 크게 휘두르기 (combo 시트의 프레임 번호)
+  attackSteps: [
+    { frames: [0, 1], fps: 12, ms: 260 },
+    { frames: [2, 3], fps: 12, ms: 260 },
+    { frames: [4, 5, 6, 7], fps: 14, ms: 340 },
+  ],
 };
+export const COMBO_RESET_SEC = 1.0; // 이 시간 동안 공격하지 않으면 다시 1타부터
 
 export const PHASE = { LOBBY: 'lobby', READING: 'reading', MOVING: 'moving', REVEAL: 'reveal' };

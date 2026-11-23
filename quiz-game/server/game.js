@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { MAP, PHASE, READ_SEC, WAIT, zoneAt, ZONES } from '../shared/constants.js';
+import { COMBO_RESET_SEC, MAP, PHASE, READ_SEC, WAIT, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -68,7 +68,7 @@ export class Game {
       input: { mx: 0, my: 0, run: false },
       hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
-      nextAttackAt: 0, attackUntil: 0,
+      nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       score: 0, zone: null, zoneSince: 0,
       ai: { nextThink: 0, mx: 0, my: 0 },
     };
@@ -181,6 +181,12 @@ export class Game {
     if (this.t < p.nextAttackAt || p.stunned) return;
     if (p.running && !a.canAttackWhileRunning) return;
 
+    // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
+    const combo = a.combo;
+    const step = combo && this.t - p.lastAttackAt <= COMBO_RESET_SEC ? p.comboStep : 0;
+    const m = combo?.[step] || {};
+    const range = a.range * (m.range ?? 1);
+
     let dx, dy;
     const ax = Number(aim?.x) || 0, ay = Number(aim?.y) || 0;
     if (Math.hypot(ax, ay) > 0.2) {
@@ -189,7 +195,7 @@ export class Game {
       let best = null, bestD = Infinity; // 자동 조준: 사거리 안에서 가장 가까운 상대
       for (const o of this._enemies(p)) {
         const d = Math.hypot(o.x - p.x, o.y - p.y);
-        if (d <= a.range && d < bestD) { best = o; bestD = d; }
+        if (d <= range && d < bestD) { best = o; bestD = d; }
       }
       if (best) { dx = (best.x - p.x) / bestD; dy = (best.y - p.y) / bestD; }
       else { dx = p.face; dy = 0; } // 대상이 없으면 바라보는 방향으로 헛손질
@@ -197,6 +203,8 @@ export class Game {
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval;
     p.attackUntil = this.t + ATTACK_ANIM_SEC;
+    p.lastAttackAt = this.t;
+    p.comboStep = combo ? (step + 1) % combo.length : 0;
 
     // 맞는 대상 찾기
     let target = null, tDist = Infinity;
@@ -206,23 +214,23 @@ export class Game {
       if (along <= 0) continue;
       if (a.type === 'melee') {
         const d = Math.hypot(vx, vy);
-        if (d <= a.range && along / d >= 0.5 && d < tDist) { target = o; tDist = d; } // 전방 ±60도
+        if (d <= range && along / d >= 0.5 && d < tDist) { target = o; tDist = d; } // 전방 ±60도
       } else {
         const perp = Math.abs(vx * dy - vy * dx);
-        if (along <= a.range && perp <= o.cfg.radius && along < tDist) { target = o; tDist = along; }
+        if (along <= range && perp <= o.cfg.radius && along < tDist) { target = o; tDist = along; }
       }
     }
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, len: r2(target ? tDist : a.range) });
-    if (target) this._hit(target, p, dx, dy);
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, step, len: r2(target ? tDist : range) });
+    if (target) this._hit(target, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1);
   }
 
-  _hit(target, attacker, dx, dy) {
+  _hit(target, attacker, dx, dy, dmgMul = 1, knockMul = 1) {
     const a = attacker.cfg.attack;
     if (this.t < target.invUntil) { // 무적: 피해도 밀림도 없음
       this.events.push({ e: 'block', id: target.id, x: r2(target.x), y: r2(target.y) });
       return;
     }
-    const dmg = target.stunned ? 0 : a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1));
+    const dmg = target.stunned ? 0 : Math.round((a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1))) * dmgMul);
     if (dmg > 0) {
       target.hp = Math.max(0, target.hp - dmg);
       if (target.hp === 0) {
@@ -234,8 +242,8 @@ export class Game {
     }
     // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knockback (BU)
     if (!target.stunned) {
-      target.kx += dx * a.knockback * KNOCK_DECAY;
-      target.ky += dy * a.knockback * KNOCK_DECAY;
+      target.kx += dx * a.knockback * knockMul * KNOCK_DECAY;
+      target.ky += dy * a.knockback * knockMul * KNOCK_DECAY;
     }
     this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, x: r2(target.x), y: r2(target.y) });
   }
