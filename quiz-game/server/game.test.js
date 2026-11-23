@@ -121,15 +121,15 @@ test('달리기: 5초 뒤 바닥, 10초 뒤 가득, 문제 시작 시 가득', (
   assert.equal(a.runGauge, a.cfg.runGauge);
 });
 
-test('걷기 3, 달리기 4.5 BU/s', () => {
+test('걷기 6, 달리기 9 BU/s (기본 이동속도의 2배)', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
   a.x = 10; a.y = 10; a.kx = a.ky = 0;
   g.setInput('a', { mx: 1, my: 0, run: false });
-  run(g, 1); assert.ok(Math.abs(a.x - 13) < 0.1, `walk x=${a.x}`);
+  run(g, 1); assert.ok(Math.abs(a.x - 16) < 0.15, `walk x=${a.x}`);
   a.x = 10;
   g.setInput('a', { mx: 1, my: 0, run: true });
-  run(g, 1); assert.ok(Math.abs(a.x - 14.5) < 0.1, `run x=${a.x}`);
+  run(g, 1); assert.ok(Math.abs(a.x - 19) < 0.15, `run x=${a.x}`);
 });
 
 test('점수: 정답 1점 + 먼저 도착한 1~3등 +3/+2/+1, 오답·무응답 0점', () => {
@@ -213,14 +213,14 @@ test('이동 속도는 항상 일정: 조이스틱을 살짝 밀어도 같은 �
   g.setInput('a', { mx: 0.3, my: 0, run: false }); // 살짝 밀기
   g.update(DT);
   const first = a.x - 10;
-  assert.ok(Math.abs(first - 3 * DT) < 1e-6, `첫 틱부터 최고 속도여야 함: ${first}`);
+  assert.ok(Math.abs(first - 6 * DT) < 1e-6, `첫 틱부터 최고 속도여야 함: ${first}`);
   const x1 = a.x; run(g, 1);
-  assert.ok(Math.abs(a.x - x1 - 3) < 0.05, `1초에 3칸: ${a.x - x1}`);
+  assert.ok(Math.abs(a.x - x1 - 6) < 0.1, `1초에 6칸: ${a.x - x1}`);
   // 대각선도 같은 속도
   a.x = 10; a.y = 10;
   g.setInput('a', { mx: 1, my: 1, run: false });
   run(g, 1);
-  assert.ok(Math.abs(Math.hypot(a.x - 10, a.y - 10) - 3) < 0.05);
+  assert.ok(Math.abs(Math.hypot(a.x - 10, a.y - 10) - 6) < 0.1);
 });
 
 test('기절한 캐릭터는 마지막 일격에도, 쓰러진 뒤에도 밀리지 않는다', () => {
@@ -275,4 +275,30 @@ test('3타 휘두르기는 1·2타보다 강하다 (기본 설정)', () => {
   }
   assert.ok(dmg[0] <= 3 && dmg[1] <= 3, `1,2타: ${dmg}`);
   assert.ok(dmg[2] >= 3 && dmg[2] > Math.min(dmg[0], dmg[1]) - 1 && dmg[2] <= 5, `3타: ${dmg}`);
+});
+
+test('근접 공격 모션이 재생되는 동안 이동 속도 50%, 끝나면 원래대로', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.x = 5; a.y = 10; a.kx = a.ky = 0;
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  g.update(DT);
+  const normal = a.x - 5;
+  g.attack('a', null); // 1타 잽: 모션 0.26초
+  const x0 = a.x; g.update(DT);
+  const slowed = a.x - x0;
+  assert.ok(Math.abs(slowed - normal * 0.5) < 1e-6, `느려짐: ${slowed} vs ${normal}`);
+  run(g, 0.3); // 모션 종료
+  const x1 = a.x; g.update(DT);
+  assert.ok(Math.abs(a.x - x1 - normal) < 1e-6, '모션이 끝나면 원래 속도');
+});
+
+test('원거리 캐릭터는 공격 중에도 느려지지 않는다 (설정에 없으면 1배)', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' });
+  a.x = 5; a.y = 10;
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  g.attack('a', null);
+  const x0 = a.x; g.update(DT);
+  assert.ok(Math.abs(a.x - x0 - 6 * DT) < 1e-6);
 });

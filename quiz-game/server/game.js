@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { COMBO_RESET_SEC, MAP, PHASE, READ_SEC, WAIT, zoneAt, ZONES } from '../shared/constants.js';
+import { COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, WAIT, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -203,7 +203,8 @@ export class Game {
     }
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval;
-    p.attackUntil = this.t + ATTACK_ANIM_SEC;
+    // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
+    p.attackUntil = this.t + (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000;
     p.lastAttackAt = this.t;
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
@@ -285,7 +286,9 @@ export class Game {
     p.moving = !p.stunned && len > 0.1;
     if (p.moving) {
       running = p.input.run && p.runGauge > 0 && !p.exhausted;
-      const speed = running ? c.runSpeed : c.walkSpeed;
+      // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
+      const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
+      const speed = (running ? c.runSpeed : c.walkSpeed) * slow;
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;

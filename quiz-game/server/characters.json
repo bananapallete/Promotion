@@ -4,8 +4,8 @@
     "sprite": "blue",
     "radius": 0.5,
     "hp": 10,
-    "walkSpeed": 3,
-    "runSpeed": 4.5,
+    "walkSpeed": 6,
+    "runSpeed": 9,
     "runGauge": 5,
     "runRecharge": 10,
     "stunSec": 2,
@@ -34,7 +34,8 @@
           "range": 1.15,
           "knockback": 1.6
         }
-      ]
+      ],
+      "moveSpeedWhileAttacking": 0.5
     }
   },
   "blue_ranged": {
@@ -42,8 +43,8 @@
     "sprite": "blue",
     "radius": 0.5,
     "hp": 10,
-    "walkSpeed": 3,
-    "runSpeed": 4.5,
+    "walkSpeed": 6,
+    "runSpeed": 9,
     "runGauge": 5,
     "runRecharge": 10,
     "stunSec": 2,
