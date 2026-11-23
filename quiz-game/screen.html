@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>퀴즈 게임 · 화면</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="screen">
+    <div id="stage">
+      <div id="game"></div>
+      <div id="hud">
+        <div id="banner" hidden><div class="qn"></div><div class="qt"></div><div class="opts"></div></div>
+        <div id="timer" hidden></div>
+        <div id="reveal" hidden></div>
+        <div id="join"><div class="t">QR로 입장!</div><img id="qr" alt="QR" /><div class="u" id="joinurl"></div></div>
+        <div id="lb" hidden></div>
+        <div id="conn">연결 중…</div>
+      </div>
+    </div>
+    <script type="module" src="/src/screen.js"></script>
+  </body>
+</html>

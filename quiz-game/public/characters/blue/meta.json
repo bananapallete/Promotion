@@ -1,0 +1,25 @@
+{
+  "cell": 256,
+  "anchor": [
+    128,
+    232
+  ],
+  "sheets": {
+    "idle": {
+      "frames": 4,
+      "scale": 0.44
+    },
+    "walk": {
+      "frames": 7,
+      "scale": 0.945
+    },
+    "run": {
+      "frames": 7,
+      "scale": 0.68
+    },
+    "punch": {
+      "frames": 7,
+      "scale": 0.881
+    }
+  }
+}

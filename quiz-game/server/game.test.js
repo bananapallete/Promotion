@@ -1,0 +1,196 @@
+// 실행: npm test   (Node 내장 테스트 러너 사용)
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { Game } from './game.js';
+import { PHASE } from '../shared/constants.js';
+
+const chars = JSON.parse(readFileSync(new URL('./characters.json', import.meta.url), 'utf8'));
+const quizzes = JSON.parse(readFileSync(new URL('./quizzes.test.json', import.meta.url), 'utf8'));
+const DT = 1 / 30;
+
+function setup() {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  for (const p of [a, b]) { p.kx = p.ky = 0; }
+  a.x = 20; a.y = 10; b.x = 21; b.y = 10; // 1BU 떨어져 있음 (사거리 1.2 안)
+  return { g, a, b };
+}
+const run = (g, sec) => { for (let i = 0; i < Math.round(sec / DT); i++) g.update(DT); };
+
+test('근접 공격: 피해 2~3, 한 대당 약 0.5 밀림', () => {
+  const { g, a, b } = setup();
+  const x0 = b.x;
+  g.attack('a', null);
+  assert.ok([8, 7].includes(b.hp), `hp=${b.hp}`);
+  run(g, 1);
+  assert.ok(Math.abs(b.x - x0 - 0.5) < 0.12, `밀린 거리 ${b.x - x0}`); // 충돌로 약간 달라질 수 있음
+});
+
+test('공격 간격: 1초에 최대 3번', () => {
+  const { g, a, b } = setup();
+  b.hp = 1000; b.cfg = { ...b.cfg, hp: 1000 };
+  let hits = 0;
+  for (let i = 0; i < 30; i++) { // 1초 동안 매 틱 연타
+    const before = b.hp;
+    g.attack('a', null);
+    if (b.hp < before) hits++;
+    g.update(DT);
+    b.x = 21; // 밀림 무시하고 제자리
+  }
+  assert.ok(hits >= 3 && hits <= 4, `hits=${hits}`);
+});
+
+test('체력 0 → 기절 2초 → 체력 회복 + 무적 3초', () => {
+  const { g, a, b } = setup();
+  b.hp = 1;
+  g.attack('a', null);
+  assert.equal(b.stunned, true);
+  assert.equal(b.hp, 0);
+  run(g, 1.9); assert.equal(b.stunned, true);
+  run(g, 0.2);
+  assert.equal(b.stunned, false);
+  assert.equal(b.hp, 10);
+  // 무적 동안은 맞아도 피해 없음
+  b.x = a.x + 1; b.y = a.y;
+  g.attack('a', null);
+  assert.equal(b.hp, 10);
+  run(g, 3.1);
+  b.x = a.x + 1; b.y = a.y; b.kx = b.ky = 0;
+  g.attack('a', null);
+  assert.ok(b.hp < 10);
+});
+
+test('기절 중에는 이동 불가', () => {
+  const { g, b } = setup();
+  b.stunned = true; b.stunUntil = g.t + 2;
+  g.setInput('b', { mx: 1, my: 0, run: false });
+  const x0 = b.x;
+  run(g, 1);
+  assert.ok(Math.abs(b.x - x0) < 0.01);
+});
+
+test('원거리: 사거리 5, 밀림 0.3, 피해 1', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  a.x = 10; a.y = 10; b.x = 14.5; b.y = 10; a.kx = a.ky = b.kx = b.ky = 0;
+  g.attack('a', null);
+  assert.equal(b.hp, 9);
+  run(g, 1);
+  assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
+  b.x = 15.6; // 5.6 > 사거리
+  run(g, 1);
+  const hp = b.hp;
+  g.attack('a', null);
+  assert.equal(b.hp, hp);
+});
+
+test('직접 조준: 드래그한 방향으로만 맞는다', () => {
+  const { g, a, b } = setup();
+  g.attack('a', { x: 0, y: -1 }); // 위쪽으로 조준 → b는 오른쪽에 있음
+  assert.equal(b.hp, 10);
+  run(g, 0.4);
+  g.attack('a', { x: 1, y: 0 });
+  assert.ok(b.hp < 10);
+});
+
+test('캐릭터끼리 겹치지 않는다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  a.x = 20; a.y = 10; b.x = 20.1; b.y = 10;
+  run(g, 0.5);
+  assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= 0.99);
+});
+
+test('달리기: 5초 뒤 바닥, 10초 뒤 가득, 문제 시작 시 가득', () => {
+  const { g, a } = setup();
+  a.x = 5; a.y = 5; // 넓은 곳에서 (맵 벽에 막히지 않게 대각선 왕복은 생략하고 짧게 확인)
+  g.setInput('a', { mx: 0, my: 1, run: true });
+  run(g, 2); // 맵 경계에 닿아도 입력 중이면 달리는 것으로 본다
+  assert.ok(a.runGauge < 3.2 && a.runGauge > 2.7, `gauge=${a.runGauge}`);
+  run(g, 3.1); // 총 5.1초 → 바닥난 직후
+  assert.ok(a.runGauge < 0.2, `gauge=${a.runGauge}`);
+  assert.equal(a.exhausted, true);
+  g.setInput('a', { mx: 0, my: 0, run: false });
+  run(g, 10);
+  assert.ok(a.runGauge >= 4.9, `gauge=${a.runGauge}`);
+  a.runGauge = 1; g.ask(1);
+  assert.equal(a.runGauge, a.cfg.runGauge);
+});
+
+test('걷기 3, 달리기 4.5 BU/s', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.x = 10; a.y = 10; a.kx = a.ky = 0;
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  run(g, 1); assert.ok(Math.abs(a.x - 13) < 0.1, `walk x=${a.x}`);
+  a.x = 10;
+  g.setInput('a', { mx: 1, my: 0, run: true });
+  run(g, 1); assert.ok(Math.abs(a.x - 14.5) < 0.1, `run x=${a.x}`);
+});
+
+test('점수: 정답 1점 + 먼저 도착한 1~3등 +3/+2/+1, 오답·무응답 0점', () => {
+  const g = new Game(chars, quizzes);
+  const ps = ['a', 'b', 'c', 'd', 'e'].map((t) => g.join({ token: t, name: t, charId: 'blue' }));
+  g.ask(1); // O 정답
+  run(g, 3.1); // 읽는 시간
+  assert.equal(g.phase, PHASE.MOVING);
+  const put = (p, x, y) => { p.x = x; p.y = y; p.kx = p.ky = 0; };
+  // 서로 겹치지 않게 O 구역(왼쪽)에 차례로 도착
+  put(ps[0], 15, 3);          // 아직 대기 공간
+  run(g, 0.2); put(ps[1], 3, 3);   // 먼저 도착
+  run(g, 0.2); put(ps[2], 3, 6);
+  run(g, 0.2); put(ps[0], 3, 9);   // 가장 늦게 도착
+  put(ps[3], 3, 12); // 이 사람은 곧 반대편으로 갈 것
+  run(g, 0.2); put(ps[3], 35, 3);  // X 구역 (오답)
+  put(ps[4], 20, 20);              // 대기 공간 (무응답)
+  g.endQuestion();
+  assert.equal(g.phase, PHASE.REVEAL);
+  const byId = Object.fromEntries(g.reveal.results.map((r) => [r.id, r]));
+  assert.equal(byId.b.gain, 4); // 1등
+  assert.equal(byId.c.gain, 3); // 2등
+  assert.equal(byId.a.gain, 2); // 3등
+  assert.equal(byId.d.gain, 0);
+  assert.equal(byId.e.gain, 0);
+  assert.equal(byId.e.zone, null);
+});
+
+test('구역을 옮기거나 밀려 나갔다 오면 도착 시각이 초기화된다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  g.ask(1); run(g, 3.1);
+  const put = (p, x, y) => { p.x = x; p.y = y; p.kx = p.ky = 0; };
+  put(a, 3, 3); put(b, 15, 15);
+  run(g, 0.3); put(b, 3, 8);  // b는 나중에 들어옴
+  run(g, 0.3); put(a, 15, 3); // a가 밀려서 나갔다가
+  run(g, 0.1); put(a, 3, 3);  // 다시 들어옴 → 초기화되어 b보다 늦다
+  g.endQuestion();
+  const byId = Object.fromEntries(g.reveal.results.map((r) => [r.id, r]));
+  assert.equal(byId.b.rank, 1);
+  assert.equal(byId.a.rank, 2);
+});
+
+test('재접속하면 외형과 점수가 유지된다', () => {
+  const g = new Game(chars, quizzes);
+  const p = g.join({ token: 't1', name: '철수', charId: 'blue_ranged' });
+  p.score = 7;
+  g.setConnected('t1', false);
+  const back = g.join({ token: 't1', name: '다른이름', charId: 'blue' });
+  assert.equal(back.name, '철수');
+  assert.equal(back.charId, 'blue_ranged');
+  assert.equal(back.score, 7);
+});
+
+test('더미 봇(공격형)이 가까운 참가자를 때린다', () => {
+  const g = new Game(chars, quizzes);
+  const p = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  p.x = 20; p.y = 10;
+  const bot = g.addBot('aggro', 'blue');
+  bot.x = 25; bot.y = 10;
+  run(g, 5);
+  assert.ok(p.hp < 10 || p.stunned || g.t < p.invUntil, `hp=${p.hp}`);
+});

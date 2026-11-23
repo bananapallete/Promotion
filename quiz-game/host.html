@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>퀴즈 게임 · 호스트</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="host">
+    <div id="auth" class="panel" hidden>
+      <h1>호스트 로그인</h1>
+      <input id="key" type="text" placeholder="호스트 키" />
+      <button id="login" class="primary" style="margin-top:12px">입장</button>
+      <p id="aerr" style="color:var(--bad)"></p>
+    </div>
+    <div id="app" class="hostgrid" hidden>
+      <div class="card">
+        <h2>진행 상태</h2>
+        <div class="stat"><span id="s-phase">-</span><span id="s-left">-</span><span id="s-players">-</span></div>
+        <div class="row-inline" style="margin-top:12px">
+          <button class="go" id="end">지금 종료 · 정답 공개</button>
+          <button id="gather">모두 대기 공간으로</button>
+          <button class="warn" id="reset">점수 초기화</button>
+        </div>
+        <div id="revealbox" style="margin-top:10px;color:var(--mute);font-size:14px"></div>
+      </div>
+
+      <div class="card">
+        <h2>임시 문제 출제</h2>
+        <div id="qlist"></div>
+        <h2 style="margin-top:16px">문제 추가</h2>
+        <div class="row-inline">
+          <select id="q-type"><option value="ox">O/X</option><option value="choice">객관식(4지선다)</option></select>
+          <input id="q-ans" type="text" placeholder="정답 (O/X 또는 1~4)" size="14" />
+          <input id="q-time" type="number" value="15" min="5" max="60" style="width:70px" />초
+        </div>
+        <div class="row-inline"><input id="q-text" type="text" placeholder="문제 내용" style="flex:1" /><button class="go" id="q-add">추가</button></div>
+      </div>
+
+      <div class="card">
+        <h2>더미 봇 (공격/피격 테스트)</h2>
+        <div class="row-inline">
+          <select id="b-mode">
+            <option value="idle">가만히 서 있기</option>
+            <option value="wander">돌아다니기</option>
+            <option value="aggro">가까운 참가자 공격</option>
+          </select>
+          <select id="b-char"></select>
+          <input id="b-count" type="number" value="1" min="1" max="10" style="width:64px" />
+          <button class="go" id="b-add">추가</button>
+          <button class="warn" id="b-clear">전부 제거</button>
+        </div>
+        <p style="color:var(--mute);font-size:13px;margin:8px 0 0">봇은 점수 계산에서 빠지고, 참가자와 같은 충돌·피격·기절 규칙을 따라요.</p>
+      </div>
+
+      <div class="card">
+        <h2>참가자</h2>
+        <table><thead><tr><th>이름</th><th>캐릭터</th><th>체력</th><th>점수</th><th></th></tr></thead><tbody id="plist"></tbody></table>
+      </div>
+    </div>
+    <script type="module" src="/src/host.js"></script>
+  </body>
+</html>

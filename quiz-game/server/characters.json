@@ -1,0 +1,44 @@
+{
+  "blue": {
+    "name": "파란티 (근접)",
+    "sprite": "blue",
+    "radius": 0.5,
+    "hp": 10,
+    "walkSpeed": 3,
+    "runSpeed": 4.5,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "attack": {
+      "type": "melee",
+      "dmgMin": 2,
+      "dmgMax": 3,
+      "interval": 0.3333,
+      "range": 1.2,
+      "knockback": 0.5,
+      "canAttackWhileRunning": true
+    }
+  },
+  "blue_ranged": {
+    "name": "파란티 (원거리 · 테스트용)",
+    "sprite": "blue",
+    "radius": 0.5,
+    "hp": 10,
+    "walkSpeed": 3,
+    "runSpeed": 4.5,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 1,
+      "dmgMax": 1,
+      "interval": 0.5,
+      "range": 5,
+      "knockback": 0.3,
+      "canAttackWhileRunning": false
+    }
+  }
+}
