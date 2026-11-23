@@ -50,7 +50,7 @@ body.play { overflow: hidden; touch-action: none; user-select: none; -webkit-use
 #result { position: absolute; top: 42%; left: 0; right: 0; text-align: center; font-size: 30px; font-weight: 800; text-shadow: 0 2px 8px #000; pointer-events: none; }
 #flag { position: absolute; top: 34%; left: 0; right: 0; text-align: center; font-size: 22px; font-weight: 800; color: #ffd54a; text-shadow: 0 2px 6px #000; pointer-events: none; }
 #pad { position: absolute; left: max(20px, env(safe-area-inset-left)); bottom: max(26px, env(safe-area-inset-bottom)); width: 150px; height: 150px; border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff40; touch-action: none; }
-#pad::before { content: ''; position: absolute; left: 50%; top: 50%; width: 25%; height: 25%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px dashed #ffffff55; pointer-events: none; }
+#pad::before { content: ''; position: absolute; left: 50%; top: 50%; width: 50%; height: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px dashed #ffffff55; pointer-events: none; }
 #stick { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: #ffffffa0; }
 .abtn { position: absolute; border-radius: 50%; border: 3px solid #ffffff60; color: #fff; font-weight: 800; touch-action: none; display: grid; place-items: center; background: #ff6b6baa; }
 #btnAtk { right: max(24px, env(safe-area-inset-right)); bottom: max(34px, env(safe-area-inset-bottom)); width: 112px; height: 112px; font-size: 22px; }
