@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { PHASE } from '../shared/constants.js';
+import { JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
 const socket = io();
@@ -57,9 +57,10 @@ function moveStick(e) {
   const d = Math.hypot(dx, dy), k = d > padR ? padR / d : 1;
   dx *= k; dy *= k;
   stick.style.transform = `translate(${dx}px, ${dy}px)`;
-  const mx = dx / padR, my = dy / padR;
-  input.mx = Math.hypot(mx, my) < 0.12 ? 0 : mx;
-  input.my = Math.hypot(mx, my) < 0.12 ? 0 : my;
+  // 데드존 안쪽은 정지, 바깥은 거리와 상관없이 방향만 전달 (속도는 항상 일정)
+  const dist = Math.hypot(dx, dy);
+  if (dist < padR * JOYSTICK_DEADZONE) { input.mx = 0; input.my = 0; }
+  else { input.mx = dx / dist; input.my = dy / dist; }
   mark();
 }
 pad.addEventListener('pointerdown', (e) => {

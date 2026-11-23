@@ -3,7 +3,7 @@ import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
-import { PHASE } from '../shared/constants.js';
+import { JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 import idle from '../public/characters/blue/idle.png';
 import walk from '../public/characters/blue/walk.png';
 import run from '../public/characters/blue/run.png';
@@ -13,9 +13,11 @@ hooks.spriteUrl = (_s, m) => ({ idle, walk, run, combo })[m];
 
 const $ = (s) => document.querySelector(s);
 const ME = 'me';
+window.__game = null; // 테스트용 접근
 
 // ---------- 게임 ----------
 const game = new Game(characters, quizzes);
+window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
 game.addBot('idle', 'blue');
 game.addBot('idle', 'blue');
@@ -91,8 +93,11 @@ function moveStick(e) {
   const d = Math.hypot(dx, dy), k = d > padR ? padR / d : 1;
   dx *= k; dy *= k;
   stick.style.transform = `translate(${dx}px, ${dy}px)`;
-  const mx = dx / padR, my = dy / padR, dead = Math.hypot(mx, my) < 0.12;
-  input.mx = dead ? 0 : mx; input.my = dead ? 0 : my; sendInput();
+  // 데드존 안쪽은 정지, 바깥은 거리와 상관없이 방향만 전달 (속도는 항상 일정)
+  const dist = Math.hypot(dx, dy);
+  if (dist < padR * JOYSTICK_DEADZONE) { input.mx = 0; input.my = 0; }
+  else { input.mx = dx / dist; input.my = dy / dist; }
+  sendInput();
 }
 pad.addEventListener('pointerdown', (e) => {
   pad.setPointerCapture(e.pointerId); padId = e.pointerId;
