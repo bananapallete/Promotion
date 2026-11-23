@@ -211,3 +211,17 @@ test('이동 속도는 항상 일정: 조이스틱을 살짝 밀어도 같은 �
   run(g, 1);
   assert.ok(Math.abs(Math.hypot(a.x - 10, a.y - 10) - 3) < 0.05);
 });
+
+test('기절한 캐릭터는 마지막 일격에도, 쓰러진 뒤에도 밀리지 않는다', () => {
+  const { g, a, b } = setup();
+  b.hp = 2; b.cfg = { ...b.cfg }; // 한 대(2~3)로 쓰러짐
+  const x0 = b.x;
+  g.attack('a', null);
+  assert.equal(b.stunned, true);
+  run(g, 0.3);
+  assert.ok(Math.abs(b.x - x0) < 0.05, `마지막 일격에 밀림: ${b.x - x0}`);
+  // 쓰러져 있는 동안 계속 맞아도 제자리
+  for (let i = 0; i < 4; i++) { g.attack('a', null); run(g, 0.4); }
+  assert.ok(Math.abs(b.x - x0) < 0.05, `쓰러진 뒤 밀림: ${b.x - x0}`);
+  assert.equal(b.hp, 0);
+});

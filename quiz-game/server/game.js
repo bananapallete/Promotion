@@ -228,12 +228,15 @@ export class Game {
       if (target.hp === 0) {
         target.stunned = true;
         target.stunUntil = this.t + target.cfg.stunSec;
+        target.kx = target.ky = 0; // 쓰러지는 순간 미끄러지던 것도 멈춤
         this.events.push({ e: 'stun', id: target.id });
       }
     }
-    // 밀어내기: 총 거리 = knockback (BU)
-    target.kx += dx * a.knockback * KNOCK_DECAY;
-    target.ky += dy * a.knockback * KNOCK_DECAY;
+    // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knockback (BU)
+    if (!target.stunned) {
+      target.kx += dx * a.knockback * KNOCK_DECAY;
+      target.ky += dy * a.knockback * KNOCK_DECAY;
+    }
     this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, x: r2(target.x), y: r2(target.y) });
   }
 
