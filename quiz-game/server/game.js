@@ -81,7 +81,8 @@ export class Game {
     if (!p || !i) return;
     const mx = Number(i.mx) || 0, my = Number(i.my) || 0;
     const len = Math.hypot(mx, my);
-    p.input = { mx: len > 1 ? mx / len : mx, my: len > 1 ? my / len : my, run: !!i.run };
+    // 방향만 사용: 조이스틱을 얼마나 밀었든 항상 같은 속도 (가속·감속 없음)
+    p.input = len > 0.1 ? { mx: mx / len, my: my / len, run: !!i.run } : { mx: 0, my: 0, run: !!i.run };
   }
 
   // ---------- 진행 ----------
@@ -347,7 +348,7 @@ export class Game {
       if (Math.random() < 0.25) { p.ai.mx = 0; p.ai.my = 0; }
       else { const ang = rand(0, Math.PI * 2); p.ai.mx = Math.cos(ang); p.ai.my = Math.sin(ang); }
     }
-    p.input = { mx: p.ai.mx * 0.7, my: p.ai.my * 0.7, run: false };
+    p.input = { mx: p.ai.mx, my: p.ai.my, run: false };
   }
 
   // ---------- 방송용 ----------

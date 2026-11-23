@@ -36,8 +36,8 @@ scene.onFrame = (sc) => {
   const v = sc.views.get(ME);
   const w = sc.scale.width, h = sc.scale.height;
   if (follow && v) {
-    // 세로 화면은 폭 11칸, 가로 화면은 폭 16칸이 보이도록 (1칸 = 몸 폭 1개)
-    cam.setZoom(w / ((h > w ? 11 : 16) * BU));
+    // 세로 화면은 폭 16.5칸, 가로 화면은 폭 24칸이 보이도록 (1칸 = 몸 폭 1개)
+    cam.setZoom(w / ((h > w ? 16.5 : 24) * BU));
     cam.centerOn(v.x, v.y - 30);
   } else {
     cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));

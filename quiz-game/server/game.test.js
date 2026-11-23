@@ -194,3 +194,20 @@ test('더미 봇(공격형)이 가까운 참가자를 때린다', () => {
   run(g, 5);
   assert.ok(p.hp < 10 || p.stunned || g.t < p.invUntil, `hp=${p.hp}`);
 });
+
+test('이동 속도는 항상 일정: 조이스틱을 살짝 밀어도 같은 속도, 가속 없음', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.x = 10; a.y = 10; a.kx = a.ky = 0;
+  g.setInput('a', { mx: 0.3, my: 0, run: false }); // 살짝 밀기
+  g.update(DT);
+  const first = a.x - 10;
+  assert.ok(Math.abs(first - 3 * DT) < 1e-6, `첫 틱부터 최고 속도여야 함: ${first}`);
+  const x1 = a.x; run(g, 1);
+  assert.ok(Math.abs(a.x - x1 - 3) < 0.05, `1초에 3칸: ${a.x - x1}`);
+  // 대각선도 같은 속도
+  a.x = 10; a.y = 10;
+  g.setInput('a', { mx: 1, my: 1, run: false });
+  run(g, 1);
+  assert.ok(Math.abs(Math.hypot(a.x - 10, a.y - 10) - 3) < 0.05);
+});
