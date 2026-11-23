@@ -2,7 +2,7 @@
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import quizzes from '../server/quizzes.test.json';
-import { hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
+import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { PHASE } from '../shared/constants.js';
 import idle from '../public/characters/blue/idle.png';
 import walk from '../public/characters/blue/walk.png';
@@ -29,16 +29,18 @@ setInterval(() => {
 }, 33);
 
 // ---------- 화면 ----------
-const { scene } = startWorld('game');
+const { scene } = startWorld('game', { fill: true });
 let follow = true;
 scene.onFrame = (sc) => {
   const cam = sc.cameras.main;
   const v = sc.views.get(ME);
+  const w = sc.scale.width, h = sc.scale.height;
   if (follow && v) {
-    cam.setZoom(2.6);
+    // 세로 화면은 폭 11칸, 가로 화면은 폭 16칸이 보이도록 (1칸 = 몸 폭 1개)
+    cam.setZoom(w / ((h > w ? 11 : 16) * BU));
     cam.centerOn(v.x, v.y - 30);
   } else {
-    cam.setZoom(1);
+    cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));
     cam.centerOn(WORLD_W / 2, WORLD_H / 2);
   }
 };
@@ -168,7 +170,3 @@ $('#panel').addEventListener('click', (e) => {
   }
 });
 
-// 세로 화면이면 가로로 돌리라고 안내
-const mq = matchMedia('(orientation: portrait)');
-const rot = () => { $('#rotate').hidden = !mq.matches; };
-mq.addEventListener('change', rot); rot();

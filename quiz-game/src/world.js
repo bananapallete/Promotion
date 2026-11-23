@@ -177,17 +177,22 @@ export class WorldScene extends Phaser.Scene {
   }
 }
 
-export function startWorld(parentId) {
+export function startWorld(parentId, opts = {}) {
   const scene = new WorldScene();
-  const game = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: parentId,
-    width: WORLD_W,
-    height: WORLD_H,
-    backgroundColor: '#6f8296',
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene,
-    render: { antialias: true },
-  });
+  let config;
+  if (opts.fill) {
+    // 부모 영역을 가득 채우는 모드(폰 세로 화면용). 고해상도 화면에서도 선명하도록 dpr배로 그린다.
+    const parent = document.getElementById(parentId);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    config = { width: Math.round(parent.clientWidth * dpr), height: Math.round(parent.clientHeight * dpr), scale: { mode: Phaser.Scale.NONE, zoom: 1 / dpr } };
+    scene.dpr = dpr;
+  } else {
+    config = { width: WORLD_W, height: WORLD_H, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } };
+  }
+  const game = new Phaser.Game({ type: Phaser.AUTO, parent: parentId, backgroundColor: '#6f8296', scene, render: { antialias: true }, ...config });
+  if (opts.fill) {
+    const parent = document.getElementById(parentId);
+    addEventListener('resize', () => game.scale.resize(Math.round(parent.clientWidth * scene.dpr), Math.round(parent.clientHeight * scene.dpr)));
+  }
   return { game, scene };
 }

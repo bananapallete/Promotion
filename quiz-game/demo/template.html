@@ -10,23 +10,24 @@
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   button, select { font: inherit; }
 
-  #stage { position: absolute; inset: 0; margin: auto; width: min(100vw, calc(100vh * 40 / 22)); height: min(100vh, calc(100vw * 22 / 40)); container-type: inline-size; }
+  #stage { position: absolute; inset: 0; }
   #game, #game canvas { width: 100% !important; height: 100% !important; display: block; }
   #hud { position: absolute; inset: 0; pointer-events: none; }
+  #top { position: absolute; left: 0; right: 0; top: max(8px, env(safe-area-inset-top, 0px)); padding: 0 calc(max(16px, env(safe-area-inset-right, 0px)) + 52px) 0 max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 
-  #me { position: absolute; top: 1.2cqw; left: max(16px, 1.2cqw); width: 22cqw; min-width: 150px; background: rgba(21,27,41,.82); border-radius: 12px; padding: 8px 10px; display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
+  #me { flex: 1 1 150px; max-width: 220px; background: rgba(21,27,41,.82); border-radius: 12px; padding: 8px 10px; display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
   #me .row { display: flex; justify-content: space-between; }
   .bar { height: 7px; background: #0007; border-radius: 99px; overflow: hidden; }
   .bar > i { display: block; height: 100%; width: 100%; background: var(--ok); transition: width .1s; }
   .bar.run > i { background: var(--accent); }
   #flag { min-height: 14px; color: var(--warn); font-size: 12px; }
 
-  #banner { position: absolute; top: 1.2cqw; left: 50%; transform: translateX(-50%); max-width: 46%; background: rgba(29,36,51,.8); border-radius: 12px; padding: 6px 14px; text-align: center; }
+  #banner { flex: 1 1 200px; background: rgba(29,36,51,.8); border-radius: 12px; padding: 6px 14px; text-align: center; }
   #banner[hidden] { display: none; }
   #qn { color: var(--accent); font-weight: 700; font-size: 11px; }
-  #qt { font-size: clamp(13px, 2.3cqw, 24px); font-weight: 800; }
-  #phase { position: absolute; bottom: 1cqw; left: 50%; transform: translateX(-50%); background: rgba(21,27,41,.8); padding: 3px 12px; border-radius: 99px; font-size: 12px; color: var(--mute); white-space: nowrap; }
-  #reveal { position: absolute; top: 5.5cqw; left: 50%; transform: translateX(-50%); padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: clamp(13px, 2cqw, 22px); white-space: nowrap; }
+  #qt { font-size: clamp(15px, 4vw, 22px); font-weight: 800; }
+  #phase { position: absolute; bottom: calc(max(22px, env(safe-area-inset-bottom, 0px)) + 150px); left: 50%; transform: translateX(-50%); background: rgba(21,27,41,.8); padding: 3px 12px; border-radius: 99px; font-size: 12px; color: var(--mute); white-space: nowrap; }
+  #reveal { flex: 1 1 100%; text-align: center; padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: clamp(14px, 4vw, 20px); }
   #reveal.ok { background: var(--ok); color: #06331a; }
   #reveal.bad { background: var(--bad); color: #3b0b0b; }
   #reveal[hidden] { display: none; }
@@ -35,7 +36,7 @@
   #stick { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: #ffffffa0; }
   .abtn { position: fixed; border-radius: 50%; border: 3px solid #ffffff60; color: #fff; font-weight: 800; touch-action: none; display: grid; place-items: center; cursor: pointer; }
   #btnAtk { right: max(22px, env(safe-area-inset-right, 0px)); bottom: max(28px, env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
-  #btnRun { right: max(140px, calc(env(safe-area-inset-right, 0px) + 124px)); bottom: max(22px, env(safe-area-inset-bottom, 0px)); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
+  #btnRun { right: max(36px, calc(env(safe-area-inset-right, 0px) + 14px)); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
   #btnRun.on { background: var(--accent); transform: scale(.94); }
   #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 
@@ -51,21 +52,21 @@
   #panel button.sel { outline: 2px solid var(--accent); }
   #panel p { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
 
-  #rotate { position: fixed; left: 0; right: 0; top: 0; padding: 10px max(16px, env(safe-area-inset-left, 0px)); background: var(--warn); color: #3a2f00; font-weight: 800; text-align: center; font-size: 14px; z-index: 30; }
-  #rotate[hidden] { display: none; }
 </style>
 
 <div id="stage">
   <div id="game"></div>
   <div id="hud">
-    <div id="me">
-      <div class="row"><span>나</span><span id="score">0점</span></div>
-      <div class="bar" title="체력"><i id="hp"></i></div>
-      <div class="bar run" title="달리기"><i id="rg"></i></div>
-      <div id="flag"></div>
+    <div id="top">
+      <div id="me">
+        <div class="row"><span>나</span><span id="score">0점</span></div>
+        <div class="bar" title="체력"><i id="hp"></i></div>
+        <div class="bar run" title="달리기"><i id="rg"></i></div>
+        <div id="flag"></div>
+      </div>
+      <div id="banner" hidden><div id="qn"></div><div id="qt"></div></div>
+      <div id="reveal" hidden></div>
     </div>
-    <div id="banner" hidden><div id="qn"></div><div id="qt"></div></div>
-    <div id="reveal" hidden></div>
     <div id="phase"></div>
   </div>
 </div>
@@ -106,7 +107,6 @@
     <button class="warn" data-act="reset" type="button">점수 초기화</button>
   </div>
 </div>
-<div id="rotate" hidden>폰을 가로로 돌려서 해보세요</div>
 
 <script>
 /*BUNDLE*/
