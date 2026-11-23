@@ -49,9 +49,9 @@ let dirty = false;
 const mark = () => { dirty = true; };
 setInterval(() => { if (dirty) { dirty = false; socket.emit('input', { ...input }); } }, 50);
 
-// 조이스틱
-const pad = $('#pad'), stick = $('#stick');
-let padId = null, padC = { x: 0, y: 0 }, padR = 75;
+// 조이스틱: 화면 왼쪽 절반 어디든 터치하면 그 지점이 중심이 된다 (플로팅 조이스틱)
+const zone = $('#lzone'), pad = $('#pad'), stick = $('#stick'), hint = $('#padHint');
+let padId = null, padC = { x: 0, y: 0 }, padR = 66;
 function moveStick(e) {
   let dx = e.clientX - padC.x, dy = e.clientY - padC.y;
   const d = Math.hypot(dx, dy), k = d > padR ? padR / d : 1;
@@ -63,19 +63,22 @@ function moveStick(e) {
   else { input.mx = dx / dist; input.my = dy / dist; }
   mark();
 }
-pad.addEventListener('pointerdown', (e) => {
-  pad.setPointerCapture(e.pointerId); padId = e.pointerId;
-  const r = pad.getBoundingClientRect();
-  padC = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; padR = r.width / 2;
+zone.addEventListener('pointerdown', (e) => {
+  if (padId !== null) return; // 손가락 하나만 조이스틱으로
+  zone.setPointerCapture(e.pointerId); padId = e.pointerId;
+  padC = { x: e.clientX, y: e.clientY }; padR = pad.offsetWidth / 2;
+  pad.style.left = `${padC.x}px`; pad.style.top = `${padC.y}px`;
+  pad.classList.add('on'); hint.classList.add('off');
   moveStick(e);
 });
-pad.addEventListener('pointermove', (e) => { if (e.pointerId === padId) moveStick(e); });
+zone.addEventListener('pointermove', (e) => { if (e.pointerId === padId) moveStick(e); });
 const padEnd = (e) => {
   if (e.pointerId !== padId) return;
-  padId = null; stick.style.transform = ''; input.mx = 0; input.my = 0; mark();
+  padId = null; stick.style.transform = ''; pad.classList.remove('on'); hint.classList.remove('off');
+  input.mx = 0; input.my = 0; mark();
 };
-pad.addEventListener('pointerup', padEnd);
-pad.addEventListener('pointercancel', padEnd);
+zone.addEventListener('pointerup', padEnd);
+zone.addEventListener('pointercancel', padEnd);
 
 // 달리기 (누르고 있는 동안)
 const runBtn = $('#btnRun');

@@ -26,18 +26,22 @@
   #banner[hidden] { display: none; }
   #qn { color: var(--accent); font-weight: 700; font-size: 11px; }
   #qt { font-size: clamp(15px, 4vw, 22px); font-weight: 800; }
-  #phase { position: absolute; bottom: calc(max(22px, env(safe-area-inset-bottom, 0px)) + 150px); left: 50%; transform: translateX(-50%); background: rgba(21,27,41,.8); padding: 3px 12px; border-radius: 99px; font-size: 12px; color: var(--mute); white-space: nowrap; }
+  #phase { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(max(22px, env(safe-area-inset-bottom, 0px)) + 236px); background: rgba(21,27,41,.8); padding: 3px 12px; border-radius: 99px; font-size: 12px; color: var(--mute); white-space: nowrap; }
   #reveal { flex: 1 1 100%; text-align: center; padding: 6px 16px; border-radius: 10px; font-weight: 800; font-size: clamp(14px, 4vw, 20px); }
   #reveal.ok { background: var(--ok); color: #06331a; }
   #reveal.bad { background: var(--bad); color: #3b0b0b; }
   #reveal[hidden] { display: none; }
 
-  #pad { position: fixed; left: max(20px, env(safe-area-inset-left, 0px)); bottom: max(22px, env(safe-area-inset-bottom, 0px)); width: 132px; height: 132px; border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff40; touch-action: none; }
+  #lzone { position: fixed; left: 0; top: 130px; bottom: 0; width: 50%; touch-action: none; z-index: 1; }
+#padHint { position: fixed; left: max(92px, 25vw); bottom: 110px; width: 110px; height: 110px; transform: translate(-50%, 50%); border-radius: 50%; border: 2px dashed #ffffff40; display: grid; place-items: center; color: #ffffff70; font-size: 12px; pointer-events: none; transition: opacity .15s; }
+#padHint.off { opacity: 0; }
+#pad { position: fixed; left: 0; top: 0; width: 132px; height: 132px; transform: translate(-50%, -50%); border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff40; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 2; }
+#pad.on { opacity: 1; }
 #pad::before { content: ''; position: absolute; left: 50%; top: 50%; width: 50%; height: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px dashed #ffffff55; pointer-events: none; }
   #stick { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: #ffffffa0; }
   .abtn { position: fixed; border-radius: 50%; border: 3px solid #ffffff60; color: #fff; font-weight: 800; touch-action: none; display: grid; place-items: center; cursor: pointer; }
-  #btnAtk { right: max(22px, env(safe-area-inset-right, 0px)); bottom: max(28px, env(safe-area-inset-bottom, 0px)); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
-  #btnRun { right: max(36px, calc(env(safe-area-inset-right, 0px) + 14px)); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
+  #btnAtk { right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
+  #btnRun { right: calc(max(56px, 13vw) + 14px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
   #btnRun.on { background: var(--accent); transform: scale(.94); }
   #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 
@@ -72,6 +76,8 @@
   </div>
 </div>
 
+<div id="lzone"></div>
+<div id="padHint">조이스틱</div>
 <div id="pad"><div id="stick"></div></div>
 <button id="btnRun" class="abtn" type="button">달리기</button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
