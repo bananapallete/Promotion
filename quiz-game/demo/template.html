@@ -86,11 +86,12 @@
   <p>문제 1의 정답은 O(왼쪽), 문제 2의 정답은 4번(오른쪽 아래)이에요. 구역에 먼저 들어갈수록 보너스가 커요.</p>
   <h3>더미 봇</h3>
   <div class="row-inline">
-    <select id="b-mode"><option value="idle">가만히</option><option value="wander">배회</option><option value="aggro" selected>공격형</option></select>
+    <select id="b-mode"><option value="idle" selected>가만히</option><option value="wander">배회</option><option value="aggro">공격형</option></select>
     <select id="b-char"><option value="blue">근접</option><option value="blue_ranged">원거리</option></select>
     <button class="go" data-act="bot" type="button">추가</button>
     <button class="warn" data-act="clear" type="button">전부 제거</button>
   </div>
+  <p><label><input type="checkbox" id="b-attack" /> 봇이 공격하게 하기 (공격형만, 기본 꺼짐)</label></p>
   <h3>내 캐릭터</h3>
   <div class="row-inline">
     <button class="sel" data-act="char" data-id="blue" type="button">근접</button>

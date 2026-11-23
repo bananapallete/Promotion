@@ -30,9 +30,9 @@
           "knockback": 1
         },
         {
-          "dmg": 1,
-          "range": 1,
-          "knockback": 1
+          "dmg": 1.5,
+          "range": 1.15,
+          "knockback": 1.6
         }
       ]
     }

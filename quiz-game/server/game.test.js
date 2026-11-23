@@ -185,8 +185,19 @@ test('재접속하면 외형과 점수가 유지된다', () => {
   assert.equal(back.score, 7);
 });
 
-test('더미 봇(공격형)이 가까운 참가자를 때린다', () => {
+test('더미 봇은 기본적으로 공격하지 않는다', () => {
   const g = new Game(chars, quizzes);
+  const p = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  p.x = 20; p.y = 10;
+  const bot = g.addBot('aggro', 'blue');
+  bot.x = 21; bot.y = 10;
+  run(g, 5);
+  assert.equal(p.hp, 10);
+});
+
+test('더미 봇(공격형)이 가까운 참가자를 때린다 (공격 허용을 켰을 때)', () => {
+  const g = new Game(chars, quizzes);
+  g.botsCanAttack = true;
   const p = g.join({ token: 'a', name: 'A', charId: 'blue' });
   p.x = 20; p.y = 10;
   const bot = g.addBot('aggro', 'blue');
@@ -249,4 +260,19 @@ test('콤보 배율: 3타만 피해·밀림·사거리를 키울 수 있다', ()
   assert.equal(hit(21), 2);   // 1타
   assert.equal(hit(21), 2);   // 2타
   assert.equal(hit(21.4), 4); // 3타: 피해 2배, 거리 1.4도 닿음(사거리 1.5)
+});
+
+test('3타 휘두르기는 1·2타보다 강하다 (기본 설정)', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  b.cfg = { ...b.cfg, hp: 1000 };
+  const dmg = [];
+  for (let i = 0; i < 3; i++) {
+    a.x = 20; a.y = 10; b.x = 21; b.y = 10; b.kx = b.ky = 0; b.hp = 1000;
+    g.attack('a', null); dmg.push(1000 - b.hp);
+    run(g, 0.4);
+  }
+  assert.ok(dmg[0] <= 3 && dmg[1] <= 3, `1,2타: ${dmg}`);
+  assert.ok(dmg[2] >= 3 && dmg[2] > Math.min(dmg[0], dmg[1]) - 1 && dmg[2] <= 5, `3타: ${dmg}`);
 });

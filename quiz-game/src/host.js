@@ -15,6 +15,7 @@ function auth(key) {
     try { localStorage.setItem(KEY, key); } catch { /* ignore */ }
     $('#auth').hidden = true; $('#app').hidden = false;
     renderQuestions(res.questions);
+    $('#b-attack').checked = !!res.botsCanAttack;
   });
 }
 socket.on('connect', () => auth(getKey()));
@@ -25,7 +26,7 @@ fetch('/api/characters').then((r) => r.json()).then((c) => {
   $('#b-char').innerHTML = Object.entries(c).map(([id, v]) => `<option value="${id}">${esc(v.name)}</option>`).join('');
 });
 
-socket.on('host:info', (i) => renderQuestions(i.questions));
+socket.on('host:info', (i) => { renderQuestions(i.questions); $('#b-attack').checked = !!i.botsCanAttack; });
 
 function renderQuestions(list) {
   $('#qlist').innerHTML = list.map((q) => `
@@ -53,6 +54,7 @@ $('#q-add').addEventListener('click', () => {
 });
 
 $('#b-add').addEventListener('click', () => socket.emit('host:addBot', { mode: $('#b-mode').value, charId: $('#b-char').value, count: Number($('#b-count').value) }));
+$('#b-attack').addEventListener('change', (e) => socket.emit('host:botAttack', { on: e.target.checked }));
 $('#b-clear').addEventListener('click', () => socket.emit('host:clearBots'));
 
 const phaseName = { [PHASE.LOBBY]: '대기', [PHASE.READING]: '문제 읽는 중', [PHASE.MOVING]: '이동 중', [PHASE.REVEAL]: '정답 공개' };

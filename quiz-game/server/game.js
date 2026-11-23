@@ -24,6 +24,7 @@ export class Game {
     this.reveal = null;
     this.events = [];
     this.botSeq = 0;
+    this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
   }
 
   // ---------- 플레이어 ----------
@@ -337,7 +338,7 @@ export class Game {
   _botThink(p) {
     if (p.stunned || p.botMode === 'idle') { p.input = { mx: 0, my: 0, run: false }; return; }
     const humans = [...this.players.values()].filter((o) => !o.isBot && o.connected);
-    if (p.botMode === 'aggro' && humans.length) {
+    if (p.botMode === 'aggro' && this.botsCanAttack && humans.length) {
       let best = null, bd = Infinity;
       for (const o of humans) {
         const d = Math.hypot(o.x - p.x, o.y - p.y);
@@ -400,6 +401,7 @@ export class Game {
     return {
       questions: this.questions.map((q) => ({ id: q.id, type: q.type, text: q.text, answer: q.answer, time: q.time })),
       zones: ZONES,
+      botsCanAttack: this.botsCanAttack,
     };
   }
 }

@@ -17,7 +17,7 @@ const ME = 'me';
 // ---------- 게임 ----------
 const game = new Game(characters, quizzes);
 game.join({ token: ME, name: '나', charId: 'blue' });
-game.addBot('aggro', 'blue');
+game.addBot('idle', 'blue');
 game.addBot('idle', 'blue');
 game.addBot('wander', 'blue_ranged');
 
@@ -149,6 +149,7 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
 
 // ---------- 테스트 패널 ----------
+$('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });
 $('#gear').addEventListener('click', () => { $('#panel').hidden = !$('#panel').hidden; });
 $('#panel').addEventListener('click', (e) => {
   const a = e.target.closest('[data-act]')?.dataset;
