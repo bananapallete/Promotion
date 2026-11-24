@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { PHASE } from '../shared/constants.js';
+import { fmtScore, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
 const socket = io();
@@ -41,6 +41,7 @@ $('#qlist').addEventListener('click', (e) => {
 });
 
 $('#end').addEventListener('click', () => socket.emit('host:end'));
+$('#coin').addEventListener('click', () => socket.emit('host:spawnCoin'));
 $('#gather').addEventListener('click', () => socket.emit('host:gather'));
 $('#reset').addEventListener('click', () => { if (confirm('모든 점수를 0으로 되돌릴까요?')) socket.emit('host:reset'); });
 
@@ -66,7 +67,7 @@ socket.on('state', (s) => {
 
   const scoreOf = Object.fromEntries((s.lb || []).map((r) => [r.id, r.score]));
   $('#plist').innerHTML = [...s.players].sort((a, b) => (b.sc - a.sc)).map((p) =>
-    `<tr><td>${p.b ? '🤖 ' : ''}${esc(p.n)}</td><td>${esc(chars[p.c]?.name || p.c)}</td><td>${p.st ? '기절' : `${p.hp}/${p.mhp}`}</td><td>${p.b ? '-' : (scoreOf[p.id] ?? p.sc)}</td><td>${p.inv ? '무적' : ''}</td></tr>`).join('');
+    `<tr><td>${p.b ? '🤖 ' : ''}${esc(p.n)}</td><td>${esc(chars[p.c]?.name || p.c)}</td><td>${p.st ? '기절' : `${p.hp}/${p.mhp}`}</td><td>${p.b ? '-' : `${fmtScore(scoreOf[p.id] ?? p.sc)} (🪙${p.cn})`}</td><td>${p.inv ? '무적' : ''}</td></tr>`).join('');
 
   if (s.phase === PHASE.REVEAL && s.reveal) {
     const ok = s.reveal.results.filter((r) => r.correct).sort((a, b) => a.rank - b.rank);

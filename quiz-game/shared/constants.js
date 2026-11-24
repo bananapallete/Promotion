@@ -8,6 +8,20 @@ export const BROADCAST_HZ = 20;
 // 조이스틱 데드존: 중심에서 패드 반지름의 이 비율 안쪽은 '움직이지 않음'. 바깥은 얼마나 밀었든 같은 속도
 export const JOYSTICK_DEADZONE = 0.5;
 
+// 동전: 30초마다 맵에 1개 생성, 다가가면 자동 습득(개당 0.5점). 문제를 못 맞히거나 쓰러지면 가진 동전이 전부 튀어나감
+export const COIN = {
+  spawnEverySec: 30,
+  maxOnMap: 30,
+  value: 0.5, // 동전 1개의 점수
+  pickupRadius: 1.0, // 캐릭터 중심과 동전 중심 사이 거리 (칸)
+  scatterRadius: 2.5, // 튀어나온 동전이 떨어지는 반경 (칸, 48px/칸 기준 120px)
+  scatterMin: 0.8, // 몸 바로 밑에는 떨어지지 않도록
+  flightSec: 0.55, // 튀어나와 바닥에 닿기까지
+  ownerLockSec: 2.0, // 자기가 흘린 동전은 이 시간 동안 못 줍는다
+  dropOnNoAnswer: true, // 무응답도 틀린 것으로 보고 떨어뜨림
+};
+export const fmtScore = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
 export const READ_SEC = 3; // 문제를 읽는 시간 (구역이 아직 잠겨 있음)
 
 // 가운데 대기 공간 + 양옆 구역 (객관식은 2x2)

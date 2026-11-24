@@ -1,6 +1,7 @@
 // 빔프로젝터용 큰 맵을 그리는 Phaser 장면. 서버 상태를 받아서 그리기만 한다.
 import Phaser from 'phaser';
 import { MAP, PHASE, SPRITE, WAIT, ZONES } from '../shared/constants.js';
+import { CoinLayer } from './coins.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
 export const WORLD_W = MAP.w * BU;
@@ -43,6 +44,8 @@ export class WorldScene extends Phaser.Scene {
     this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
     this.aim = null;
     this.lockId = null;
+    this.coins = new CoinLayer(this, BU);
+    this.coins.create();
     this.zoneTexts = [];
 
     for (const s of SPRITES) {
@@ -148,6 +151,7 @@ export class WorldScene extends Phaser.Scene {
       if (!seen.has(id)) { this._glowOff(v); v.root.forEach((o) => o.destroy()); this.views.delete(id); }
     }
     for (const e of s.ev || []) this.handleEvent(e);
+    this.coins.apply(s);
   }
 
   makeView(p) {
@@ -156,7 +160,9 @@ export class WorldScene extends Phaser.Scene {
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
-    const v = { sprite, name, bar, status, root: [sprite, name, bar, status], flashUntil: 0, punchUntil: 0, flashing: false, p };
+    const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
+    const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
+    const v = { sprite, name, bar, status, coinIcon, coinTxt, root: [sprite, name, bar, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -248,7 +254,12 @@ export class WorldScene extends Phaser.Scene {
       v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);
       v.name.setPosition(bx, by - 3).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 24).setDepth(v.y + 1);
+      const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
+      const bk = Math.max(0, 1 - (now - v.bump) / 250);
+      v.coinIcon.setVisible(shown > 0).setPosition(bx + bw / 2 + 12, by + 4).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
+      v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx + bw / 2 + 24, by + 4).setDepth(v.y + 1);
     }
+    this.coins.update(now);
     this._drawAim(now);
     this.onFrame?.(this, delta);
   }

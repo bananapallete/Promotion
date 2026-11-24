@@ -3,7 +3,7 @@ import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
-import { JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
+import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 import idle from '../public/characters/blue/idle.png';
 import walk from '../public/characters/blue/walk.png';
 import run from '../public/characters/blue/run.png';
@@ -64,7 +64,7 @@ function hud(s) {
   if (p) {
     $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
     $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
-    $('#score').textContent = `${p.sc}점`;
+    $('#score').textContent = `🪙${p.cn} · ${fmtScore(p.sc)}점`;
     $('#flag').textContent = p.st ? '기절! 잠시 움직일 수 없어요' : p.inv ? '무적' : '';
   }
   const counting = s.phase === PHASE.READING || s.phase === PHASE.MOVING;
@@ -82,7 +82,7 @@ function hud(s) {
     const mine = s.reveal.results.find((r) => r.id === ME);
     const ans = s.q.type === 'choice' ? `${s.reveal.answer}번` : s.reveal.answer;
     rv.hidden = false;
-    rv.textContent = `정답 ${ans} · ` + (mine ? (mine.correct ? `정답! +${mine.gain}점${mine.rank ? ` (${mine.rank}등)` : ''}` : mine.zone == null ? '무응답' : '오답') : '');
+    rv.textContent = `정답 ${ans} · ` + (mine ? (mine.correct ? `정답! +${mine.gain}점${mine.rank ? ` (${mine.rank}등)` : ''}` : (mine.zone == null ? '무응답' : '오답') + (mine.dropped ? ` · 동전 ${mine.dropped}개 떨어뜨림` : '')) : '');
     rv.className = mine?.correct ? 'ok' : 'bad';
   } else rv.hidden = true;
 }
@@ -175,6 +175,10 @@ $('#panel').addEventListener('click', (e) => {
     case 'ask': game.ask(Number(a.id)); break;
     case 'end': game.endQuestion(); break;
     case 'gather': game.gather(); break;
+    case 'coin': game.spawnCoin(); break;
+    case 'coin5': game.giveCoins(ME, 5); break;
+    case 'ko': game.knockOut(ME); break;
+    case 'coinnear': { const m = game.players.get(ME); game.spawnCoin(m.x + 2.2, m.y); break; }
     case 'reset': game.resetScores(); break;
     case 'clear': game.clearBots(); break;
     case 'bot': game.addBot($('#b-mode').value, $('#b-char').value); break;

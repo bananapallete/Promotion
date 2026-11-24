@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, WAIT, zoneAt, ZONES } from '../shared/constants.js';
+import { COIN, COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, WAIT, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -24,6 +24,9 @@ export class Game {
     this.reveal = null;
     this.events = [];
     this.botSeq = 0;
+    this.coins = new Map(); // 맵 위의 동전 id → {id,x,y,readyAt,lockId,lockUntil}
+    this.coinSeq = 0;
+    this.coinClock = 0;
     this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
   }
 
@@ -70,7 +73,7 @@ export class Game {
       hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
-      score: 0, zone: null, zoneSince: 0,
+      score: 0, coins: 0, zone: null, zoneSince: 0,
       ai: { nextThink: 0, mx: 0, my: 0 },
     };
     this.players.set(id, p);
@@ -117,7 +120,8 @@ export class Game {
   }
 
   resetScores() {
-    for (const p of this.players.values()) p.score = 0;
+    for (const p of this.players.values()) { p.score = 0; p.coins = 0; }
+    this.coins.clear();
     this.phase = PHASE.LOBBY;
     this.question = null;
     this.reveal = null;
@@ -161,7 +165,8 @@ export class Game {
       const bonus = r.correct && r.rank <= BONUS.length ? BONUS[r.rank - 1] : 0;
       const gain = r.correct ? BASE_POINT + bonus : 0;
       r.p.score += gain;
-      return { id: r.p.id, name: r.p.name, zone: r.zone, correct: r.correct, rank: r.correct ? r.rank : null, gain };
+      const dropped = !r.correct && (r.zone != null || COIN.dropOnNoAnswer) ? this._dropCoins(r.p) : 0;
+      return { id: r.p.id, name: r.p.name, zone: r.zone, correct: r.correct, rank: r.correct ? r.rank : null, gain, dropped };
     });
     this.reveal = { answer: q.answer, results };
     this.phase = PHASE.REVEAL;
@@ -251,6 +256,81 @@ export class Game {
     if (target) this._hit(target, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1);
   }
 
+  _ko(target) {
+    target.hp = 0;
+    target.stunned = true;
+    target.stunUntil = this.t + target.cfg.stunSec;
+    target.kx = target.ky = 0; // 쓰러지는 순간 미끄러지던 것도 멈춤
+    this.events.push({ e: 'stun', id: target.id });
+    this._dropCoins(target); // 소닉의 링처럼 가진 동전이 전부 튀어나감
+  }
+
+  /** 테스트/호스트용: 즉시 쓰러뜨리기 */
+  knockOut(id) {
+    const p = this.players.get(id);
+    if (p && !p.stunned) this._ko(p);
+  }
+
+  // ---------- 동전 ----------
+  spawnCoin(x, y) {
+    if (this.coins.size >= COIN.maxOnMap) return null;
+    if (x == null) {
+      for (let i = 0; i < 12; i++) { // 다른 동전과 너무 가깝지 않은 곳
+        x = rand(1, MAP.w - 1); y = rand(1, MAP.h - 1);
+        if ([...this.coins.values()].every((c) => Math.hypot(c.x - x, c.y - y) > 3)) break;
+      }
+    }
+    const c = { id: ++this.coinSeq, x, y, readyAt: this.t + 0.35, lockId: null, lockUntil: 0 };
+    this.coins.set(c.id, c);
+    this.events.push({ e: 'coinSpawn', id: c.id, x: r2(x), y: r2(y) });
+    return c;
+  }
+
+  giveCoins(id, n) {
+    const p = this.players.get(id);
+    if (p) p.coins += n;
+  }
+
+  /** 가진 동전을 전부 몸에서 튀어나가게 함. 반경 안 무작위 지점으로 포물선을 그리며 떨어짐. 떨어뜨린 개수 반환 */
+  _dropCoins(p) {
+    const n = p.coins;
+    if (!n) return 0;
+    p.coins = 0;
+    for (let i = 0; i < n; i++) {
+      const ang = rand(0, Math.PI * 2);
+      const dist = Math.max(COIN.scatterMin, COIN.scatterRadius * Math.sqrt(Math.random())); // 원 안에 고르게
+      const x = Math.min(MAP.w - 0.5, Math.max(0.5, p.x + Math.cos(ang) * dist));
+      const y = Math.min(MAP.h - 0.5, Math.max(0.5, p.y + Math.sin(ang) * dist));
+      const flight = COIN.flightSec * rand(0.85, 1.15);
+      const c = { id: ++this.coinSeq, x, y, readyAt: this.t + flight, lockId: p.id, lockUntil: this.t + COIN.ownerLockSec };
+      this.coins.set(c.id, c);
+      this.events.push({ e: 'coinDrop', id: c.id, fx: r2(p.x), fy: r2(p.y), x: r2(x), y: r2(y), flight: r2(flight) });
+    }
+    return n;
+  }
+
+  _updateCoins(dt, active) {
+    if (active.some((p) => !p.isBot)) { // 참가자가 있을 때만 30초 시계가 간다
+      this.coinClock += dt;
+      if (this.coinClock >= COIN.spawnEverySec) { this.coinClock = 0; this.spawnCoin(); }
+    }
+    for (const c of [...this.coins.values()]) {
+      if (this.t < c.readyAt) continue; // 아직 날아오는 중
+      let best = null, bd = Infinity;
+      for (const p of active) {
+        if (p.isBot || p.stunned) continue; // 봇과 쓰러진 캐릭터는 못 줍는다
+        if (c.lockId === p.id && this.t < c.lockUntil) continue; // 자기가 흘린 건 잠깐 못 줍는다
+        const d = Math.hypot(p.x - c.x, p.y - c.y);
+        if (d <= COIN.pickupRadius && d < bd) { best = p; bd = d; }
+      }
+      if (best) {
+        this.coins.delete(c.id);
+        best.coins += 1;
+        this.events.push({ e: 'coinGet', id: c.id, by: best.id, x: r2(c.x), y: r2(c.y) });
+      }
+    }
+  }
+
   _hit(target, attacker, dx, dy, dmgMul = 1, knockMul = 1) {
     const a = attacker.cfg.attack;
     if (this.t < target.invUntil) { // 무적: 피해도 밀림도 없음
@@ -260,12 +340,7 @@ export class Game {
     const dmg = target.stunned ? 0 : Math.round((a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1))) * dmgMul);
     if (dmg > 0) {
       target.hp = Math.max(0, target.hp - dmg);
-      if (target.hp === 0) {
-        target.stunned = true;
-        target.stunUntil = this.t + target.cfg.stunSec;
-        target.kx = target.ky = 0; // 쓰러지는 순간 미끄러지던 것도 멈춤
-        this.events.push({ e: 'stun', id: target.id });
-      }
+      if (target.hp === 0) this._ko(target);
     }
     // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knockback (BU)
     if (!target.stunned) {
@@ -289,6 +364,7 @@ export class Game {
       this._step(p, dt);
     }
     this._collide(active);
+    this._updateCoins(dt, active);
 
     if (this.phase === PHASE.MOVING) {
       for (const p of active) {
@@ -405,7 +481,7 @@ export class Game {
         st: p.stunned ? 1 : 0, inv: this.t < p.invUntil ? 1 : 0,
         a: p.moving ? (p.running ? 'run' : 'walk') : 'idle',
         rg: r2(p.runGauge), mrg: p.cfg.runGauge,
-        sc: p.score,
+        sc: this.totalScore(p), cn: p.coins,
       });
     }
     const q = this.question
@@ -416,13 +492,18 @@ export class Game {
       left: this.phase === PHASE.READING || this.phase === PHASE.MOVING ? r2(Math.max(0, this.phaseEnd - this.t)) : 0,
       q,
       reveal: this.reveal,
+      coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y) })),
       players,
       ev: events,
     };
   }
 
+  totalScore(p) {
+    return Math.round((p.score + p.coins * COIN.value) * 10) / 10;
+  }
+
   leaderboard() {
-    return this.humans().filter((p) => p.connected).sort((a, b) => b.score - a.score).map((p) => ({ id: p.id, name: p.name, score: p.score }));
+    return this.humans().filter((p) => p.connected).map((p) => ({ id: p.id, name: p.name, score: this.totalScore(p) })).sort((a, b) => b.score - a.score);
   }
 
   hostInfo() {

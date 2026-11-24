@@ -88,6 +88,7 @@ io.on('connection', (socket) => {
     for (let i = 0; i < n; i++) game.addBot(d?.mode, d?.charId);
   });
   host('host:clearBots', () => game.clearBots());
+  host('host:spawnCoin', () => { game.spawnCoin(); });
   host('host:botAttack', (d) => { game.botsCanAttack = !!d?.on; });
 
   socket.on('disconnect', () => { if (socket.data.pid) game.setConnected(socket.data.pid, false); });

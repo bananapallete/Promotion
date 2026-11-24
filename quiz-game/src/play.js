@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
+import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
 const socket = io();
@@ -135,13 +135,13 @@ socket.on('state', (s) => {
   if (!p) return;
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
-  $('#score').textContent = `${p.sc}점`;
+  $('#score').textContent = `🪙${p.cn} · ${fmtScore(p.sc)}점`;
   const left = s.left > 0 ? ` · ${Math.ceil(s.left)}초` : '';
   $('#phase').textContent = (phaseText[s.phase] || '') + left;
   $('#flag').textContent = p.st ? '기절! 잠시 움직일 수 없어요' : p.inv ? '무적' : '';
 
   const r = s.phase === PHASE.REVEAL && s.reveal?.results.find((x) => x.id === me.token);
-  $('#result').textContent = r ? (r.correct ? `정답! +${r.gain}점` : r.zone == null ? '무응답' : '오답') : '';
+  $('#result').textContent = r ? (r.correct ? `정답! +${r.gain}점` : (r.zone == null ? '무응답' : '오답') + (r.dropped ? ` · 동전 ${r.dropped}개를 떨어뜨렸어요` : '')) : '';
   $('#result').style.color = r?.correct ? '#7ee0a1' : '#ff9b9b';
 
   if (s.ev?.some((e) => e.e === 'hit' && e.id === me.token)) navigator.vibrate?.(40);

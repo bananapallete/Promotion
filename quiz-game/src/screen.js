@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import QRCode from 'qrcode';
-import { PHASE } from '../shared/constants.js';
+import { fmtScore, PHASE } from '../shared/constants.js';
 import { startWorld } from './world.js';
 
 const $ = (s) => document.querySelector(s);
@@ -49,7 +49,7 @@ function hud(s) {
 
   const rows = (s.lb || []).slice(0, 5);
   lb.hidden = !rows.length;
-  lb.innerHTML = rows.map((r, i) => `<span>${i + 1}. ${esc(r.name)}<b>${r.score}</b></span>`).join('');
+  lb.innerHTML = rows.map((r, i) => `<span>${i + 1}. ${esc(r.name)}<b>${fmtScore(r.score)}</b></span>`).join('');
 }
 
 function esc(t) { return String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
