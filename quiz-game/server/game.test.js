@@ -397,26 +397,36 @@ test('동전: 쓰러지면 가진 동전이 전부 반경 2.5칸 안으로 튀�
   }
 });
 
-test('동전: 떨어지는 중에는 못 줍고, 흘린 본인은 잠깐 못 줍지만 다른 사람은 바로 줍는다', () => {
+test('동전: 떨어진 동전은 3.5초 동안 아무도(본인 포함) 못 줍고, 지나면 누구나 줍는다', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
   const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
   a.x = 20; a.y = 11; b.x = 3; b.y = 3; g.giveCoins('a', 1);
   g.events = [];
   g.knockOut('a');
+  const drop = g.events.find((e) => e.e === 'coinDrop');
+  assert.equal(drop.lock, 3.5);
   const c = [...g.coins.values()][0];
-  b.x = c.x; b.y = c.y; // 코인이 떨어질 자리에 b가 서 있음
-  g.update(DT); g.update(DT);
-  assert.equal(b.coins, 0, '날아오는 중');
-  run(g, 0.7);
-  assert.equal(b.coins, 1, '착지 후 다른 사람은 줍는다');
-  // 본인은 잠금: 다시 코인 하나 만들어 위에 서 있어도 안 줍는다
+  b.x = c.x; b.y = c.y; // 다른 사람이 동전 위에 서 있어도
+  run(g, 3.3);
+  assert.equal(b.coins, 0, '3.5초 전에는 아무도 못 줍는다');
+  assert.ok(g.snapshot().coins[0].lk > 0, '깜빡임용 남은 시간이 내려간다');
+  run(g, 0.4);
+  assert.equal(b.coins, 1, '3.5초가 지나면 줍는다');
+  // 본인도 3.5초 뒤에는 줍는다 (본인 제한은 없음)
   a.stunned = false; a.stunUntil = 0; g.giveCoins('a', 1); a.x = 20; a.y = 11; g._dropCoins(a);
   const c2 = [...g.coins.values()].at(-1); a.x = c2.x; a.y = c2.y;
-  run(g, 1);
-  assert.equal(a.coins, 0, '잠금 시간 안에는 못 줍는다');
-  run(g, 1.5);
-  assert.equal(a.coins, 1, '잠금이 풀리면 줍는다');
+  run(g, 3.3); assert.equal(a.coins, 0);
+  run(g, 0.4); assert.equal(a.coins, 1);
+});
+
+test('동전: 새로 생긴 동전은 깜빡이지 않고 바로 주울 수 있다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.x = 10; a.y = 10; g.spawnCoin(10.5, 10);
+  assert.equal(g.snapshot().coins[0].lk, 0);
+  run(g, 0.6);
+  assert.equal(a.coins, 1);
 });
 
 test('동전: 문제를 틀리거나 무응답이면 전부 떨어뜨리고, 맞히면 그대로', () => {

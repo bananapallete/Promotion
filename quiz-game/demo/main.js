@@ -32,6 +32,7 @@ setInterval(() => {
 
 // ---------- 화면 ----------
 const { scene } = startWorld('game', { fill: true });
+window.__world = scene; // 테스트용 접근
 let follow = true;
 scene.onFrame = (sc) => {
   const cam = sc.cameras.main;

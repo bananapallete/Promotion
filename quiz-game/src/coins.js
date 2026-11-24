@@ -40,6 +40,9 @@ export class CoinLayer {
       ids.add(c.id);
       const v = this.views.get(c.id) || this._make(c.id, c.x, c.y, 'idle');
       if (v.mode === 'idle') { v.gx = c.x; v.gy = c.y; }
+      // 줍기 금지 시간이 남아 있으면 깜빡임 (중간에 접속해도 맞게 서버가 남은 시간을 알려줌)
+      const until = performance.now() + (c.lk || 0) * 1000;
+      if (c.lk > 0 && until > (v.blinkUntil || 0) + 250) v.blinkUntil = until;
     }
     for (const v of [...this.views.values()]) {
       if (!ids.has(v.id) && v.mode !== 'get') this._destroy(v);
@@ -76,6 +79,7 @@ export class CoinLayer {
     v.mode = 'drop';
     v.d = e;
     v.t0 = performance.now();
+    v.blinkUntil = v.t0 + (e.lock || 0) * 1000; // 줍기 금지 시간 동안 깜빡임
     v.sprite.play('coin-spin-fast');
     v.fast = true;
   }
@@ -84,6 +88,7 @@ export class CoinLayer {
     let v = this.views.get(e.id);
     if (!v) v = this._make(e.id, e.x, e.y, 'idle');
     v.mode = 'get';
+    v.sprite.setAlpha(1);
     v.by = e.by;
     v.t0 = performance.now();
     v.sx0 = v.sprite.x;
@@ -109,6 +114,12 @@ export class CoinLayer {
         }
         case 'drop': this._updateDrop(v, now); break;
         case 'get': this._updateGet(v, now); break;
+      }
+      if (v.mode !== 'get') { // 줍기 금지 중이면 깜빡임 (끝나기 직전엔 더 빠르게)
+        const left = (v.blinkUntil || 0) - now;
+        const on = left <= 0 || Math.floor(now / (left < 700 ? 70 : 130)) % 2 === 0;
+        v.sprite.setAlpha(on ? 1 : 0.18);
+        v.shadow.setAlpha(on ? v.shadow.alpha : 0.05);
       }
     }
   }

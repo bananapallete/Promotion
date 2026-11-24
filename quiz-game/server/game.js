@@ -24,7 +24,7 @@ export class Game {
     this.reveal = null;
     this.events = [];
     this.botSeq = 0;
-    this.coins = new Map(); // 맵 위의 동전 id → {id,x,y,readyAt,lockId,lockUntil}
+    this.coins = new Map(); // 맵 위의 동전 id → {id,x,y,readyAt,lockUntil}
     this.coinSeq = 0;
     this.coinClock = 0;
     this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
@@ -280,7 +280,7 @@ export class Game {
         if ([...this.coins.values()].every((c) => Math.hypot(c.x - x, c.y - y) > 3)) break;
       }
     }
-    const c = { id: ++this.coinSeq, x, y, readyAt: this.t + 0.35, lockId: null, lockUntil: 0 };
+    const c = { id: ++this.coinSeq, x, y, readyAt: this.t + 0.35, lockUntil: 0 };
     this.coins.set(c.id, c);
     this.events.push({ e: 'coinSpawn', id: c.id, x: r2(x), y: r2(y) });
     return c;
@@ -302,9 +302,10 @@ export class Game {
       const x = Math.min(MAP.w - 0.5, Math.max(0.5, p.x + Math.cos(ang) * dist));
       const y = Math.min(MAP.h - 0.5, Math.max(0.5, p.y + Math.sin(ang) * dist));
       const flight = COIN.flightSec * rand(0.85, 1.15);
-      const c = { id: ++this.coinSeq, x, y, readyAt: this.t + flight, lockId: p.id, lockUntil: this.t + COIN.ownerLockSec };
+      // 떨어진 동전은 누구도(떨어뜨린 본인 포함) 일정 시간 못 줍는다
+      const c = { id: ++this.coinSeq, x, y, readyAt: this.t + COIN.dropLockSec, lockUntil: this.t + COIN.dropLockSec };
       this.coins.set(c.id, c);
-      this.events.push({ e: 'coinDrop', id: c.id, fx: r2(p.x), fy: r2(p.y), x: r2(x), y: r2(y), flight: r2(flight) });
+      this.events.push({ e: 'coinDrop', id: c.id, fx: r2(p.x), fy: r2(p.y), x: r2(x), y: r2(y), flight: r2(flight), lock: COIN.dropLockSec });
     }
     return n;
   }
@@ -315,11 +316,10 @@ export class Game {
       if (this.coinClock >= COIN.spawnEverySec) { this.coinClock = 0; this.spawnCoin(); }
     }
     for (const c of [...this.coins.values()]) {
-      if (this.t < c.readyAt) continue; // 아직 날아오는 중
+      if (this.t < c.readyAt) continue; // 생성 직후이거나, 떨어진 뒤 줍기 금지 시간 중
       let best = null, bd = Infinity;
       for (const p of active) {
         if (p.isBot || p.stunned) continue; // 봇과 쓰러진 캐릭터는 못 줍는다
-        if (c.lockId === p.id && this.t < c.lockUntil) continue; // 자기가 흘린 건 잠깐 못 줍는다
         const d = Math.hypot(p.x - c.x, p.y - c.y);
         if (d <= COIN.pickupRadius && d < bd) { best = p; bd = d; }
       }
@@ -492,7 +492,7 @@ export class Game {
       left: this.phase === PHASE.READING || this.phase === PHASE.MOVING ? r2(Math.max(0, this.phaseEnd - this.t)) : 0,
       q,
       reveal: this.reveal,
-      coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y) })),
+      coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),
       players,
       ev: events,
     };
