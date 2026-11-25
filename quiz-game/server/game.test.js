@@ -21,14 +21,14 @@ function setup() {
 }
 const run = (g, sec) => { for (let i = 0; i < Math.round(sec / DT); i++) g.update(DT); };
 
-test('근접 공격: 피해 2~3, 한 대당 약 0.5 밀림', () => {
+test('근접 공격: 피해 2~3, 일반 공격은 밀치지 않는다', () => {
   const { g, a, b } = setup();
   const x0 = b.x;
   g.attack('a', null);
   const d1 = b.cfg.hp - b.hp, A1 = chars.blue.attack;
   assert.ok(d1 >= A1.dmgMin && d1 <= A1.dmgMax, `피해=${d1}`);
   run(g, 1);
-  assert.ok(Math.abs(b.x - x0 - 0.5) < 0.12, `밀린 거리 ${b.x - x0}`); // 충돌로 약간 달라질 수 있음
+  assert.ok(Math.abs(b.x - x0) < 0.05, `밀린 거리 ${b.x - x0}`);
 });
 
 test('공격 간격: 1초에 최대 3번', () => {
@@ -74,7 +74,7 @@ test('기절 중에는 이동 불가', () => {
   assert.ok(Math.abs(b.x - x0) < 0.01);
 });
 
-test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 밀림 0.3, 피해 1', () => {
+test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 밀림 없음, 피해 1', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' });
   const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
@@ -85,7 +85,7 @@ test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 
   run(g, 0.2); assert.equal(b.hp, 50, '아직 날아가는 중 (4.5칸 / 초속 12)');
   run(g, 0.3); assert.equal(b.hp, 50 - chars.blue_ranged.attack.dmgMin);
   run(g, 1);
-  assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
+  assert.ok(Math.abs(b.x - 14.5) < 0.05, `x=${b.x}`);
   assert.equal(g.projectiles.size, 0, '맞으면 사라짐');
   b.x = 16; b.y = 10; run(g, 1); const hp = b.hp; // 사거리 5 + 몸/투사체 반지름 0.75 밖
   g.attack('a', null); run(g, 1);
@@ -138,7 +138,7 @@ test('화염병: 포물선으로 날아가 착탄 지점에서 범위 폭발, �
   assert.equal(near.hp, 50 - bd); assert.equal(edge.hp, 50 - bd, '폭발 가장자리도 맞음');
   assert.equal(out.hp, 50); assert.equal(a.hp, 40, '던진 사람은 안 맞음');
   assert.ok(g.projectiles.size === 0);
-  run(g, 0.6); assert.ok(edge.y > 11.9 + 0.3 && near.x > 15.1, '중심에서 바깥으로 밀림');
+  run(g, 0.6); assert.ok(Math.abs(edge.y - 11.9) < 0.05 && Math.abs(near.x - 15) < 0.05, '폭발도 밀치지 않음');
 });
 
 test('화염병: 자동 조준은 가장 가까운 상대의 위치에 던지고, 미리보기가 착탄 지점을 알려준다', () => {
@@ -613,14 +613,14 @@ test('개구리: 도약은 없고 달리기(부스트) 스킬, 자동차라 기�
   assert.ok(Math.abs(A.x - x0 - chars.frog.runSpeed * DT) < 1e-6, '달리면 runSpeed');
 });
 
-test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려온다', () => {
+test('개구리 혀: 사거리 3.5의 직선, 맞아도 밀리거나 끌려오지 않는다', () => {
   const { g, A, B } = duo('frog', 'blue');
   B.x = 13; B.y = 10; // 3칸 앞
   g.attack('a', null);
   const td = B.cfg.hp - B.hp, ta = chars.frog.attack;
   assert.ok(td >= ta.dmgMin && td <= ta.dmgMax, `혀 피해 ${td}`);
   run(g, 0.6);
-  assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
+  assert.ok(Math.abs(B.x - 13) < 0.05, `끌려오지 않음: ${B.x}`);
   B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
   g.attack('a', null); assert.equal(B.hp, hp, '3.5 밖은 안 맞음');
 });
@@ -785,7 +785,7 @@ test('오크: 예고 0.4초 뒤에 부채꼴로 타격, 그 전에 쓰러지면 
   assert.ok(B.hp < hp, '예고 후 타격');
   // 피하기
   run(g, 1); B.x = A.x + 1.2; B.hp = B.cfg.hp; B.invUntil = 0;
-  g.attack('a', null); B.x = A.x + 4; run(g, w + 0.05);
+  g.attack('a', null); B.x = A.x + 6; run(g, w + 0.05);
   assert.equal(B.hp, B.cfg.hp, '벗어나면 안 맞음');
   // 취소
   run(g, 1); B.x = A.x + 1.2;
@@ -919,4 +919,15 @@ test('궁극기 barrage·meteor·zone: 투사체 n발, 예고 후 폭발, 바닥
   const hp = T3.hp; for (let i = 0; i < 200; i++) g3.update(0.016);
   assert.ok(T3.hp < hp, '불바다 지속 피해');
   assert.ok(g3.snapshot().uz.length >= 0);
+});
+
+test('오크: 길고 좁은 원뿔(사거리 4, ±28°) — 정면 멀리는 맞고, 옆은 가까워도 안 맞는다', () => {
+  const { g, A, B } = duo('orc', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  assert.equal(chars.orc.attack.range, 4);
+  A.x = 8; A.y = 10; B.x = 11.6; B.y = 10; C.x = 8; C.y = 12; // C는 바로 옆(90°)
+  g.attack('a', { x: 1, y: 0 });
+  run(g, chars.orc.attack.windup + 0.05);
+  assert.ok(B.hp < B.cfg.hp, '정면 3.6칸 맞음');
+  assert.equal(C.hp, C.cfg.hp, '옆은 안 맞음');
 });
