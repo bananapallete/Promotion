@@ -48,6 +48,9 @@
   #btnAtk { right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
   #btnRun { right: calc(max(56px, 13vw) + 14px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
   #btnRun.on { background: var(--accent); transform: scale(.94); }
+  #ammo { position: fixed; right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 18px); width: 100px; display: flex; gap: 4px; pointer-events: none; }
+  #ammo[hidden] { display: none; }
+  #ammo i { --f: 0; flex: 1; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), #0008 0); box-shadow: 0 0 0 1.5px #ffffff55 inset; }
   #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 
   #gear { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; z-index: 20; }
@@ -88,6 +91,7 @@
 <div id="pad"><div id="stick"></div></div>
 <button id="btnRun" class="abtn" type="button">달리기</button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
+<div id="ammo" hidden></div>
 
 <button id="gear" type="button" aria-label="테스트 패널">⚙</button>
 <div id="panel" hidden>
@@ -103,6 +107,7 @@
     <select id="b-char"></select>
     <button class="go" data-act="bot" type="button">추가</button>
     <button class="warn" data-act="clear" type="button">제거</button>
+    <button data-act="abots" type="button">공격봇 15</button>
   </div>
   <p><label><input type="checkbox" id="b-attack" /> 공격 허용</label></p>
   <h3>시점</h3>

@@ -65,6 +65,7 @@ setInterval(() => {
 function hud(s) {
   const p = s.players.find((x) => x.id === ME);
   if (p) {
+    showAmmo(p);
     $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
     $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
     $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
@@ -88,6 +89,17 @@ function hud(s) {
     rv.textContent = `정답 ${ans}` + (mine ? ` ${mine.correct ? `+${mine.gain}${mine.rank ? ` ${mine.rank}등` : ''}` : (mine.zone == null ? '무응답' : '오답') + (mine.dropped ? ` 🪙-${mine.dropped}` : '')}` : '');
     rv.className = mine?.correct ? 'ok' : 'bad';
   } else rv.hidden = true;
+}
+
+
+// 탄창 표시: 가득 찬 칸은 밝게, 장전 중인 칸은 차오르게, 공격 버튼은 탄이 없으면 흐리게
+function showAmmo(p) {
+  const box = document.getElementById('ammo');
+  if (!p.mam) { box.hidden = true; return; }
+  box.hidden = false;
+  if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
+  [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
+  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 1 : 0.45;
 }
 
 // ---------- 조작 ----------
@@ -202,6 +214,10 @@ $('#panel').addEventListener('click', (e) => {
     case 'coinnear': { const m = game.players.get(ME); game.spawnCoin(m.x + 2.2, m.y); break; }
     case 'reset': game.resetScores(); break;
     case 'clear': game.clearBots(); break;
+    case 'abots': // 공격하는 봇 15마리 (캐릭터는 무작위, 봇끼리도 서로 공격)
+      game.botsCanAttack = true; $('#b-attack').checked = true;
+      for (let i = 0; i < 15; i++) game.addBot('aggro', 'random');
+      break;
     case 'bot': game.addBot($('#b-mode').value, $('#b-char').value); break;
     case 'view': follow = a.v === 'follow'; document.querySelectorAll('[data-act=view]').forEach((b) => b.classList.toggle('sel', b === e.target)); break;
     case 'char': pickChar(a.id); break;

@@ -23,7 +23,8 @@ test('근접 공격: 피해 2~3, 한 대당 약 0.5 밀림', () => {
   const { g, a, b } = setup();
   const x0 = b.x;
   g.attack('a', null);
-  assert.ok([48, 47].includes(b.hp), `hp=${b.hp}`);
+  const d1 = b.cfg.hp - b.hp, A1 = chars.blue.attack;
+  assert.ok(d1 >= A1.dmgMin && d1 <= A1.dmgMax, `피해=${d1}`);
   run(g, 1);
   assert.ok(Math.abs(b.x - x0 - 0.5) < 0.12, `밀린 거리 ${b.x - x0}`); // 충돌로 약간 달라질 수 있음
 });
@@ -80,7 +81,7 @@ test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 
   assert.equal(b.hp, 50, '쏜 순간에는 안 맞음');
   assert.equal(g.projectiles.size, 1);
   run(g, 0.2); assert.equal(b.hp, 50, '아직 날아가는 중 (4.5칸 / 초속 12)');
-  run(g, 0.3); assert.equal(b.hp, 48);
+  run(g, 0.3); assert.equal(b.hp, 50 - chars.blue_ranged.attack.dmgMin);
   run(g, 1);
   assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
   assert.equal(g.projectiles.size, 0, '맞으면 사라짐');
@@ -131,7 +132,8 @@ test('화염병: 포물선으로 날아가 착탄 지점에서 범위 폭발, �
   run(g, 0.4);
   const boom = g.events.find((e) => e.e === 'boom');
   assert.ok(boom && Math.abs(boom.x - 15) < 0.01 && boom.r === 1.8);
-  assert.equal(near.hp, 45); assert.equal(edge.hp, 45, '폭발 가장자리도 맞음');
+  const bd = chars.bomber.attack.dmgMin;
+  assert.equal(near.hp, 50 - bd); assert.equal(edge.hp, 50 - bd, '폭발 가장자리도 맞음');
   assert.equal(out.hp, 50); assert.equal(a.hp, 40, '던진 사람은 안 맞음');
   assert.ok(g.projectiles.size === 0);
   run(g, 0.6); assert.ok(edge.y > 11.9 + 0.3 && near.x > 15.1, '중심에서 바깥으로 밀림');
@@ -335,8 +337,7 @@ test('3타 휘두르기는 1·2타보다 강하다 (기본 설정)', () => {
     g.attack('a', null); dmg.push(1000 - b.hp);
     run(g, 0.4);
   }
-  assert.ok(dmg[0] <= 3 && dmg[1] <= 3, `1,2타: ${dmg}`);
-  assert.ok(dmg[2] >= 3 && dmg[2] > Math.min(dmg[0], dmg[1]) - 1 && dmg[2] <= 5, `3타: ${dmg}`);
+  assert.ok(dmg[2] > Math.max(dmg[0], dmg[1]), `3타가 1·2타보다 세다: ${dmg}`);
 });
 
 test('근접 공격 모션이 재생되는 동안 이동 속도 50%, 끝나면 원래대로', () => {
@@ -593,8 +594,9 @@ test('귀상어 박치기: 부채꼴 ±90° 안의 상대를 모두 때린다', 
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   B.x = 11.0; B.y = 10; C.x = 10.9; C.y = 9.1; // 앞쪽과 위쪽 가까이
   g.attack('a', { x: 1, y: 0 });
-  assert.equal(B.hp, B.cfg.hp - 3);
-  assert.equal(C.hp, C.cfg.hp - 3);
+  const hd = chars.hammerhead.attack.dmgMin;
+  assert.equal(B.hp, B.cfg.hp - hd);
+  assert.equal(C.hp, C.cfg.hp - hd);
 });
 
 test('개구리: 도약은 없고 달리기(부스트) 스킬, 자동차라 기본 속도가 빠르다', () => {
@@ -613,7 +615,8 @@ test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려�
   const { g, A, B } = duo('frog', 'blue');
   B.x = 13; B.y = 10; // 3칸 앞
   g.attack('a', null);
-  assert.ok([1, 2].includes(B.cfg.hp - B.hp), '혀 피해 1~2');
+  const td = B.cfg.hp - B.hp, ta = chars.frog.attack;
+  assert.ok(td >= ta.dmgMin && td <= ta.dmgMax, `혀 피해 ${td}`);
   run(g, 0.6);
   assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
   B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
@@ -646,7 +649,7 @@ test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진�
   assert.equal(g._dashing(A), false);
 });
 
-import { dpsOf, powerIndex } from './balance.js';
+import { dpsOf, FIGHT_SEC, powerIndex, shotsOf } from './balance.js';
 
 test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 끌어당기는 혀가 있어 15 이상)', () => {
   for (const [id, c] of Object.entries(chars)) {
@@ -657,8 +660,9 @@ test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 끌어당기는 �
 });
 
 test('DPS 계산: 콤보 평균, 명중률, 범위, 돌진 피해를 반영한다', () => {
-  const blue = dpsOf(chars.blue); // 평균 2.5 × (1+1+1.5)/3 ÷ 0.3333
-  assert.ok(Math.abs(blue.basic - 2.5 * (3.5 / 3) / 0.3333) < 0.01);
+  const blue = dpsOf(chars.blue); // 평균 피해 × 콤보 평균 × 교전 중 발수 ÷ 교전 시간
+  const a = chars.blue.attack;
+  assert.ok(Math.abs(blue.basic - ((a.dmgMin + a.dmgMax) / 2) * ((2 + a.combo[2].dmg) / 3) * shotsOf(chars.blue) / FIGHT_SEC) < 1e-9);
   assert.ok(dpsOf(chars.brawler).dps > dpsOf(chars.brawler).basic, '돌진 피해가 더해짐');
   assert.ok(dpsOf(chars.witch).dps < dpsOf(chars.witch).basic, '느린 투사체는 명중률로 깎임');
   assert.ok(dpsOf(chars.bomber).dps > dpsOf(chars.bomber).basic * 0.75, '범위 공격은 보정이 붙음');
@@ -677,4 +681,61 @@ test('모든 캐릭터가 서버 규칙으로 문제없이 싸운다 (공격 →
     const s = g.snapshot().players.find((p) => p.id === 'a');
     assert.ok(['run', 'dash'].includes(s.k) && s.mrg > 0, id);
   }
+});
+
+// ---------- 탄창 ----------
+test('탄창: 3발로 시작해 쏠 때마다 줄고, 비면 못 쏘고, 시간이 지나면 한 발씩 장전된다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'elf' }); // 장전 2.2초
+  g.join({ token: 'b', name: 'B', charId: 'blue' }).x = 30;
+  a.x = 10; a.y = 10;
+  const atks = () => g.events.filter((e) => e.e === 'atk').length;
+  assert.equal(g.snapshot().players.find((p) => p.id === 'a').am, 3);
+  for (let i = 0; i < 3; i++) { a.nextAttackAt = 0; g.attack('a', null); } // 쿨타임은 건너뛰고 탄창만 본다
+  assert.equal(atks(), 3);
+  assert.ok(a.ammoF < 0.01, '3발 모두 소모');
+  a.nextAttackAt = 0; g.attack('a', null);
+  assert.equal(atks(), 3, '탄창이 비면 안 나감');
+  run(g, 2.3);
+  assert.ok(a.ammoF >= 1 && a.ammoF < 2, '2.2초에 한 발 장전');
+  g.attack('a', null);
+  assert.equal(atks(), 4);
+});
+
+test('탄창: 연타해도 교전 중 발수는 탄창+장전 한계를 넘지 못한다', () => {
+  for (const id of ['blue', 'puppy', 'elf', 'bomber']) {
+    const g = new Game(chars, quizzes);
+    const a = g.join({ token: 'a', name: 'A', charId: id });
+    const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+    a.x = 10; a.y = 10; b.x = 10.9; b.y = 10;
+    let n = 0;
+    for (let i = 0; i < 300; i++) { // 10초 동안 매 틱 연타
+      const before = a.ammoF; g.attack('a', null); if (a.ammoF < before) n++;
+      b.x = 10.9; b.y = 10; b.kx = b.ky = 0; b.hp = 9999; g.update(DT);
+    }
+    const max = chars[id].ammo.max + 10 / chars[id].ammo.reload;
+    assert.ok(n <= Math.ceil(max) + 1, `${id}: ${n}발 (한계 ${max.toFixed(1)})`);
+    assert.ok(n >= Math.floor(max) - 2, `${id}: 탄창을 거의 다 씀 ${n}`);
+  }
+});
+
+test('탄창: 문제가 시작되면 가득 찬다, 스냅샷에 남은 발수가 담긴다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.ammoF = 0.4; g.ask(1);
+  assert.equal(a.ammoF, 3);
+  const s = g.snapshot().players[0];
+  assert.deepEqual([s.am, s.mam], [3, 3]);
+});
+
+test('공격봇: 봇끼리도 서로 공격한다. random으로 무작위 캐릭터 봇을 만든다', () => {
+  const g = new Game(chars, quizzes);
+  g.botsCanAttack = true;
+  const ids = new Set();
+  for (let i = 0; i < 8; i++) ids.add(g.addBot('aggro', 'random').charId);
+  assert.ok(ids.size >= 2, '캐릭터가 섞임');
+  g.humans().forEach((h) => g.players.delete(h.id));
+  run(g, 15);
+  const hurt = [...g.players.values()].filter((p) => p.hp < p.cfg.hp || p.stunned || g.t < p.invUntil);
+  assert.ok(hurt.length >= 3, `서로 싸운 봇 ${hurt.length}`);
 });

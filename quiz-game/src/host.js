@@ -42,6 +42,7 @@ $('#qlist').addEventListener('click', (e) => {
 
 $('#end').addEventListener('click', () => socket.emit('host:end'));
 $('#coin').addEventListener('click', () => socket.emit('host:spawnCoin'));
+$('#abots').addEventListener('click', () => { socket.emit('host:botAttack', { on: true }); socket.emit('host:addBot', { mode: 'aggro', charId: 'random', count: 15 }); });
 let rankOn = false;
 $('#rank').addEventListener('click', () => socket.emit('host:rank', { on: !rankOn }));
 $('#gather').addEventListener('click', () => socket.emit('host:gather'));

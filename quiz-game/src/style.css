@@ -72,6 +72,9 @@ body.play { overflow: hidden; touch-action: none; user-select: none; -webkit-use
 #btnAtk { right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px); width: 112px; height: 112px; font-size: 22px; }
 #btnRun { right: calc(max(56px, 13vw) + 14px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px + 112px); width: 76px; height: 76px; font-size: 16px; background: #4cc2ffaa; }
 #btnRun.on { background: #4cc2ff; transform: scale(.94); }
+#ammo { position: fixed; right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 18px); width: 112px; display: flex; gap: 4px; pointer-events: none; }
+#ammo[hidden] { display: none; }
+#ammo i { --f: 0; flex: 1; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), #0008 0); box-shadow: 0 0 0 1.5px #ffffff55 inset; }
 #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 #menu { position: absolute; left: 50%; transform: translateX(-50%); bottom: 6px; background: none; border: 0; color: var(--mute); font-size: 13px; text-decoration: underline; }
 

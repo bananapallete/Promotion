@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
   host('host:gather', () => game.gather());
   host('host:addQuestion', (d) => game.addQuestion(d || {}));
   host('host:addBot', (d) => {
-    const n = Math.min(10, Math.max(1, Number(d?.count) || 1));
+    const n = Math.min(30, Math.max(1, Number(d?.count) || 1));
     for (let i = 0; i < n; i++) game.addBot(d?.mode, d?.charId);
   });
   host('host:clearBots', () => game.clearBots());

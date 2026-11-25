@@ -151,12 +151,24 @@ addEventListener('keydown', (e) => {
 });
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
 
+
+// 탄창 표시: 가득 찬 칸은 밝게, 장전 중인 칸은 차오르게, 공격 버튼은 탄이 없으면 흐리게
+function showAmmo(p) {
+  const box = document.getElementById('ammo');
+  if (!p.mam) { box.hidden = true; return; }
+  box.hidden = false;
+  if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
+  [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
+  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 1 : 0.45;
+}
+
 // ---------- 상태 표시 ----------
 const phaseText = { [PHASE.LOBBY]: '', [PHASE.READING]: '읽기', [PHASE.MOVING]: '이동', [PHASE.REVEAL]: '정답' };
 socket.on('state', (s) => {
   if (!me) return;
   const p = s.players.find((x) => x.id === me.token);
   if (!p) return;
+  showAmmo(p);
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
   $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;

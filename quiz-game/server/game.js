@@ -65,6 +65,7 @@ export class Game {
   }
 
   addBot(mode = 'idle', charId = 'blue') {
+    if (charId === 'random') { const ids = Object.keys(this.characters); charId = ids[Math.floor(Math.random() * ids.length)]; }
     if (!this.characters[charId]) charId = Object.keys(this.characters)[0];
     const id = `bot-${++this.botSeq}`;
     return this._spawn({ id, name: `더미${this.botSeq}`, charId, isBot: true, botMode: mode });
@@ -88,6 +89,7 @@ export class Game {
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
+      ammoF: cfg.ammo?.max ?? 99, // 탄창: 정수 부분이 쏠 수 있는 발수, 소수 부분은 장전 진행도
       score: 0, coins: 0, zone: null, zoneSince: 0,
       ai: { nextThink: 0, mx: 0, my: 0 },
     };
@@ -157,6 +159,7 @@ export class Game {
     p.runGauge = p.cfg.runGauge;
     p.exhausted = false;
     p.skillReadyAt = 0;
+    p.ammoF = p.cfg.ammo?.max ?? 99;
   }
 
   _startMoving() {
@@ -273,7 +276,7 @@ export class Game {
 
   _tryAttack(p, aim) {
     const a = p.cfg.attack;
-    if (this.t < p.nextAttackAt || p.stunned || this._dashing(p)) return;
+    if (this.t < p.nextAttackAt || p.stunned || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
     if (p.running && !a.canAttackWhileRunning) return;
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
@@ -281,6 +284,7 @@ export class Game {
     const { dx, dy, near } = this._aimDir(p, aim, range);
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval;
+    p.ammoF -= 1;
     // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
     p.attackUntil = this.t + (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000;
     p.lastAttackAt = this.t;
@@ -504,6 +508,8 @@ export class Game {
       p.invUntil = this.t + c.invincibleSec;
     }
 
+    const am = c.ammo; // 탄창 장전: 쏜 직후에도 계속 차오름
+    if (am) p.ammoF = Math.min(am.max, p.ammoF + dt / am.reload);
     if (p.stunned) p.dash = null;
     const dashing = this._dashing(p);
     if (!dashing) p.dash = null;
@@ -582,7 +588,7 @@ export class Game {
   // ---------- 더미 봇 ----------
   _botThink(p) {
     if (p.stunned || p.botMode === 'idle') { p.input = { mx: 0, my: 0, run: false }; return; }
-    const humans = [...this.players.values()].filter((o) => !o.isBot && o.connected);
+    const humans = this._enemies(p); // 공격형 봇은 봇끼리도 서로 공격
     if (p.botMode === 'aggro' && this.botsCanAttack && humans.length) {
       let best = null, bd = Infinity;
       for (const o of humans) {
@@ -639,6 +645,7 @@ export class Game {
           ? { k: 'dash', rg: r2(p.cfg.skill.cooldown - Math.max(0, p.skillReadyAt - this.t)), mrg: p.cfg.skill.cooldown } // 쿨타임 진행도
           : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
         tn: p.cfg.tint || null, zs: p.cfg.scale || 1,
+        am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
         sc: this.totalScore(p), cn: p.coins,
       });
     }
