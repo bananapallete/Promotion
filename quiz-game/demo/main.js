@@ -191,6 +191,9 @@ addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); 
 
 // ---------- 테스트 패널 ----------
 // 캐릭터 선택 그리드와 봇 종류
+// 상단 UI 숨기기/보이기
+$('#uiToggle').addEventListener('click', () => document.body.classList.toggle('hideui'));
+
 // 캐릭터 바(상단): 탭하면 바로 바뀜
 $('#charbar').innerHTML = charIds.map((id, i) => `<button type="button" data-id="${id}" class="${i ? '' : 'sel'}"><i style="background:${characters[id].tint || '#4a7bd1'}"></i>${characters[id].name}</button>`).join('');
 function pickChar(id) {

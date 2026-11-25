@@ -56,6 +56,10 @@
   #gear { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; z-index: 20; }
   #panel { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); width: min(340px, calc(100vw - 100px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); border-radius: 14px; padding: 12px 14px; z-index: 20; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
   #panel[hidden] { display: none; }
+  #uiToggle { position: fixed; top: calc(max(8px, env(safe-area-inset-top, 0px)) + 52px); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 32px; border-radius: 10px; border: 0; background: var(--panel); color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; z-index: 20; }
+  body.hideui #uiToggle { opacity: .4; }
+  /* 상단 UI 숨김: 캐릭터 바, 내 상태·문제 배너, 단계 표시, 테스트 패널. 조작 버튼과 맵은 그대로 */
+  body.hideui #charbar, body.hideui #top, body.hideui #phase, body.hideui #gear, body.hideui #panel { display: none; }
   #panel h3 { margin: 10px 0 6px; font-size: 12px; color: var(--accent); letter-spacing: .04em; }
   #panel h3:first-child { margin-top: 0; }
   .row-inline { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -94,6 +98,7 @@
 <div id="ammo" hidden></div>
 
 <button id="gear" type="button" aria-label="테스트 패널">⚙</button>
+<button id="uiToggle" type="button" aria-label="상단 UI 숨기기">UI</button>
 <div id="panel" hidden>
   <h3>문제</h3>
   <div class="row-inline">
