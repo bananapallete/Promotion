@@ -1,6 +1,7 @@
 // 투사체 렌더링: 서버가 알려준 위치·속도로 사이를 이어서 그리고, 던지기는 포물선과 착탄 경고, 폭발 연출을 보여준다.
 import Phaser from 'phaser';
 import { PROJ_ART } from '../shared/pixelProjectiles.js';
+import { explosion } from './ultFx.js';
 
 const SCALE = 3;
 
@@ -67,18 +68,7 @@ export class ProjectileLayer {
   }
 
   // 폭발: 불덩이가 퍼지는 링 + 튀는 불씨(도트 네모) + 바닥에 그을음
-  _boom(e) {
-    const s = this.s, bu = this.bu, x = e.x * bu, y = e.y * bu, R = e.r * bu;
-    const fill = s.add.circle(x, y, R * 0.25, 0xff7a1a, 0.75).setDepth(5400);
-    s.tweens.add({ targets: fill, scale: 4, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => fill.destroy() });
-    const ring = s.add.circle(x, y, R * 0.3).setStrokeStyle(6, 0xffd84a, 1).setDepth(5401);
-    s.tweens.add({ targets: ring, scale: 3.3, alpha: 0, duration: 420, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
-    for (let i = 0; i < 18; i++) {
-      const ang = Math.random() * Math.PI * 2, d = R * (0.5 + Math.random() * 0.9);
-      const ember = s.add.rectangle(x, y, 6, 6, [0xff7a1a, 0xffd84a, 0xffffff][i % 3]).setDepth(5402);
-      s.tweens.add({ targets: ember, x: x + Math.cos(ang) * d, y: y + Math.sin(ang) * d * 0.8 - 20, alpha: 0, scale: 0.3, duration: 450 + Math.random() * 300, ease: 'Cubic.easeOut', onComplete: () => ember.destroy() });
-    }
-    const scorch = s.add.circle(x, y, R * 0.8, 0x1b1410, 0.3).setDepth(-46);
-    s.tweens.add({ targets: scorch, alpha: 0, delay: 600, duration: 1200, onComplete: () => scorch.destroy() });
+  _boom(e) { // 도트 폭발: 불꽃(기본) · 별똥별(보라) · 알(노랑)
+    explosion(this.s, e.x * this.bu, e.y * this.bu, e.r, e.art === 'orb' ? 'orb' : e.art === 'egg' ? 'egg' : 'fire', this.bu);
   }
 }

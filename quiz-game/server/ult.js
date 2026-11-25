@@ -20,7 +20,7 @@ export function useUlt(g, p, aim) {
   p.ult = 0;
   const { dx, dy, near } = g._aimDir(p, aim, u.range ?? 6);
   if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
-  g.events.push({ e: 'ult', id: p.id, name: u.name, t: u.type, x: r2(p.x), y: r2(p.y), dx: r2(dx), dy: r2(dy), r: u.radius ?? 0, sec: u.sec ?? 0 });
+  g.events.push({ e: 'ult', id: p.id, name: u.name, t: u.type, x: r2(p.x), y: r2(p.y), dx: r2(dx), dy: r2(dy), r: u.radius ?? 0, sec: u.sec ?? 0, dist: u.dist ?? 0 });
   RUN[u.type](g, p, u, dx, dy, near);
 }
 
@@ -86,7 +86,7 @@ const RUN = {
       later(g, (i * (u.over ?? 1)) / u.n, () => {
         g.events.push({ e: 'warn', x: r2(x), y: r2(y), r: u.blast, sec: u.warn ?? 0.7, art: u.art });
         later(g, u.warn ?? 0.7, () => {
-          g.events.push({ e: 'boom', x: r2(x), y: r2(y), r: u.blast });
+          g.events.push({ e: 'boom', x: r2(x), y: r2(y), r: u.blast, art: u.art });
           hitArea(g, p, x, y, u.blast, u.dmg, u.knock ?? 0.8, u.art);
         });
       });

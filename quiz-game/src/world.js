@@ -5,7 +5,8 @@ import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
-import { burstFx, hitFx, meleeFx, muzzleFx, rushFx, ultBanner, warnFx } from './fx.js';
+import { burstFx, hitFx, meleeFx, muzzleFx, ultBanner } from './fx.js';
+import { auraOff, auraTick, meteorFall, quake, shockRing, speedLines, UltZoneLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
@@ -55,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
     this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('dust', { start: 0, end: 4 }), frameRate: 12, repeat: 0 });
     this.coins = new CoinLayer(this, BU);
     this.coins.create();
+    this.uzl = new UltZoneLayer(this, BU); // 궁극기 바닥 범위(불바다·화살비) 도트
     this.items = new ItemLayer(this, BU);
     this.items.create();
     this.proj = new ProjectileLayer(this, BU);
@@ -131,26 +133,6 @@ export class WorldScene extends Phaser.Scene {
     d.once('animationcomplete', () => d.destroy());
   }
 
-  // 궁극기: 바닥 지속 범위(불바다·화살비)와 강화 중인 캐릭터의 오라
-  _drawUlt(now) {
-    const g = this.ultGfx || (this.ultGfx = this.add.graphics().setDepth(-44));
-    g.clear();
-    for (const z of this.uz || []) {
-      const x = z.x * BU, y = z.y * BU, R = z.r * BU, fade = Math.min(1, z.l / 0.5), fire = z.k === 'fire';
-      g.fillStyle(fire ? 0xff6a1a : 0x5aa7ff, (0.22 + 0.06 * Math.sin(now / 160)) * fade).fillCircle(x, y, R);
-      for (let i = 0; i < 16; i++) { // 불꽃은 올라가고 화살은 떨어지는 점
-        const a = i * 2.4 + z.id, rr = R * (0.15 + 0.8 * ((i * 37) % 10) / 10), ph = ((now / (fire ? 700 : 450) + i * 0.37) % 1);
-        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 0.85 + (fire ? -ph * 30 : (ph - 1) * 40);
-        g.fillStyle(fire ? [0xffd84a, 0xff9a3c, 0xffffff][i % 3] : [0xcfe8ff, 0x8ec5ff][i % 2], (1 - ph) * fade).fillRect(Math.round(px / 2) * 2, Math.round(py / 2) * 2, fire ? 6 : 4, fire ? 6 : 12);
-      }
-    }
-    for (const v of this.views.values()) {
-      if (!(v.p.ub > 0)) continue;
-      const pulse = 0.5 + 0.5 * Math.sin(now / 150);
-      g.fillStyle(0xffd54a, 0.18 + 0.14 * pulse).fillCircle(v.x, v.y - 0.1 * BU, (0.9 + 0.1 * pulse) * BU);
-    }
-  }
-
   _drawTelegraph(now) {
     const g = this.teleGfx;
     g.clear();
@@ -204,7 +186,7 @@ export class WorldScene extends Phaser.Scene {
   applyState(s) {
     if (!this.zoneGfx) { this.pending = s; return; }
     this.drawZones(s);
-    this.uz = s.uz || [];
+    this.uzl.apply(s.uz);
 
     const seen = new Set();
     for (const p of s.players) {
@@ -245,12 +227,13 @@ export class WorldScene extends Phaser.Scene {
     const v = this.views.get(e.id);
     if (e.e === 'ult' && v) {
       ultBanner(this, v, e.name, BU);
-      if (e.t === 'rush') rushFx(this, e, v, BU);
-      else if (e.t === 'buff' || e.t === 'barrage') burstFx(this, { x: e.x, y: e.y, r: 1.6, fx: e.t === 'buff' ? 'thrust' : 'spark' }, BU);
+      if (e.t === 'rush') speedLines(this, e, BU);
+      else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
     } else if (e.e === 'burst') {
-      burstFx(this, e, BU);
+      if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
       warnFx(this, e, BU);
+      meteorFall(this, e, BU);
     } else if (e.e === 'windup' && v) {
       v.windup = { from: now, until: now + e.sec * 1000, dx: e.dx, dy: e.dy, range: e.range, arc: e.arc };
     } else if (e.e === 'atk' && v) {
@@ -310,7 +293,7 @@ export class WorldScene extends Phaser.Scene {
   update(_time, delta) {
     const now = performance.now();
     this._drawTelegraph(now);
-    this._drawUlt(now);
+    this.uzl.update(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
       const p = v.p;
@@ -319,6 +302,7 @@ export class WorldScene extends Phaser.Scene {
       const hop = v.hopUntil > now ? Math.sin(Math.PI * (1 - (v.hopUntil - now) / 350)) * 1.3 * BU : 0; // 도약: 포물선으로 뜸
       v.sprite.setPosition(v.x, v.y - hop).setDepth(v.y);
       this._dust(v, p, now);
+      if (p.ub > 0) auraTick(this, v, now, BU); else auraOff(v);
       v.sprite.setFlipX(p.f < 0);
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
