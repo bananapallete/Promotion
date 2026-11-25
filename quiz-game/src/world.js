@@ -4,7 +4,7 @@ import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
-import { hitFx, meleeFx, muzzleFx } from './fx.js';
+import { burstFx, hitFx, meleeFx, muzzleFx, rushFx, ultBanner, warnFx } from './fx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
@@ -130,6 +130,26 @@ export class WorldScene extends Phaser.Scene {
     d.once('animationcomplete', () => d.destroy());
   }
 
+  // 궁극기: 바닥 지속 범위(불바다·화살비)와 강화 중인 캐릭터의 오라
+  _drawUlt(now) {
+    const g = this.ultGfx || (this.ultGfx = this.add.graphics().setDepth(-44));
+    g.clear();
+    for (const z of this.uz || []) {
+      const x = z.x * BU, y = z.y * BU, R = z.r * BU, fade = Math.min(1, z.l / 0.5), fire = z.k === 'fire';
+      g.fillStyle(fire ? 0xff6a1a : 0x5aa7ff, (0.22 + 0.06 * Math.sin(now / 160)) * fade).fillCircle(x, y, R);
+      for (let i = 0; i < 16; i++) { // 불꽃은 올라가고 화살은 떨어지는 점
+        const a = i * 2.4 + z.id, rr = R * (0.15 + 0.8 * ((i * 37) % 10) / 10), ph = ((now / (fire ? 700 : 450) + i * 0.37) % 1);
+        const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr * 0.85 + (fire ? -ph * 30 : (ph - 1) * 40);
+        g.fillStyle(fire ? [0xffd84a, 0xff9a3c, 0xffffff][i % 3] : [0xcfe8ff, 0x8ec5ff][i % 2], (1 - ph) * fade).fillRect(Math.round(px / 2) * 2, Math.round(py / 2) * 2, fire ? 6 : 4, fire ? 6 : 12);
+      }
+    }
+    for (const v of this.views.values()) {
+      if (!(v.p.ub > 0)) continue;
+      const pulse = 0.5 + 0.5 * Math.sin(now / 150);
+      g.fillStyle(0xffd54a, 0.18 + 0.14 * pulse).fillCircle(v.x, v.y - 0.1 * BU, (0.9 + 0.1 * pulse) * BU);
+    }
+  }
+
   _drawTelegraph(now) {
     const g = this.teleGfx;
     g.clear();
@@ -183,6 +203,7 @@ export class WorldScene extends Phaser.Scene {
   applyState(s) {
     if (!this.zoneGfx) { this.pending = s; return; }
     this.drawZones(s);
+    this.uz = s.uz || [];
 
     const seen = new Set();
     for (const p of s.players) {
@@ -210,10 +231,11 @@ export class WorldScene extends Phaser.Scene {
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
     const shoe = this.add.image(0, 0, 'item-shoe').setScale(1.5).setVisible(false);
+    const star = this.add.text(0, 0, '★', { fontFamily: 'sans-serif', fontSize: '22px', color: '#ffd54a', stroke: '#14122b', strokeThickness: 5 }).setOrigin(0.5).setVisible(false);
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
     const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
-    const v = { sprite, name, bar, shoe, status, coinIcon, coinTxt, root: [sprite, name, bar, shoe, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
+    const v = { sprite, name, bar, shoe, star, status, coinIcon, coinTxt, root: [sprite, name, bar, shoe, star, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -221,7 +243,15 @@ export class WorldScene extends Phaser.Scene {
   handleEvent(e) {
     const now = performance.now();
     const v = this.views.get(e.id);
-    if (e.e === 'windup' && v) {
+    if (e.e === 'ult' && v) {
+      ultBanner(this, v, e.name, BU);
+      if (e.t === 'rush') rushFx(this, e, v, BU);
+      else if (e.t === 'buff' || e.t === 'barrage') burstFx(this, { x: e.x, y: e.y, r: 1.6, fx: e.t === 'buff' ? 'thrust' : 'spark' }, BU);
+    } else if (e.e === 'burst') {
+      burstFx(this, e, BU);
+    } else if (e.e === 'warn') {
+      warnFx(this, e, BU);
+    } else if (e.e === 'windup' && v) {
       v.windup = { from: now, until: now + e.sec * 1000, dx: e.dx, dy: e.dy, range: e.range, arc: e.arc };
     } else if (e.e === 'atk' && v) {
       const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
@@ -280,6 +310,7 @@ export class WorldScene extends Phaser.Scene {
   update(_time, delta) {
     const now = performance.now();
     this._drawTelegraph(now);
+    this._drawUlt(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
       const p = v.p;
@@ -319,6 +350,7 @@ export class WorldScene extends Phaser.Scene {
       v.bar.fillStyle(low ? THEME.hpLow : THEME.hpFill, 1).fillRect(bx0, by, bw * f, bh);
       v.bar.fillStyle(THEME.hpShine, 0.55).fillRect(bx0, by, bw * f, Math.max(2, bh * 0.28)); // 윗면 하이라이트
       for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
+      v.star.setVisible(!!p.ur).setPosition(bx0 - 12, by + bh / 2).setDepth(v.y + 2).setScale(1 + 0.18 * Math.sin(now / 140)); // 궁극기 준비됨
       v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
       if (me) { // 탄창 · 대쉬 게이지는 내 것만 (빔프로젝터엔 내 캐릭터가 없어서 안 나옴)
         const h = 5, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 2, y0 - 2, w + 4, h + 4).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
@@ -328,10 +360,11 @@ export class WorldScene extends Phaser.Scene {
           for (let i = 0; i < p.mam; i++) bar2(bx0 + i * (sw + gap), y0, sw, i < p.am ? 1 : i === p.am ? p.amf : 0, THEME.ammo);
           y0 += h + 7;
         }
-        if (p.mrg) bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); // 대쉬 쿨타임 / 달리기 게이지
+        if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + 7; } // 대쉬 쿨타임 / 달리기 게이지
+        bar2(bx0, y0, bw, p.ur ? 1 : p.ul, p.ur ? THEME.ultReady : THEME.ult); // 궁극기 충전
       }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
-      v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
+      v.status.setText(p.st ? '기절!' : p.rt ? '스턴' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
       const bk = Math.max(0, 1 - (now - v.bump) / 250);
       v.coinIcon.setVisible(shown > 0).setPosition(bx0 + bw + (p.sp > 0 ? 40 : 18), by + 7).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));

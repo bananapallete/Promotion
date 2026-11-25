@@ -132,6 +132,40 @@ export function meleeFx(scene, e, v, BU) {
   }
 }
 
+/** 궁극기 이름 띄우기 */
+export function ultBanner(scene, v, name, BU) {
+  const t = scene.add.text(v.x, v.y - 3.1 * BU, name, { fontFamily: 'sans-serif', fontSize: '30px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 8 }).setOrigin(0.5).setDepth(8000).setScale(0.6).setResolution(2);
+  scene.tweens.add({ targets: t, scale: 1.15, duration: 160, ease: 'Back.easeOut' });
+  scene.tweens.add({ targets: t, y: t.y - 0.8 * BU, alpha: 0, delay: 650, duration: 600, ease: 'Cubic.easeOut', onComplete: () => t.destroy() });
+}
+
+/** 내 주변 범위 폭발: 테두리 없이 퍼지는 면 + 파편 */
+export function burstFx(scene, e, BU) {
+  const c = FX_COLOR[e.fx] ?? 0xffffff, x = e.x * BU, y = e.y * BU, R = e.r * BU;
+  play(scene, 520, (g, u) => {
+    const k = 1 - (1 - u) ** 3;
+    g.fillStyle(c, 0.5 * (1 - u)).fillCircle(x, y, R * (0.3 + 0.7 * k));
+    g.fillStyle(0xffffff, 0.35 * (1 - u)).fillCircle(x, y, R * (0.15 + 0.5 * k));
+    burst(g, x, y - 0.3 * BU, R * 0.95, 14, 10, c, u);
+  }, 4995);
+}
+
+/** 폭발 예고: 시간이 갈수록 차오르는 붉은 면 */
+export function warnFx(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU;
+  play(scene, e.sec * 1000, (g, u) => {
+    g.fillStyle(0xff3b30, 0.12 + 0.28 * u).fillCircle(x, y, R);
+    g.fillStyle(0xff3b30, 0.3).fillCircle(x, y, R * u);
+  }, -44);
+}
+
+/** 돌진 궁극기: 달리는 방향 뒤로 먼지 줄 */
+export function rushFx(scene, e, v, BU) {
+  play(scene, 450, (g, u) => {
+    for (let i = 0; i < 8; i++) dot(g, e.x * BU - e.dx * i * 0.5 * BU, e.y * BU - e.dy * i * 0.5 * BU - 6 - 8 * u * (i % 3), 10 * (1 - u), 0xffffff, 0.8 * (1 - u));
+  }, 4000);
+}
+
 /** 원거리 발사 순간 번쩍임 */
 export function muzzleFx(scene, e, v, BU) {
   const c = FX_COLOR[e.fx] ?? 0xffffff, ang = Math.atan2(e.dy, e.dx);

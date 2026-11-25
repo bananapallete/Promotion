@@ -30,7 +30,7 @@ function lanOrigin() {
 }
 
 app.get('/api/characters', (_req, res) => {
-  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', role: c.role, atkInfo: c.atkInfo, sk: c.skill, runGauge: c.runGauge, tint: c.tint || null, scale: c.scale || 1 }])));
+  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', role: c.role, atkInfo: c.atkInfo, ultName: c.ult?.name, sk: c.skill, runGauge: c.runGauge, tint: c.tint || null, scale: c.scale || 1 }])));
 });
 app.get('/api/info', (_req, res) => res.json({ lanOrigin: lanOrigin(), publicUrl: process.env.PUBLIC_URL || null, hostKeyRequired: !!HOST_KEY }));
 
@@ -63,6 +63,7 @@ io.on('connection', (socket) => {
 
   socket.on('input', (i) => { if (socket.data.pid) game.setInput(socket.data.pid, i); });
   socket.on('attack', (aim) => { if (socket.data.pid) game.attack(socket.data.pid, aim); });
+  socket.on('ult', (aim) => { if (socket.data.pid) game.ult(socket.data.pid, aim); });
   socket.on('skill', () => { if (socket.data.pid) game.skill(socket.data.pid); });
 
   socket.on('screen:join', () => socket.join('screens'));

@@ -87,6 +87,9 @@
   #btnAtk { background: #d9606f; } #btnRun { background: #5aa7ff; }
   #ammo i { height: 10px; border-radius: 2px; border: 2px solid var(--navy); box-shadow: none; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), var(--empty) 0); }
   #stick { border: 3px solid var(--navy); background: var(--cream-hi); }
+  #btnUlt { right: calc(max(56px, 13vw) + 112px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 46px); width: 76px; height: 76px; font-size: 14px; background: linear-gradient(to top, #ffd54a calc(var(--f, 0) * 100%), #6a4fb0 0); color: #fff; text-shadow: 0 0 3px var(--navy), 0 0 3px var(--navy); }
+  #btnUlt.ready { animation: ultpulse .7s ease-in-out infinite alternate; }
+  @keyframes ultpulse { from { box-shadow: 0 5px 0 #0007, 0 0 0 0 #ffd54a99; } to { box-shadow: 0 5px 0 #0007, 0 0 18px 6px #ffd54acc; } }
   #pick { position: fixed; inset: 0; z-index: 60; background: #2f4a33; overflow-y: auto; touch-action: pan-y; }
   #pick[hidden] { display: none; }
   #pick .box { max-width: 760px; margin: 0 auto; padding: 16px 16px 90px; }
@@ -117,6 +120,7 @@
 <div id="padHint"></div>
 <div id="pad"><div id="stick"></div></div>
 <button id="btnRun" class="abtn" type="button">달리기</button>
+<button id="btnUlt" class="abtn" type="button">궁극기</button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
 <div id="ammo" hidden></div>
 
@@ -136,6 +140,10 @@
     <button class="go" data-act="bot" type="button">추가</button>
     <button class="warn" data-act="clear" type="button">제거</button>
     <button data-act="abots" type="button">공격봇 15</button>
+  </div>
+  <h3>궁극기</h3>
+  <div class="row-inline">
+    <button class="go" data-act="ultfull" type="button">충전</button>
   </div>
   <p><label><input type="checkbox" id="b-attack" /> 공격 허용</label></p>
   <h3>시점</h3>

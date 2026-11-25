@@ -118,6 +118,10 @@ const atkEnd = (e, cancel) => {
 atk.addEventListener('pointerup', (e) => atkEnd(e, false));
 atk.addEventListener('pointercancel', (e) => atkEnd(e, true));
 
+// 궁극기: 충전되면 탭
+const ultBtn = $('#btnUlt');
+ultBtn.addEventListener('pointerdown', () => socket.emit('ult', null));
+
 // 키보드 (PC에서 테스트용): WASD/방향키 이동, Shift 달리기, Space/J 공격
 const keys = new Set();
 function keyMove() {
@@ -131,6 +135,7 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (k === 'shift' && !e.repeat && me?.skill === 'dash') socket.emit('skill');
   if ((k === ' ' || k === 'j') && !e.repeat) { socket.emit('attack', null); e.preventDefault(); return; }
+  if (k === 'k' && !e.repeat) { socket.emit('ult', null); return; }
   if (!keys.has(k)) { keys.add(k); keyMove(); }
 });
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
@@ -153,6 +158,7 @@ socket.on('state', (s) => {
   const p = s.players.find((x) => x.id === me.token);
   if (!p) return;
   showAmmo(p);
+  ultBtn.style.setProperty('--f', p.ul); ultBtn.classList.toggle('ready', !!p.ur);
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
   $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;

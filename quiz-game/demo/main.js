@@ -95,6 +95,7 @@ function hud(s) {
 
 // 탄창 표시: 가득 찬 칸은 밝게, 장전 중인 칸은 차오르게, 공격 버튼은 탄이 없으면 흐리게
 function showAmmo(p) {
+  const ub = document.getElementById('btnUlt'); ub.style.setProperty('--f', p.ul); ub.classList.toggle('ready', !!p.ur);
   const box = document.getElementById('ammo');
   if (!p.mam) { box.hidden = true; return; }
   box.hidden = false;
@@ -150,6 +151,10 @@ runBtn.addEventListener('pointerdown', (e) => {
 runBtn.addEventListener('pointerup', () => setRun(false));
 runBtn.addEventListener('pointercancel', () => setRun(false));
 
+// 궁극기: 충전되면 탭 (키보드 K)
+const ultBtn = $('#btnUlt');
+ultBtn.addEventListener('pointerdown', () => game.ult(ME, null));
+
 // 공격: 탭 = 자동 조준, 드래그 후 놓기 = 그 방향으로 직접 조준
 const atk = $('#btnAtk'), aim = $('#aim');
 let atkId = null, atkStart = null, atkVec = { x: 0, y: 0 };
@@ -184,6 +189,7 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (k === 'shift' && !e.repeat && skillType() === 'dash') game.skill(ME);
   if ((k === ' ' || k === 'j') && !e.repeat) { game.attack(ME, null); e.preventDefault(); return; }
+  if (k === 'k' && !e.repeat) { game.ult(ME, null); return; }
   if (!keys.has(k)) { keys.add(k); keyMove(); }
 });
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
@@ -219,6 +225,7 @@ $('#panel').addEventListener('click', (e) => {
     case 'coin': game.spawnCoin(); break;
     case 'coin5': game.giveCoins(ME, 5); break;
     case 'ko': game.knockOut(ME); break;
+    case 'ultfull': { const m = game.players.get(ME); if (m.cfg.ult) m.ult = m.cfg.ult.need; break; }
     case 'coinnear': { const m = game.players.get(ME); game.spawnCoin(m.x + 2.2, m.y); break; }
     case 'reset': game.resetScores(); break;
     case 'clear': game.clearBots(); break;

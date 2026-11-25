@@ -46,7 +46,17 @@
       "reload": 1.0
     },
     "role": "melee",
-    "atkInfo": "3연타, 마지막 강타"
+    "atkInfo": "3연타, 마지막 강타",
+    "ult": {
+      "name": "돌진 연타",
+      "need": 80,
+      "type": "rush",
+      "dist": 5,
+      "dur": 0.35,
+      "dmg": 9,
+      "knock": 2.2,
+      "range": 5
+    }
   },
   "blue_ranged": {
     "name": "파란티 원거리",
@@ -82,7 +92,20 @@
       "reload": 1.5
     },
     "role": "ranged",
-    "atkInfo": "돌 연사"
+    "atkInfo": "돌 연사",
+    "ult": {
+      "name": "연발",
+      "need": 90,
+      "type": "barrage",
+      "pattern": "line",
+      "n": 12,
+      "over": 1.6,
+      "art": "stone",
+      "dmg": 5,
+      "speed": 14,
+      "range": 6.5,
+      "radius": 0.25
+    }
   },
   "elf": {
     "name": "엘프",
@@ -119,7 +142,19 @@
       "reload": 2.2
     },
     "role": "ranged",
-    "atkInfo": "멀리 쏘는 화살"
+    "atkInfo": "멀리 쏘는 화살",
+    "ult": {
+      "name": "화살비",
+      "need": 100,
+      "type": "zone",
+      "center": "target",
+      "range": 6.5,
+      "radius": 2.6,
+      "sec": 3,
+      "tick": 0.5,
+      "dmg": 4,
+      "kind": "rain"
+    }
   },
   "witch": {
     "name": "마녀",
@@ -155,7 +190,22 @@
       "reload": 2.2
     },
     "role": "ranged",
-    "atkInfo": "느린 마법구, 큰 피해"
+    "atkInfo": "느린 마법구, 큰 피해",
+    "ult": {
+      "name": "별똥별",
+      "need": 100,
+      "type": "meteor",
+      "center": "target",
+      "range": 5,
+      "spread": 3,
+      "n": 6,
+      "over": 1.8,
+      "warn": 0.7,
+      "blast": 1.3,
+      "dmg": 10,
+      "art": "orb",
+      "knock": 1
+    }
   },
   "bomber": {
     "name": "화염병",
@@ -193,7 +243,19 @@
       "reload": 2.2
     },
     "role": "ranged",
-    "atkInfo": "화염병, 범위 폭발"
+    "atkInfo": "화염병, 범위 폭발",
+    "ult": {
+      "name": "불바다",
+      "need": 100,
+      "type": "zone",
+      "center": "target",
+      "range": 6,
+      "radius": 2.8,
+      "sec": 4,
+      "tick": 0.5,
+      "dmg": 4,
+      "kind": "fire"
+    }
   },
   "girl_long": {
     "name": "흑발 소녀",
@@ -250,7 +312,19 @@
       "reload": 0.9
     },
     "role": "melee",
-    "atkInfo": "3연타, 회전 베기"
+    "atkInfo": "3연타, 회전 베기",
+    "ult": {
+      "name": "회전 폭풍",
+      "need": 90,
+      "type": "burst",
+      "radius": 2.2,
+      "dmg": 4,
+      "hits": 3,
+      "gap": 0.25,
+      "knock": 1.2,
+      "fx": "flurry",
+      "range": 2.2
+    }
   },
   "orc": {
     "name": "오크",
@@ -286,7 +360,16 @@
       "reload": 2.2
     },
     "role": "tank",
-    "atkInfo": "예고 후 넓은 강타"
+    "atkInfo": "예고 후 넓은 강타",
+    "ult": {
+      "name": "분노",
+      "need": 80,
+      "type": "buff",
+      "sec": 7,
+      "dmg": 1.7,
+      "spd": 1.15,
+      "range": 3
+    }
   },
   "princess": {
     "name": "공주",
@@ -323,7 +406,20 @@
       "reload": 1.5
     },
     "role": "ranged",
-    "atkInfo": "반짝 연사"
+    "atkInfo": "반짝 연사",
+    "ult": {
+      "name": "별 폭풍",
+      "need": 90,
+      "type": "barrage",
+      "pattern": "ring",
+      "n": 20,
+      "over": 0.8,
+      "art": "star",
+      "dmg": 5,
+      "speed": 10,
+      "range": 5.5,
+      "radius": 0.3
+    }
   },
   "brawler": {
     "name": "격투가",
@@ -379,7 +475,17 @@
       "reload": 1.65
     },
     "role": "tank",
-    "atkInfo": "3연타, 충격파"
+    "atkInfo": "3연타, 충격파",
+    "ult": {
+      "name": "필살 어퍼",
+      "need": 90,
+      "type": "burst",
+      "radius": 2.5,
+      "dmg": 14,
+      "knock": 3.5,
+      "fx": "shock",
+      "range": 2.5
+    }
   },
   "puppy": {
     "name": "강아지",
@@ -413,7 +519,16 @@
       "reload": 0.9
     },
     "role": "melee",
-    "atkInfo": "초고속 물기"
+    "atkInfo": "초고속 물기",
+    "ult": {
+      "name": "광란",
+      "need": 70,
+      "type": "buff",
+      "sec": 6,
+      "atk": 2,
+      "spd": 1.3,
+      "range": 3
+    }
   },
   "girl_short": {
     "name": "단발 소녀",
@@ -452,7 +567,21 @@
       "reload": 1.95
     },
     "role": "ranged",
-    "atkInfo": "별 던지기, 관통"
+    "atkInfo": "별 던지기, 관통",
+    "ult": {
+      "name": "별 소나기",
+      "need": 90,
+      "type": "barrage",
+      "pattern": "fan",
+      "n": 9,
+      "spread": 70,
+      "art": "star",
+      "dmg": 6,
+      "speed": 12,
+      "range": 6,
+      "radius": 0.3,
+      "pierce": true
+    }
   },
   "knight": {
     "name": "기사",
@@ -493,7 +622,16 @@
     },
     "guard": 0.4,
     "role": "tank",
-    "atkInfo": "긴 찌르기, 방패로 40% 막음"
+    "atkInfo": "긴 찌르기, 방패로 40% 막음",
+    "ult": {
+      "name": "철벽",
+      "need": 70,
+      "type": "buff",
+      "sec": 4,
+      "inv": true,
+      "dmg": 1.3,
+      "range": 3
+    }
   },
   "cat": {
     "name": "고양이",
@@ -527,7 +665,17 @@
       "reload": 0.9
     },
     "role": "speed",
-    "atkInfo": "고속 할퀴기, 크리티컬 잘 터짐"
+    "atkInfo": "고속 할퀴기, 크리티컬 잘 터짐",
+    "ult": {
+      "name": "그림자",
+      "need": 70,
+      "type": "buff",
+      "sec": 5,
+      "crit": true,
+      "spd": 1.3,
+      "atk": 1.3,
+      "range": 3
+    }
   },
   "hammerhead": {
     "name": "귀상어",
@@ -567,7 +715,17 @@
       "reload": 1.8
     },
     "role": "tank",
-    "atkInfo": "넓게 휘두르기"
+    "atkInfo": "넓게 휘두르기",
+    "ult": {
+      "name": "물살",
+      "need": 80,
+      "type": "rush",
+      "dist": 7,
+      "dur": 0.5,
+      "dmg": 10,
+      "knock": 3,
+      "range": 7
+    }
   },
   "labrador": {
     "name": "래브라도",
@@ -617,7 +775,16 @@
       "reload": 0.9
     },
     "role": "speed",
-    "atkInfo": "빠른 3연타"
+    "atkInfo": "빠른 3연타",
+    "ult": {
+      "name": "질주",
+      "need": 70,
+      "type": "buff",
+      "sec": 7,
+      "spd": 1.6,
+      "pickup": 3,
+      "range": 3
+    }
   },
   "frog": {
     "name": "개구리",
@@ -648,7 +815,17 @@
       "reload": 1.5
     },
     "role": "speed",
-    "atkInfo": "혀로 끌어당김"
+    "atkInfo": "혀로 끌어당김",
+    "ult": {
+      "name": "질주 자동차",
+      "need": 80,
+      "type": "rush",
+      "dist": 9,
+      "dur": 0.6,
+      "dmg": 9,
+      "knock": 3,
+      "range": 9
+    }
   },
   "shiba": {
     "name": "시바견",
@@ -702,7 +879,16 @@
       "reload": 1.05
     },
     "role": "melee",
-    "atkInfo": "3연타 베기"
+    "atkInfo": "3연타 베기",
+    "ult": {
+      "name": "질풍",
+      "need": 70,
+      "type": "buff",
+      "sec": 6,
+      "spd": 1.5,
+      "atk": 1.7,
+      "range": 3
+    }
   },
   "hippo": {
     "name": "하마",
@@ -736,7 +922,18 @@
       "reload": 2.2
     },
     "role": "tank",
-    "atkInfo": "주변 전체 쾅"
+    "atkInfo": "주변 전체 쾅",
+    "ult": {
+      "name": "지진",
+      "need": 100,
+      "type": "burst",
+      "radius": 3.8,
+      "dmg": 8,
+      "knock": 2,
+      "root": 1.5,
+      "fx": "stomp",
+      "range": 3.8
+    }
   },
   "pig": {
     "name": "돼지",
@@ -773,7 +970,17 @@
       "reload": 2.1
     },
     "role": "tank",
-    "atkInfo": "묵직한 박치기"
+    "atkInfo": "묵직한 박치기",
+    "ult": {
+      "name": "폭주",
+      "need": 80,
+      "type": "rush",
+      "dist": 6,
+      "dur": 0.45,
+      "dmg": 12,
+      "knock": 3.5,
+      "range": 6
+    }
   },
   "chicken": {
     "name": "닭",
@@ -811,7 +1018,22 @@
       "reload": 2.2
     },
     "role": "ranged",
-    "atkInfo": "알 폭탄, 범위 폭발"
+    "atkInfo": "알 폭탄, 범위 폭발",
+    "ult": {
+      "name": "알 폭탄",
+      "need": 100,
+      "type": "meteor",
+      "center": "self",
+      "range": 5,
+      "spread": 4,
+      "n": 7,
+      "over": 2,
+      "warn": 0.6,
+      "blast": 1.2,
+      "dmg": 8,
+      "art": "egg",
+      "knock": 0.8
+    }
   },
   "chick": {
     "name": "병아리",
@@ -848,6 +1070,19 @@
       "reload": 1.05
     },
     "role": "speed",
-    "atkInfo": "관통 화살 연사"
+    "atkInfo": "관통 화살 연사",
+    "ult": {
+      "name": "병아리 떼",
+      "need": 90,
+      "type": "barrage",
+      "pattern": "ring",
+      "n": 16,
+      "over": 0.5,
+      "art": "arrow",
+      "dmg": 4,
+      "speed": 11,
+      "range": 5,
+      "radius": 0.3
+    }
   }
 }
