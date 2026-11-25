@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
 import { ProjectileLayer } from './projectiles.js';
+import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, TILE } from './mapArt.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
@@ -10,7 +11,7 @@ export const WORLD_W = MAP.w * BU;
 export const WORLD_H = MAP.h * BU;
 
 export const hooks = { spriteUrl: (s, m) => `characters/${s}/${m}.png` }; // 데모 페이지가 이미지 경로를 바꿔 끼울 수 있게
-const SPRITES = ['blue']; // 스프라이트 폴더 이름 (public/characters/<name>/)
+const SPRITES = ['blue', ...Object.keys(sprites)]; // 스프라이트 폴더 이름 (public/characters/<name>/)
 const SPR_SCALE = 0.34; // 256px 셀 → 화면. 몸 폭이 약 1.1BU가 되도록
 const FLASH_MS = 100; // 맞았을 때 하얗게 번쩍이는 시간
 
@@ -47,14 +48,18 @@ export class WorldScene extends Phaser.Scene {
     this.zoneImgs = [];
 
     for (const s of SPRITES) {
+      const n = sprites[s]; // 없으면 blue(constants의 프레임 수)
       SPRITE.attackSteps.forEach((st, i) => {
-        this.anims.create({ key: `${s}-atk${i}`, frames: this.anims.generateFrameNumbers(`${s}-combo`, { frames: st.frames }), frameRate: st.fps, repeat: 0 });
+        // 새 스프라이트의 공격은 한 동작(0번은 준비 자세)이라 단계마다 1~끝을 그 시간에 맞춰 재생
+        const frames = n ? Array.from({ length: n.combo - 1 }, (_, k) => k + 1) : st.frames;
+        const fps = n ? (frames.length * 1000) / st.ms : st.fps;
+        this.anims.create({ key: `${s}-atk${i}`, frames: this.anims.generateFrameNumbers(`${s}-combo`, { frames }), frameRate: fps, repeat: 0 });
       });
       for (const [m, c] of Object.entries(SPRITE.motions)) {
         if (!c.fps) continue; // combo는 위에서 단계별로 만들었음
         this.anims.create({
           key: `${s}-${m}`,
-          frames: this.anims.generateFrameNumbers(`${s}-${m}`, { start: 0, end: c.frames - 1 }),
+          frames: this.anims.generateFrameNumbers(`${s}-${m}`, { start: 0, end: (n ? n[m] : c.frames) - 1 }),
           frameRate: c.fps,
           repeat: c.loop ? -1 : 0,
           yoyo: !!c.yoyo,

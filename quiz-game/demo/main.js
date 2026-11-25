@@ -4,12 +4,8 @@ import characters from '../server/characters.json';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
-import idle from '../public/characters/blue/idle.png';
-import walk from '../public/characters/blue/walk.png';
-import run from '../public/characters/blue/run.png';
-import combo from '../public/characters/blue/combo.png';
-
-hooks.spriteUrl = (_s, m) => ({ idle, walk, run, combo })[m];
+const urls = import.meta.glob('../public/characters/*/*.png', { eager: true, query: '?url', import: 'default' });
+hooks.spriteUrl = (s, m) => urls[`../public/characters/${s}/${m}.png`];
 
 const $ = (s) => document.querySelector(s);
 const ME = 'me';

@@ -80,7 +80,7 @@
   },
   "elf": {
     "name": "엘프",
-    "sprite": "blue",
+    "sprite": "elf",
     "radius": 0.5,
     "hp": 40,
     "walkSpeed": 6.5,
@@ -106,7 +106,6 @@
         "art": "arrow"
       }
     },
-    "tint": "#bfe9b4",
     "scale": 1.05,
     "ammo": {
       "max": 3,
@@ -115,7 +114,7 @@
   },
   "witch": {
     "name": "마녀",
-    "sprite": "blue",
+    "sprite": "witch",
     "radius": 0.5,
     "hp": 40,
     "walkSpeed": 5.5,
@@ -145,7 +144,6 @@
         "art": "orb"
       }
     },
-    "tint": "#e0a8f5",
     "ammo": {
       "max": 3,
       "reload": 2.2
@@ -189,7 +187,7 @@
   },
   "girl_long": {
     "name": "흑발 소녀",
-    "sprite": "blue",
+    "sprite": "girl_long",
     "radius": 0.5,
     "hp": 45,
     "walkSpeed": 6.5,
@@ -234,7 +232,6 @@
         }
       ]
     },
-    "tint": "#ff9c9c",
     "ammo": {
       "max": 3,
       "reload": 0.9
@@ -242,7 +239,7 @@
   },
   "orc": {
     "name": "오크",
-    "sprite": "blue",
+    "sprite": "orc",
     "radius": 0.62,
     "hp": 70,
     "walkSpeed": 4.5,
@@ -265,7 +262,6 @@
       "moveSpeedWhileAttacking": 0.4,
       "arcDeg": 75
     },
-    "tint": "#7fc46a",
     "scale": 1.2,
     "ammo": {
       "max": 3,
@@ -274,7 +270,7 @@
   },
   "princess": {
     "name": "공주",
-    "sprite": "blue",
+    "sprite": "princess",
     "radius": 0.5,
     "hp": 40,
     "walkSpeed": 6,
@@ -300,7 +296,6 @@
         "art": "spark"
       }
     },
-    "tint": "#ffc3e0",
     "pickupRadius": 2.0,
     "ammo": {
       "max": 3,
@@ -309,7 +304,7 @@
   },
   "brawler": {
     "name": "격투가",
-    "sprite": "blue",
+    "sprite": "brawler",
     "radius": 0.56,
     "hp": 60,
     "walkSpeed": 5,
@@ -353,7 +348,6 @@
         }
       ]
     },
-    "tint": "#e8b48c",
     "scale": 1.1,
     "ammo": {
       "max": 3,
@@ -362,7 +356,7 @@
   },
   "puppy": {
     "name": "강아지",
-    "sprite": "blue",
+    "sprite": "puppy",
     "radius": 0.4,
     "hp": 40,
     "walkSpeed": 7.5,
@@ -384,7 +378,6 @@
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 1.0
     },
-    "tint": "#d9a066",
     "scale": 0.8,
     "pickupRadius": 1.4,
     "ammo": {
@@ -394,7 +387,7 @@
   },
   "girl_short": {
     "name": "단발 소녀",
-    "sprite": "blue",
+    "sprite": "girl_short",
     "radius": 0.48,
     "hp": 45,
     "walkSpeed": 6,
@@ -422,7 +415,6 @@
         "art": "star"
       }
     },
-    "tint": "#ff8d8d",
     "scale": 0.95,
     "ammo": {
       "max": 3,
@@ -431,7 +423,7 @@
   },
   "knight": {
     "name": "기사",
-    "sprite": "blue",
+    "sprite": "knight",
     "radius": 0.6,
     "hp": 80,
     "walkSpeed": 4,
@@ -458,7 +450,6 @@
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.5
     },
-    "tint": "#bcc3cf",
     "scale": 1.15,
     "ammo": {
       "max": 3,
@@ -467,7 +458,7 @@
   },
   "cat": {
     "name": "고양이",
-    "sprite": "blue",
+    "sprite": "cat",
     "radius": 0.42,
     "hp": 35,
     "walkSpeed": 7.5,
@@ -493,7 +484,6 @@
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.5
     },
-    "tint": "#ffb35c",
     "scale": 0.85,
     "ammo": {
       "max": 3,

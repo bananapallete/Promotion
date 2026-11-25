@@ -1,0 +1,62 @@
+{
+ "brawler": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "cat": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "elf": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "girl_long": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "girl_short": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "knight": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "orc": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "princess": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "puppy": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ },
+ "witch": {
+  "idle": 4,
+  "walk": 6,
+  "run": 6,
+  "combo": 6
+ }
+}
