@@ -2,7 +2,7 @@
 import Phaser from 'phaser';
 import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
-import { buildFloor, matTexture, TILE } from './mapArt.js';
+import { buildFloor, MAT_MARGIN, matTexture, TILE } from './mapArt.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
 export const WORLD_W = MAP.w * BU;
@@ -206,7 +206,7 @@ export class WorldScene extends Phaser.Scene {
     for (const z of ZONES[type]) {
       const correct = s.phase === PHASE.REVEAL && z.id === ans;
       const alpha = { [PHASE.LOBBY]: 0.35, [PHASE.READING]: 0.6, [PHASE.MOVING]: 0.85 }[s.phase] ?? (correct ? 1 : 0.2);
-      this.zoneImgs.push(this.add.image((z.cx - z.r) * BU, (z.cy - z.r) * BU, matTexture(this, type, z)).setOrigin(0).setScale(BU / TILE).setDepth(-80).setAlpha(alpha));
+      this.zoneImgs.push(this.add.image((z.cx - z.r) * BU - MAT_MARGIN * (BU / TILE), (z.cy - z.r) * BU - MAT_MARGIN * (BU / TILE), matTexture(this, type, z)).setOrigin(0).setScale(BU / TILE).setDepth(-80).setAlpha(alpha));
       if (correct) this.zoneGfx.lineStyle(6, 0xffffff, 1).strokeCircle(z.cx * BU, z.cy * BU, z.r * BU - 3); // 정답 구역 강조
     }
   }
