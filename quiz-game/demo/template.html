@@ -77,50 +77,47 @@
 </div>
 
 <div id="lzone"></div>
-<div id="padHint">조이스틱</div>
+<div id="padHint"></div>
 <div id="pad"><div id="stick"></div></div>
 <button id="btnRun" class="abtn" type="button">달리기</button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
 
 <button id="gear" type="button" aria-label="테스트 패널">⚙</button>
 <div id="panel" hidden>
-  <h3>문제 출제</h3>
+  <h3>문제</h3>
   <div class="row-inline">
-    <button class="go" data-act="ask" data-id="1" type="button">1번 (O/X)</button>
-    <button class="go" data-act="ask" data-id="2" type="button">2번 (객관식)</button>
-    <button data-act="end" type="button">정답 공개</button>
+    <button class="go" data-act="ask" data-id="1" type="button">O/X</button>
+    <button class="go" data-act="ask" data-id="2" type="button">객관식</button>
+    <button data-act="end" type="button">정답</button>
   </div>
-  <p>문제 1의 정답은 O(왼쪽), 문제 2의 정답은 4번(오른쪽 아래)이에요. 구역에 먼저 들어갈수록 보너스가 커요.</p>
-  <h3>더미 봇</h3>
+  <h3>봇</h3>
   <div class="row-inline">
-    <select id="b-mode"><option value="idle" selected>가만히</option><option value="wander">배회</option><option value="aggro">공격형</option></select>
+    <select id="b-mode"><option value="idle" selected>정지</option><option value="wander">배회</option><option value="aggro">공격형</option></select>
     <select id="b-char"><option value="blue">근접</option><option value="blue_ranged">원거리</option></select>
     <button class="go" data-act="bot" type="button">추가</button>
-    <button class="warn" data-act="clear" type="button">전부 제거</button>
+    <button class="warn" data-act="clear" type="button">제거</button>
   </div>
-  <p><label><input type="checkbox" id="b-attack" /> 봇이 공격하게 하기 (공격형만, 기본 꺼짐)</label></p>
-  <h3>내 캐릭터</h3>
+  <p><label><input type="checkbox" id="b-attack" /> 공격 허용</label></p>
+  <h3>캐릭터</h3>
   <div class="row-inline">
     <button class="sel" data-act="char" data-id="blue" type="button">근접</button>
     <button data-act="char" data-id="blue_ranged" type="button">원거리</button>
   </div>
-  <h3>보기</h3>
+  <h3>시점</h3>
   <div class="row-inline">
-    <button class="sel" data-act="view" data-v="follow" type="button">내 캐릭터 따라가기</button>
-    <button data-act="view" data-v="all" type="button">맵 전체</button>
+    <button class="sel" data-act="view" data-v="follow" type="button">따라가기</button>
+    <button data-act="view" data-v="all" type="button">전체</button>
   </div>
   <h3>동전</h3>
   <div class="row-inline">
-    <button class="go" data-act="coinnear" type="button">내 앞에 동전 생성</button>
-    <button data-act="coin" type="button">맵에 무작위 생성</button>
-    <button data-act="coin5" type="button">동전 5개 받기</button>
-    <button class="warn" data-act="ko" type="button">나를 기절시키기</button>
+    <button class="go" data-act="coinnear" type="button">앞에</button>
+    <button data-act="coin" type="button">무작위</button>
+    <button data-act="coin5" type="button">+5</button>
+    <button class="warn" data-act="ko" type="button">기절</button>
   </div>
-  <p>30초마다 맵에 동전이 1개씩 생겨요. 다가가면 자동으로 주워지고 개당 0.5점이에요. 문제를 못 맞히거나 쓰러지면 가진 동전이 전부 튀어나가요.</p>
-  <h3>기타</h3>
   <div class="row-inline">
-    <button data-act="gather" type="button">모두 대기 공간으로</button>
-    <button class="warn" data-act="reset" type="button">점수 초기화</button>
+    <button data-act="gather" type="button">모이기</button>
+    <button class="warn" data-act="reset" type="button">초기화</button>
   </div>
 </div>
 

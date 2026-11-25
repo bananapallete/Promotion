@@ -7,8 +7,8 @@ const $ = (s) => document.querySelector(s);
 const { scene } = startWorld('game');
 const socket = io();
 
-socket.on('connect', () => { socket.emit('screen:join'); $('#conn').textContent = '연결됨'; });
-socket.on('disconnect', () => { $('#conn').textContent = '연결 끊김 · 재연결 중…'; });
+socket.on('connect', () => { socket.emit('screen:join'); $('#conn').textContent = ''; });
+socket.on('disconnect', () => { $('#conn').textContent = '연결 끊김'; });
 
 // 입장 QR: 폰이 접속할 수 있는 주소여야 한다 (localhost로 열었으면 같은 와이파이 주소로 대체)
 fetch('/api/info').then((r) => r.json()).then(async (info) => {
@@ -30,9 +30,9 @@ function hud(s) {
 
   if (s.q && s.phase !== PHASE.LOBBY) {
     banner.hidden = false;
-    banner.querySelector('.qn').textContent = `문제 ${s.q.id}` + (s.phase === PHASE.READING ? ' · 문제를 읽어보세요' : '');
+    banner.querySelector('.qn').textContent = `문제 ${s.q.id}`;
     banner.querySelector('.qt').textContent = s.q.text;
-    banner.querySelector('.opts').textContent = s.q.type === 'choice' ? s.q.options.map((o, i) => `${i + 1}. ${o}`).join('   ') : 'O 또는 X 구역으로 이동하세요';
+    banner.querySelector('.opts').textContent = s.q.type === 'choice' ? s.q.options.map((o, i) => `${i + 1}. ${o}`).join('   ') : '';
   } else banner.hidden = true;
 
   const counting = s.phase === PHASE.READING || s.phase === PHASE.MOVING;
@@ -44,7 +44,7 @@ function hud(s) {
     const ans = s.q.type === 'choice' ? `${s.reveal.answer}번` : s.reveal.answer;
     const winners = s.reveal.results.filter((r) => r.correct).sort((a, b) => a.rank - b.rank);
     const top = winners.slice(0, 3).map((r) => `${r.rank}등 ${r.name} +${r.gain}`).join('  ');
-    reveal.innerHTML = `정답: ${ans} · 정답자 ${winners.length}명<small>${top || '정답자가 없어요'}</small>`;
+    reveal.innerHTML = `정답 ${ans} · ${winners.length}명<small>${top}</small>`;
   } else reveal.hidden = true;
 
   const rows = (s.lb || []).slice(0, 5);

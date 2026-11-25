@@ -43,7 +43,7 @@ $('#qlist').addEventListener('click', (e) => {
 $('#end').addEventListener('click', () => socket.emit('host:end'));
 $('#coin').addEventListener('click', () => socket.emit('host:spawnCoin'));
 $('#gather').addEventListener('click', () => socket.emit('host:gather'));
-$('#reset').addEventListener('click', () => { if (confirm('모든 점수를 0으로 되돌릴까요?')) socket.emit('host:reset'); });
+$('#reset').addEventListener('click', () => { if (confirm('초기화?')) socket.emit('host:reset'); });
 
 $('#q-add').addEventListener('click', () => {
   const text = $('#q-text').value.trim();
@@ -58,12 +58,12 @@ $('#b-add').addEventListener('click', () => socket.emit('host:addBot', { mode: $
 $('#b-attack').addEventListener('change', (e) => socket.emit('host:botAttack', { on: e.target.checked }));
 $('#b-clear').addEventListener('click', () => socket.emit('host:clearBots'));
 
-const phaseName = { [PHASE.LOBBY]: '대기', [PHASE.READING]: '문제 읽는 중', [PHASE.MOVING]: '이동 중', [PHASE.REVEAL]: '정답 공개' };
+const phaseName = { [PHASE.LOBBY]: '대기', [PHASE.READING]: '읽기', [PHASE.MOVING]: '이동', [PHASE.REVEAL]: '정답' };
 socket.on('state', (s) => {
-  $('#s-phase').textContent = `상태: ${phaseName[s.phase]}`;
-  $('#s-left').textContent = s.left > 0 ? `남은 시간 ${Math.ceil(s.left)}초` : '타이머 없음';
+  $('#s-phase').textContent = phaseName[s.phase];
+  $('#s-left').textContent = s.left > 0 ? `${Math.ceil(s.left)}` : '-';
   const humans = s.players.filter((p) => !p.b);
-  $('#s-players').textContent = `참가자 ${humans.length}명 · 봇 ${s.players.length - humans.length}`;
+  $('#s-players').textContent = `${humans.length}명 · 봇 ${s.players.length - humans.length}`;
 
   const scoreOf = Object.fromEntries((s.lb || []).map((r) => [r.id, r.score]));
   $('#plist').innerHTML = [...s.players].sort((a, b) => (b.sc - a.sc)).map((p) =>
@@ -71,6 +71,6 @@ socket.on('state', (s) => {
 
   if (s.phase === PHASE.REVEAL && s.reveal) {
     const ok = s.reveal.results.filter((r) => r.correct).sort((a, b) => a.rank - b.rank);
-    $('#revealbox').innerHTML = `정답 <b>${esc(s.reveal.answer)}</b> · 정답자 ${ok.length}/${s.reveal.results.length}명<br>` + ok.map((r) => `${r.rank}등 ${esc(r.name)} (+${r.gain})`).join(' · ');
+    $('#revealbox').innerHTML = `정답 <b>${esc(s.reveal.answer)}</b> · ${ok.length}/${s.reveal.results.length}<br>` + ok.map((r) => `${r.rank}등 ${esc(r.name)} (+${r.gain})`).join(' · ');
   } else $('#revealbox').textContent = '';
 });

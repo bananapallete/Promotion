@@ -1,6 +1,6 @@
 {
   "blue": {
-    "name": "파란티 (근접)",
+    "name": "파란티 근접",
     "sprite": "blue",
     "radius": 0.5,
     "hp": 10,
@@ -39,7 +39,7 @@
     }
   },
   "blue_ranged": {
-    "name": "파란티 (원거리 · 테스트용)",
+    "name": "파란티 원거리",
     "sprite": "blue",
     "radius": 0.5,
     "hp": 10,

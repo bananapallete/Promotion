@@ -27,6 +27,7 @@ body.screen { display: grid; place-items: center; overflow: hidden; }
 #join img { width: 13cqw; height: 13cqw; background: #fff; border-radius: .8cqw; padding: .6cqw; display: block; margin: .8cqw auto; image-rendering: pixelated; }
 #join .t { font-size: 1.9cqw; font-weight: 800; }
 #join .u { font-size: 1.15cqw; color: var(--mute); word-break: break-all; max-width: 24cqw; }
+#conn:empty { display: none; }
 #conn { position: absolute; left: 1cqw; bottom: 1cqw; font-size: 1cqw; color: var(--mute); background: rgba(29,36,51,.7); padding: .3cqw .8cqw; border-radius: 99px; }
 
 /* ===== 폰(참가자) ===== */

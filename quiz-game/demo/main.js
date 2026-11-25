@@ -48,7 +48,7 @@ scene.onFrame = (sc) => {
   }
 };
 
-const phaseText = { [PHASE.LOBBY]: '아래 ⚙ 패널에서 문제를 출제해보세요', [PHASE.READING]: '문제를 읽는 중…', [PHASE.MOVING]: '답 구역으로 이동!', [PHASE.REVEAL]: '정답 공개' };
+const phaseText = { [PHASE.LOBBY]: '', [PHASE.READING]: '읽기', [PHASE.MOVING]: '이동', [PHASE.REVEAL]: '정답' };
 setInterval(() => {
   const s = { ...game.snapshot(), lb: game.leaderboard() };
   scene.applyState(s);
@@ -65,11 +65,11 @@ function hud(s) {
   if (p) {
     $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
     $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
-    $('#score').textContent = `🪙${p.cn} · ${fmtScore(p.sc)}점`;
-    $('#flag').textContent = p.st ? '기절! 잠시 움직일 수 없어요' : p.inv ? '무적' : '';
+    $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
+    $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';
   }
   const counting = s.phase === PHASE.READING || s.phase === PHASE.MOVING;
-  $('#phase').textContent = (phaseText[s.phase] || '') + (counting ? ` · ${Math.ceil(s.left)}초` : '');
+  $('#phase').textContent = ((phaseText[s.phase] || '') + (counting ? ` ${Math.ceil(s.left)}` : '')).trim();
 
   const banner = $('#banner');
   if (s.q && s.phase !== PHASE.LOBBY) {
@@ -83,7 +83,7 @@ function hud(s) {
     const mine = s.reveal.results.find((r) => r.id === ME);
     const ans = s.q.type === 'choice' ? `${s.reveal.answer}번` : s.reveal.answer;
     rv.hidden = false;
-    rv.textContent = `정답 ${ans} · ` + (mine ? (mine.correct ? `정답! +${mine.gain}점${mine.rank ? ` (${mine.rank}등)` : ''}` : (mine.zone == null ? '무응답' : '오답') + (mine.dropped ? ` · 동전 ${mine.dropped}개 떨어뜨림` : '')) : '');
+    rv.textContent = `정답 ${ans}` + (mine ? ` ${mine.correct ? `+${mine.gain}${mine.rank ? ` ${mine.rank}등` : ''}` : (mine.zone == null ? '무응답' : '오답') + (mine.dropped ? ` 🪙-${mine.dropped}` : '')}` : '');
     rv.className = mine?.correct ? 'ok' : 'bad';
   } else rv.hidden = true;
 }

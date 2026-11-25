@@ -128,20 +128,20 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
 
 // ---------- 상태 표시 ----------
-const phaseText = { [PHASE.LOBBY]: '대기 중 · 화면을 보세요', [PHASE.READING]: '문제를 읽는 중…', [PHASE.MOVING]: '답 구역으로 이동!', [PHASE.REVEAL]: '정답 공개' };
+const phaseText = { [PHASE.LOBBY]: '', [PHASE.READING]: '읽기', [PHASE.MOVING]: '이동', [PHASE.REVEAL]: '정답' };
 socket.on('state', (s) => {
   if (!me) return;
   const p = s.players.find((x) => x.id === me.token);
   if (!p) return;
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
-  $('#score').textContent = `🪙${p.cn} · ${fmtScore(p.sc)}점`;
-  const left = s.left > 0 ? ` · ${Math.ceil(s.left)}초` : '';
-  $('#phase').textContent = (phaseText[s.phase] || '') + left;
-  $('#flag').textContent = p.st ? '기절! 잠시 움직일 수 없어요' : p.inv ? '무적' : '';
+  $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
+  const left = s.left > 0 ? ` ${Math.ceil(s.left)}` : '';
+  $('#phase').textContent = ((phaseText[s.phase] || '') + left).trim();
+  $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';
 
   const r = s.phase === PHASE.REVEAL && s.reveal?.results.find((x) => x.id === me.token);
-  $('#result').textContent = r ? (r.correct ? `정답! +${r.gain}점` : (r.zone == null ? '무응답' : '오답') + (r.dropped ? ` · 동전 ${r.dropped}개를 떨어뜨렸어요` : '')) : '';
+  $('#result').textContent = r ? (r.correct ? `+${r.gain}` : (r.zone == null ? '무응답' : '오답') + (r.dropped ? ` 🪙-${r.dropped}` : '')) : '';
   $('#result').style.color = r?.correct ? '#7ee0a1' : '#ff9b9b';
 
   if (s.ev?.some((e) => e.e === 'hit' && e.id === me.token)) navigator.vibrate?.(40);
