@@ -38,6 +38,8 @@ export class Game {
     this.coinClock = 0;
     this.coinsSpawned = 0; // 지금까지 생성한 동전 수 (습득된 것 포함)
     this.showRank = false; // 빔프로젝터에 순위표를 띄울지
+    this.projectiles = new Map(); // 날아가는 투사체 id → {...}
+    this.projSeq = 0;
     this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
   }
 
@@ -222,7 +224,7 @@ export class Game {
       const d = Math.hypot(o.x - p.x, o.y - p.y);
       if (d <= range && d < bestD) { best = o; bestD = d; }
     }
-    if (best) return { dx: (best.x - p.x) / bestD, dy: (best.y - p.y) / bestD, manual: false };
+    if (best) return { dx: (best.x - p.x) / bestD, dy: (best.y - p.y) / bestD, manual: false, near: best };
     return { dx: p.face, dy: 0, manual: false };
   }
 
@@ -241,7 +243,7 @@ export class Game {
         if (d <= range && along / d >= cosMin) hits.push({ o, dist: d });
       } else {
         const perp = Math.abs(vx * dy - vy * dx);
-        if (along <= range && perp <= o.cfg.radius) hits.push({ o, dist: along });
+        if (along <= range && perp <= o.cfg.radius + (a.projectile?.radius || 0)) hits.push({ o, dist: along });
       }
     }
     return hits.sort((x, y) => x.dist - y.dist);
@@ -258,8 +260,15 @@ export class Game {
     if (!p) return null;
     const { range, step } = this._comboState(p);
     const dir = this._aimDir(p, aim, range);
-    const { target } = this._pickTarget(p, range, dir.dx, dir.dy);
-    return { dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc: p.cfg.attack.arcDeg ?? 60, radius: p.cfg.radius, targetId: target ? target.id : null };
+    const pr = p.cfg.attack.projectile;
+    let { target } = this._pickTarget(p, range, dir.dx, dir.dy);
+    let lob = null;
+    if (pr?.lob) { // 던지기: 착탄 지점과 폭발 범위, 그 안의 가장 가까운 상대를 조준 대상으로 표시
+      const L = this._lobLanding(p, dir, range, aim);
+      lob = { x: r2(L.x), y: r2(L.y), r: pr.explodeRadius };
+      target = this._enemies(p).filter((o) => Math.hypot(o.x - L.x, o.y - L.y) <= pr.explodeRadius + o.cfg.radius).sort((u, v) => Math.hypot(u.x - L.x, u.y - L.y) - Math.hypot(v.x - L.x, v.y - L.y))[0] || null;
+    }
+    return { lob, dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc: p.cfg.attack.arcDeg ?? 60, radius: p.cfg.radius, targetId: target ? target.id : null };
   }
 
   _tryAttack(p, aim) {
@@ -269,7 +278,7 @@ export class Game {
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
     const { combo, step, m, range } = this._comboState(p);
-    const { dx, dy } = this._aimDir(p, aim, range);
+    const { dx, dy, near } = this._aimDir(p, aim, range);
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval;
     // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
@@ -277,9 +286,72 @@ export class Game {
     p.lastAttackAt = this.t;
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
+    if (a.projectile) { // 투사체: 날아가서 닿아야 맞는다 (피할 수 있음)
+      this._shoot(p, a, aim, dx, dy, range, near);
+      this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: 'proj', step, len: range });
+      return;
+    }
     const hits = this._pickTargets(p, range, dx, dy);
     this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] && !(a.multi && a.type === 'ranged') ? hits[0].dist : range) });
     for (const h of a.multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
+  }
+
+  // ---------- 투사체 ----------
+  // 던지기 착탄 지점: 직접 조준이면 드래그 길이(aim.m, 0~1)만큼, 자동 조준이면 상대가 있는 곳(없으면 사거리의 70%)
+  _lobLanding(p, dir, range, aim) {
+    let dist;
+    if (dir.manual) dist = Math.max(1.5, range * Math.min(1, Number(aim?.m) || 1));
+    else dist = dir.near ? Math.min(range, Math.hypot(dir.near.x - p.x, dir.near.y - p.y)) : range * 0.7;
+    return { x: Math.min(MAP.w - 0.3, Math.max(0.3, p.x + dir.dx * dist)), y: Math.min(MAP.h - 0.3, Math.max(0.3, p.y + dir.dy * dist)) };
+  }
+
+  _shoot(p, a, aim, dx, dy, range, near) {
+    const pr = a.projectile;
+    const base = { id: ++this.projSeq, owner: p.id, art: pr.art, dmgMin: a.dmgMin, dmgMax: a.dmgMax, knock: a.knockback };
+    if (pr.lob) {
+      const L = this._lobLanding(p, { dx, dy, manual: !!(Math.hypot(Number(aim?.x) || 0, Number(aim?.y) || 0) > 0.2), near }, range, aim);
+      const dist = Math.hypot(L.x - p.x, L.y - p.y);
+      this.projectiles.set(base.id, { ...base, kind: 'lob', sx: p.x, sy: p.y, tx: L.x, ty: L.y, x: p.x, y: p.y, t0: this.t, T: Math.max(0.15, dist / pr.speed), r: pr.explodeRadius });
+    } else {
+      this.projectiles.set(base.id, { ...base, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * pr.speed, vy: dy * pr.speed, speed: pr.speed, travel: 0, maxDist: range, radius: pr.radius, pierce: !!pr.pierce, hit: new Set() });
+    }
+  }
+
+  _projDamage(q) {
+    return q.dmgMin + Math.floor(Math.random() * (q.dmgMax - q.dmgMin + 1));
+  }
+
+  _updateProjectiles(dt) {
+    for (const q of [...this.projectiles.values()]) {
+      const foes = [...this.players.values()].filter((o) => o.connected && o.id !== q.owner);
+      if (q.kind === 'lob') {
+        const u = (this.t - q.t0) / q.T;
+        if (u < 1) { q.x = q.sx + (q.tx - q.sx) * u; q.y = q.sy + (q.ty - q.sy) * u; continue; }
+        this.projectiles.delete(q.id); // 착탄: 범위 안 모두에게 피해, 중심에서 바깥으로 밀림 (던진 사람은 안 맞음)
+        this.events.push({ e: 'boom', x: r2(q.tx), y: r2(q.ty), r: q.r });
+        for (const o of foes) {
+          const d = Math.hypot(o.x - q.tx, o.y - q.ty);
+          if (d > q.r + o.cfg.radius) continue;
+          const nx = d > 1e-6 ? (o.x - q.tx) / d : 1, ny = d > 1e-6 ? (o.y - q.ty) / d : 0;
+          this._applyHit(o, { id: q.owner }, this._projDamage(q), q.knock, nx, ny);
+        }
+        continue;
+      }
+      const px = q.x, py = q.y;
+      q.x += q.vx * dt; q.y += q.vy * dt; q.travel += q.speed * dt;
+      let gone = q.travel >= q.maxDist || q.x < 0 || q.y < 0 || q.x > MAP.w || q.y > MAP.h;
+      for (const o of foes) {
+        if (q.hit.has(o.id)) continue;
+        // 이번 틱에 지나온 선분과 상대 사이 거리 (빠른 투사체가 통과하지 않게)
+        const sx = q.x - px, sy = q.y - py, l2 = sx * sx + sy * sy;
+        const k = l2 > 0 ? Math.max(0, Math.min(1, ((o.x - px) * sx + (o.y - py) * sy) / l2)) : 0;
+        if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
+        q.hit.add(o.id);
+        this._applyHit(o, { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy);
+        if (!q.pierce) { gone = true; break; }
+      }
+      if (gone) this.projectiles.delete(q.id);
+    }
   }
 
   _ko(target) {
@@ -414,6 +486,7 @@ export class Game {
     }
     this._collide(active);
     this._updateCoins(dt, active);
+    this._updateProjectiles(dt);
 
     if (this.phase === PHASE.MOVING) {
       for (const p of active) {
@@ -578,6 +651,9 @@ export class Game {
       q,
       reveal: this.reveal,
       rank: this.showRank,
+      pj: [...this.projectiles.values()].map((q) => q.kind === 'lob'
+        ? { id: q.id, k: 'l', a: q.art, x: r2(q.x), y: r2(q.y), sx: r2(q.sx), sy: r2(q.sy), tx: r2(q.tx), ty: r2(q.ty), u: r2((this.t - q.t0) / q.T), T: r2(q.T), r: q.r }
+        : { id: q.id, k: 'b', a: q.art, x: r2(q.x), y: r2(q.y), vx: r2(q.vx), vy: r2(q.vy) }),
       coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),
       players,
       ev: events,

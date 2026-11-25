@@ -129,7 +129,7 @@ const atkEnd = (e, cancel) => {
   atkId = null; aim.style.opacity = 0;
   if (cancel) return;
   const d = Math.hypot(atkVec.x, atkVec.y);
-  socket.emit('attack', d > 16 ? { x: atkVec.x / d, y: atkVec.y / d } : null);
+  socket.emit('attack', d > 16 ? { x: atkVec.x / d, y: atkVec.y / d, m: Math.min(1, d / 70) } : null);
 };
 atk.addEventListener('pointerup', (e) => atkEnd(e, false));
 atk.addEventListener('pointercancel', (e) => atkEnd(e, true));

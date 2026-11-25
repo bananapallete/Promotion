@@ -62,7 +62,12 @@
       "interval": 0.5,
       "range": 5,
       "knockback": 0.3,
-      "canAttackWhileRunning": false
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 12,
+        "radius": 0.25,
+        "art": "stone"
+      }
     }
   },
   "elf": {
@@ -86,7 +91,12 @@
       "interval": 0.8,
       "range": 6.5,
       "knockback": 0.3,
-      "canAttackWhileRunning": false
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 18,
+        "radius": 0.2,
+        "art": "arrow"
+      }
     },
     "tint": "#bfe9b4",
     "scale": 1.05
@@ -116,9 +126,46 @@
       "interval": 1.0,
       "range": 4.5,
       "knockback": 0.7,
-      "canAttackWhileRunning": false
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 7,
+        "radius": 0.45,
+        "art": "orb"
+      }
     },
     "tint": "#e0a8f5"
+  },
+  "bomber": {
+    "name": "화염병",
+    "sprite": "blue",
+    "tint": "#ff8a5c",
+    "radius": 0.5,
+    "hp": 40,
+    "walkSpeed": 5.5,
+    "runSpeed": 8.25,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 4,
+      "dmgMax": 4,
+      "interval": 1.2,
+      "range": 6.5,
+      "knockback": 0.9,
+      "multi": true,
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 10,
+        "lob": true,
+        "explodeRadius": 1.8,
+        "art": "bottle"
+      }
+    }
   },
   "girl_long": {
     "name": "흑발 소녀",
@@ -218,7 +265,12 @@
       "interval": 0.5,
       "range": 4,
       "knockback": 0.8,
-      "canAttackWhileRunning": false
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 11,
+        "radius": 0.3,
+        "art": "spark"
+      }
     },
     "tint": "#ffc3e0",
     "pickupRadius": 2.0
@@ -322,7 +374,13 @@
       "range": 4,
       "knockback": 0.4,
       "canAttackWhileRunning": true,
-      "multi": true
+      "multi": true,
+      "projectile": {
+        "speed": 13,
+        "radius": 0.3,
+        "pierce": true,
+        "art": "star"
+      }
     },
     "tint": "#ff8d8d",
     "scale": 0.95
@@ -491,9 +549,9 @@
     "attack": {
       "type": "ranged",
       "fx": "tongue",
-      "dmgMin": 2,
-      "dmgMax": 2,
-      "interval": 0.6,
+      "dmgMin": 1,
+      "dmgMax": 1,
+      "interval": 0.5,
       "range": 3.5,
       "knockback": -0.4,
       "canAttackWhileRunning": true

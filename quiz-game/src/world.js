@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
+import { ProjectileLayer } from './projectiles.js';
 import { buildFloor, MAT_MARGIN, matTexture, TILE } from './mapArt.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
@@ -41,6 +42,8 @@ export class WorldScene extends Phaser.Scene {
     this.lockId = null;
     this.coins = new CoinLayer(this, BU);
     this.coins.create();
+    this.proj = new ProjectileLayer(this, BU);
+    this.proj.create();
     this.zoneImgs = [];
 
     for (const s of SPRITES) {
@@ -107,7 +110,7 @@ export class WorldScene extends Phaser.Scene {
     const cx = me.x, cy = me.y, R = a.range * BU, ang = Math.atan2(a.dy, a.dx);
     // 공격 사거리: 평소엔 옅게, 직접 조준 중엔 또렷하게
     g.lineStyle(a.dragging ? 3 : 2, 0xffffff, a.dragging ? 0.6 : 0.2).strokeCircle(cx, cy, R);
-    if (a.dragging) { // 조준선: 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
+    if (a.dragging && !a.lob) { // 조준선: 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
       if (a.kind === 'melee') {
         const half = ((a.arc ?? 60) * Math.PI) / 180;
         g.fillStyle(0xffffff, 0.22).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
@@ -119,6 +122,12 @@ export class WorldScene extends Phaser.Scene {
         g.lineStyle(3, 0xffffff, 0.8).lineBetween(cx + nx, cy + ny, ex + nx, ey + ny).lineBetween(cx - nx, cy - ny, ex - nx, ey - ny).lineBetween(ex + nx, ey + ny, ex - nx, ey - ny);
       }
       g.lineStyle(4, 0xffffff, 0.95).lineBetween(cx, cy, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R);
+    }
+    if (a.lob && (a.dragging || a.targetId)) { // 던지기: 착탄 지점과 폭발 범위
+      const lx = a.lob.x * BU, ly = a.lob.y * BU;
+      g.lineStyle(3, 0xffffff, 0.5).lineBetween(cx, cy, lx, ly);
+      g.fillStyle(0xff7a1a, 0.18).fillCircle(lx, ly, a.lob.r * BU).lineStyle(4, 0xffd84a, 0.9).strokeCircle(lx, ly, a.lob.r * BU);
+      g.lineStyle(3, 0xffffff, 0.9).lineBetween(lx - 8, ly, lx + 8, ly).lineBetween(lx, ly - 8, lx, ly + 8);
     }
     // 조준 중인 적: 발밑 링 (빛나는 테두리는 _lockChange가 스프라이트에 입힘)
     const t = tid && this.views.get(tid);
@@ -147,6 +156,7 @@ export class WorldScene extends Phaser.Scene {
     }
     for (const e of s.ev || []) this.handleEvent(e);
     this.coins.apply(s);
+    this.proj.apply(s);
   }
 
   makeView(p) {
@@ -171,6 +181,7 @@ export class WorldScene extends Phaser.Scene {
       const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
       v.sprite.play(`${v.p.s}-atk${step}`, false);
       v.punchUntil = now + SPRITE.attackSteps[step].ms;
+      if (e.kind === 'proj') return; // 투사체 공격은 날아가는 모습이 효과
       const x0 = v.x, y0 = v.y - 0.55 * BU; // 가슴 높이에서 나가는 효과
       const len = e.len * BU;
       const line = this.add.graphics().setDepth(5000);
@@ -261,6 +272,7 @@ export class WorldScene extends Phaser.Scene {
       v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx + bw / 2 + 24, by + 4).setDepth(v.y + 1);
     }
     this.coins.update(now);
+    this.proj.update(now);
     this._drawAim(now);
     this.onFrame?.(this, delta);
   }

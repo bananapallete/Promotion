@@ -71,20 +71,82 @@ test('기절 중에는 이동 불가', () => {
   assert.ok(Math.abs(b.x - x0) < 0.01);
 });
 
-test('원거리: 사거리 5, 밀림 0.3, 피해 1', () => {
+test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 밀림 0.3, 피해 1', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' });
   const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
   a.x = 10; a.y = 10; b.x = 14.5; b.y = 10; a.kx = a.ky = b.kx = b.ky = 0;
   g.attack('a', null);
-  assert.equal(b.hp, 49);
+  assert.equal(b.hp, 50, '쏜 순간에는 안 맞음');
+  assert.equal(g.projectiles.size, 1);
+  run(g, 0.2); assert.equal(b.hp, 50, '아직 날아가는 중 (4.5칸 / 초속 12)');
+  run(g, 0.3); assert.equal(b.hp, 49);
   run(g, 1);
   assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
-  b.x = 15.6; // 5.6 > 사거리
-  run(g, 1);
-  const hp = b.hp;
-  g.attack('a', null);
+  assert.equal(g.projectiles.size, 0, '맞으면 사라짐');
+  b.x = 16; b.y = 10; run(g, 1); const hp = b.hp; // 사거리 5 + 몸/투사체 반지름 0.75 밖
+  g.attack('a', null); run(g, 1);
   assert.equal(b.hp, hp);
+});
+
+test('투사체: 날아가는 동안 상대가 비키면 안 맞는다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'witch' }); // 느린 마법탄
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  a.x = 10; a.y = 10; b.x = 14; b.y = 10; a.kx = a.ky = b.kx = b.ky = 0;
+  g.attack('a', null);
+  run(g, 0.3); b.y = 12; // 비킴
+  run(g, 1);
+  assert.equal(b.hp, 50);
+});
+
+test('투사체: 관통형은 한 줄의 상대를 모두, 일반형은 처음 닿은 상대만 맞힌다', () => {
+  for (const [id, both] of [['girl_short', true], ['elf', false]]) {
+    const g = new Game(chars, quizzes);
+    const a = g.join({ token: 'a', name: 'A', charId: id });
+    const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+    const c = g.join({ token: 'c', name: 'C', charId: 'blue' });
+    a.x = 8; a.y = 10; b.x = 11; b.y = 10; c.x = 13; c.y = 10; [a, b, c].forEach((p) => { p.kx = p.ky = 0; });
+    g.attack('a', { x: 1, y: 0 });
+    run(g, 1);
+    assert.ok(b.hp < 50, `${id}: 앞사람`);
+    assert.equal(c.hp < 50, both, `${id}: 뒷사람`);
+  }
+});
+
+test('화염병: 포물선으로 날아가 착탄 지점에서 범위 폭발, 안쪽만 맞고 던진 사람은 안 맞는다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'bomber' });
+  const near = g.join({ token: 'n', name: 'N', charId: 'blue' });
+  const edge = g.join({ token: 'e', name: 'E', charId: 'blue' });
+  const out = g.join({ token: 'o', name: 'O', charId: 'blue' });
+  a.x = 10; a.y = 10; near.x = 15; near.y = 10; edge.x = 15; edge.y = 11.9; out.x = 15; out.y = 14;
+  [a, near, edge, out].forEach((p) => { p.kx = p.ky = 0; });
+  g.attack('a', { x: 1, y: 0, m: 5 / 6.5 }); // 직접 조준: 5칸 앞에 착탄
+  assert.equal(near.hp, 50, '던진 순간에는 안 맞음');
+  const flight = g.projectiles.get(1).T;
+  assert.ok(Math.abs(flight - 0.5) < 0.05, `비행 시간 ${flight}`);
+  run(g, 0.3); assert.equal(near.hp, 50, '날아가는 중');
+  g.events = [];
+  run(g, 0.4);
+  const boom = g.events.find((e) => e.e === 'boom');
+  assert.ok(boom && Math.abs(boom.x - 15) < 0.01 && boom.r === 1.8);
+  assert.equal(near.hp, 46); assert.equal(edge.hp, 46, '폭발 가장자리도 맞음');
+  assert.equal(out.hp, 50); assert.equal(a.hp, 40, '던진 사람은 안 맞음');
+  assert.ok(g.projectiles.size === 0);
+  run(g, 0.6); assert.ok(edge.y > 11.9 + 0.3 && near.x > 15.1, '중심에서 바깥으로 밀림');
+});
+
+test('화염병: 자동 조준은 가장 가까운 상대의 위치에 던지고, 미리보기가 착탄 지점을 알려준다', () => {
+  const g = new Game(chars, quizzes);
+  const a = g.join({ token: 'a', name: 'A', charId: 'bomber' });
+  const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  a.x = 10; a.y = 10; b.x = 14; b.y = 10;
+  const pv = g.aimPreview('a', null);
+  assert.ok(pv.lob && Math.abs(pv.lob.x - 14) < 0.01 && pv.lob.r === 1.8);
+  assert.equal(pv.targetId, 'b');
+  g.attack('a', null);
+  assert.ok(Math.abs(g.projectiles.get(1).tx - 14) < 0.01);
 });
 
 test('직접 조준: 드래그한 방향으로만 맞는다', () => {
@@ -552,7 +614,7 @@ test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려�
   const { g, A, B } = duo('frog', 'blue');
   B.x = 13; B.y = 10; // 3칸 앞
   g.attack('a', null);
-  assert.equal(B.hp, B.cfg.hp - 2);
+  assert.equal(B.hp, B.cfg.hp - 1);
   run(g, 0.6);
   assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
   B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
@@ -585,7 +647,7 @@ test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진�
   assert.equal(g._dashing(A), false);
 });
 
-test('밸런스: 캐릭터 전투력 지수가 같은 범위 안 (파란티 원거리는 정해진 값이라 제외)', () => {
+test('밸런스: 캐릭터 전투력 지수가 같은 범위 안 (파란티 원거리와 개구리는 제외)', () => {
   const index = (c) => {
     const a = c.attack;
     let dps = (a.dmgMin + a.dmgMax) / 2 / a.interval;
@@ -593,7 +655,7 @@ test('밸런스: 캐릭터 전투력 지수가 같은 범위 안 (파란티 원�
     return Math.sqrt(c.hp * dps) * (1 + 0.1 * (a.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;
   };
   for (const [id, c] of Object.entries(chars)) {
-    if (id === 'blue_ranged') continue;
+    if (id === 'blue_ranged' || id === 'frog') continue; // 정해진 값 / 즉발 혀 (대신 끌어당김)
     const v = index(c);
     assert.ok(v >= 15 && v <= 21, `${c.name}: ${v.toFixed(1)}`);
     assert.ok(c.hp >= 35 && c.hp <= 80, `${c.name} 체력`);
