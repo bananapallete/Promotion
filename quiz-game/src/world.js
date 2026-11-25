@@ -1,7 +1,8 @@
 // 빔프로젝터용 큰 맵을 그리는 Phaser 장면. 서버 상태를 받아서 그리기만 한다.
 import Phaser from 'phaser';
-import { MAP, PHASE, SPRITE, WAIT, ZONES } from '../shared/constants.js';
+import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
+import { buildFloor, matTexture, TILE } from './mapArt.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
 export const WORLD_W = MAP.w * BU;
@@ -12,7 +13,6 @@ const SPRITES = ['blue']; // 스프라이트 폴더 이름 (public/characters/<n
 const SPR_SCALE = 0.34; // 256px 셀 → 화면. 몸 폭이 약 1.1BU가 되도록
 const FLASH_MS = 100; // 맞았을 때 하얗게 번쩍이는 시간
 
-const ZONE_COLOR = { O: 0x2e86de, X: 0xee5253, 1: 0xee5253, 2: 0x2e86de, 3: 0xf0b429, 4: 0x1dd1a1 };
 
 export class WorldScene extends Phaser.Scene {
   constructor() {
@@ -31,14 +31,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create() {
-    // 바닥
-    const g = this.add.graphics().setDepth(-100);
-    g.fillStyle(0x6f8296).fillRect(0, 0, WORLD_W, WORLD_H);
-    g.fillStyle(0x7a8da1).fillRect(WAIT.x * BU, 0, WAIT.w * BU, WORLD_H);
-    g.lineStyle(1, 0x8497ab, 1);
-    for (let x = 0; x <= MAP.w; x += 2) g.lineBetween(x * BU, 0, x * BU, WORLD_H);
-    for (let y = 0; y <= MAP.h; y += 2) g.lineBetween(0, y * BU, WORLD_W, y * BU);
-    this.add.text((WAIT.x + WAIT.w / 2) * BU, WORLD_H - 26, '대기 공간', { fontFamily: 'sans-serif', fontSize: '22px', color: '#c9d4df' }).setOrigin(0.5).setDepth(-90);
+    // 바닥: 도트 1개 = 화면 2px (캐릭터와 같은 도트 크기)
+    buildFloor(this);
+    this.add.image(0, 0, 'floor').setOrigin(0).setScale(BU / TILE).setDepth(-100);
 
     this.zoneGfx = this.add.graphics().setDepth(-80);
     this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
@@ -46,7 +41,7 @@ export class WorldScene extends Phaser.Scene {
     this.lockId = null;
     this.coins = new CoinLayer(this, BU);
     this.coins.create();
-    this.zoneTexts = [];
+    this.zoneImgs = [];
 
     for (const s of SPRITES) {
       SPRITE.attackSteps.forEach((st, i) => {
@@ -205,23 +200,14 @@ export class WorldScene extends Phaser.Scene {
     if (key === this.zoneKey) return;
     this.zoneKey = key;
     this.zoneGfx.clear();
-    this.zoneTexts.forEach((t) => t.destroy());
-    this.zoneTexts = [];
+    this.zoneImgs.forEach((i) => i.destroy());
+    this.zoneImgs = [];
 
     for (const z of ZONES[type]) {
-      const col = ZONE_COLOR[z.id];
-      let alpha = 0.34, border = 0.9, label = 0.55;
-      if (s.phase === PHASE.LOBBY) { alpha = 0.12; border = 0.3; label = 0.25; }
-      if (s.phase === PHASE.READING) { alpha = 0.22; border = 0.6; label = 0.5; }
-      let fill = col;
-      if (s.phase === PHASE.REVEAL) {
-        if (z.id === ans) { fill = 0x2ecc71; alpha = 0.6; border = 1; label = 0.95; }
-        else { alpha = 0.08; border = 0.25; label = 0.25; }
-      }
-      this.zoneGfx.fillStyle(fill, alpha).fillRect(z.x * BU, z.y * BU, z.w * BU, z.h * BU);
-      this.zoneGfx.lineStyle(4, fill, border).strokeRect(z.x * BU + 2, z.y * BU + 2, z.w * BU - 4, z.h * BU - 4);
-      const t = this.add.text((z.x + z.w / 2) * BU, (z.y + z.h / 2) * BU, String(z.label), { fontFamily: 'sans-serif', fontSize: type === 'ox' ? '200px' : '130px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setAlpha(label).setDepth(-70);
-      this.zoneTexts.push(t);
+      const correct = s.phase === PHASE.REVEAL && z.id === ans;
+      const alpha = { [PHASE.LOBBY]: 0.35, [PHASE.READING]: 0.6, [PHASE.MOVING]: 0.85 }[s.phase] ?? (correct ? 1 : 0.2);
+      this.zoneImgs.push(this.add.image(z.x * BU, z.y * BU, matTexture(this, type, z)).setOrigin(0).setScale(BU / TILE).setDepth(-80).setAlpha(alpha));
+      if (correct) this.zoneGfx.lineStyle(6, 0xffffff, 1).strokeRect(z.x * BU + 3, z.y * BU + 3, z.w * BU - 6, z.h * BU - 6); // 정답 구역 강조
     }
   }
 
@@ -277,7 +263,7 @@ export function startWorld(parentId, opts = {}) {
   } else {
     config = { width: WORLD_W, height: WORLD_H, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } };
   }
-  const game = new Phaser.Game({ type: Phaser.AUTO, parent: parentId, backgroundColor: '#6f8296', scene, render: { antialias: true }, ...config });
+  const game = new Phaser.Game({ type: Phaser.AUTO, parent: parentId, backgroundColor: '#2b4d2a', scene, render: { antialias: true }, ...config });
   if (opts.fill) {
     const parent = document.getElementById(parentId);
     addEventListener('resize', () => game.scale.resize(Math.round(parent.clientWidth * scene.dpr), Math.round(parent.clientHeight * scene.dpr)));
