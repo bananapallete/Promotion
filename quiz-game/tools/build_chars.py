@@ -16,6 +16,9 @@ from scipy import ndimage
 import build_sheets as bs
 
 REF_SIZE = 158  # 기본(blue) 캐릭터 idle의 덩치(면적 제곱근)
+# 실제 크기 비율: 기준(1.0) 대비 화면에 보이는 크기. 줄여도 도트 크기(DOT)는 그대로라서 그림 자체를 더 성긴 도트로 다시 찍는다
+SIZE = {"chick": 0.38, "chicken": 0.5, "frog": 0.7, "shiba": 0.8, "labrador": 0.9, "pig": 0.9, "hippo": 0.8}
+DOT = 7  # 셀 안에서 도트 한 개의 크기(px). 파란티 등 기본 캐릭터의 도트 크기와 같다
 MOTIONS = {"idle": 4, "walk": 6, "run": 6, "attack": 6, "die": 6}  # 모션 → 프레임 수 (attack·die는 2줄 x 3칸)
 
 
@@ -113,7 +116,7 @@ def main(src: Path, out: Path):
             sc = REF_SIZE / float(np.median([body(f) for f in frames]))
             motions.append(("combo" if mo == "attack" else mo, frames, infos, sc))
         # 셀보다 넓은 캐릭터(귀상어 등)는 모든 모션을 같은 비율로 줄여 안 잘리게 한다
-        fit = min([1.0] + [(bs.CELL - 4) / (f.shape[1] * sc) for _, fs, _, sc in motions for f in fs])
+        fit = min([1.0] + [(bs.CELL - 4) / (f.shape[1] * sc * SIZE.get(cid, 1)) for _, fs, _, sc in motions for f in fs])
         if fit < 1:
             print(f"{cid}: 너무 넓어서 {fit:.3f}배로 줄임 → characters.json scale을 {1 / fit:.3f}배 키울 것")
         for name, frames, infos, sc in motions:
@@ -121,8 +124,16 @@ def main(src: Path, out: Path):
             sheet = Image.new("RGBA", (bs.CELL * len(frames), bs.CELL), (0, 0, 0, 0))
             for i, (f, (cx, by, _)) in enumerate(zip(frames, infos)):
                 im = Image.fromarray(f)
-                im = im.resize((max(1, round(im.width * sc)), max(1, round(im.height * sc))), Image.NEAREST)
-                px, py = bs.ANCHOR[0] - round(cx * sc), bs.ANCHOR[1] - round(by * sc)
+                k = SIZE.get(cid)
+                if k:  # 도트 격자 수를 줄여서 다시 찍기: 박스 평균 → 알파 이진화 → 최근접 확대
+                    gw, gh = max(1, round(im.width * sc * k / DOT)), max(1, round(im.height * sc * k / DOT))
+                    sm = np.array(im.resize((gw, gh), Image.BOX)); sm[..., 3] = np.where(sm[..., 3] > 110, 255, 0)
+                    im = Image.fromarray(sm).resize((gw * DOT, gh * DOT), Image.NEAREST)
+                    sc_eff = k * sc  # 앵커 계산용 배율
+                else:
+                    im = im.resize((max(1, round(im.width * sc)), max(1, round(im.height * sc))), Image.NEAREST)
+                    sc_eff = sc
+                px, py = bs.ANCHOR[0] - round(cx * sc_eff), bs.ANCHOR[1] - round(by * sc_eff)
                 px = min(max(px, 0), bs.CELL - im.width)  # 살짝 벗어난 건 옆으로 밀어 넣음 (쓰러진 자세 등)
                 py = max(py, 0)
                 cell = Image.new("RGBA", (bs.CELL, bs.CELL), (0, 0, 0, 0))

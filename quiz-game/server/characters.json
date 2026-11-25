@@ -592,8 +592,7 @@
   "frog": {
     "name": "개구리",
     "sprite": "frog",
-    "scale": 0.85,
-    "radius": 0.42,
+    "radius": 0.4,
     "hp": 50,
     "walkSpeed": 7,
     "runSpeed": 10.5,
@@ -622,7 +621,7 @@
   "shiba": {
     "name": "시바견",
     "sprite": "shiba",
-    "radius": 0.45,
+    "radius": 0.42,
     "hp": 45,
     "walkSpeed": 7,
     "runSpeed": 10.5,
@@ -666,7 +665,6 @@
       ],
       "fx": "crescent"
     },
-    "scale": 0.9,
     "ammo": {
       "max": 3,
       "reload": 1.05
@@ -675,7 +673,7 @@
   "hippo": {
     "name": "하마",
     "sprite": "hippo",
-    "radius": 0.75,
+    "radius": 0.6,
     "hp": 90,
     "walkSpeed": 4,
     "runSpeed": 6.0,
@@ -699,7 +697,6 @@
       "multi": true,
       "fx": "stomp"
     },
-    "scale": 1.35,
     "ammo": {
       "max": 3,
       "reload": 2.2
@@ -708,7 +705,7 @@
   "pig": {
     "name": "돼지",
     "sprite": "pig",
-    "radius": 0.6,
+    "radius": 0.55,
     "hp": 75,
     "walkSpeed": 4.5,
     "runSpeed": 6.75,
@@ -735,7 +732,6 @@
       "moveSpeedWhileAttacking": 0.5,
       "fx": "bump"
     },
-    "scale": 1.1,
     "ammo": {
       "max": 3,
       "reload": 2.1
@@ -744,7 +740,7 @@
   "chicken": {
     "name": "닭",
     "sprite": "chicken",
-    "radius": 0.45,
+    "radius": 0.34,
     "hp": 40,
     "walkSpeed": 6,
     "runSpeed": 9.0,
@@ -772,7 +768,6 @@
       },
       "fx": "egg"
     },
-    "scale": 0.9,
     "ammo": {
       "max": 3,
       "reload": 2.2
@@ -781,7 +776,7 @@
   "chick": {
     "name": "병아리",
     "sprite": "chick",
-    "radius": 0.35,
+    "radius": 0.28,
     "hp": 30,
     "walkSpeed": 8,
     "runSpeed": 12.0,
@@ -808,7 +803,6 @@
       },
       "fx": "arrow"
     },
-    "scale": 0.7,
     "ammo": {
       "max": 3,
       "reload": 1.05
