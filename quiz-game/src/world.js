@@ -140,7 +140,6 @@ export class WorldScene extends Phaser.Scene {
       const u = (now - w.from) / (w.until - w.from), R = w.range * BU, ang = Math.atan2(w.dy, w.dx), half = (w.arc * Math.PI) / 180;
       g.fillStyle(0xff3b30, 0.12 + 0.3 * u).slice(v.x, v.y, R, ang - half, ang + half, false).fillPath(); // 시간이 갈수록 진해짐
       g.fillStyle(0xff3b30, 0.35).slice(v.x, v.y, R * u, ang - half, ang + half, false).fillPath(); // 안쪽부터 차오름
-      g.lineStyle(3, 0xff3b30, 0.9).beginPath().moveTo(v.x, v.y).lineTo(v.x + Math.cos(ang - half) * R, v.y + Math.sin(ang - half) * R).arc(v.x, v.y, R, ang - half, ang + half, false).lineTo(v.x, v.y).strokePath();
     }
   }
 
@@ -155,26 +154,21 @@ export class WorldScene extends Phaser.Scene {
 
     const cx = me.x, cy = me.y, R = a.range * BU, ang = Math.atan2(a.dy, a.dx);
     // 공격 범위는 항상 또렷하게 (직접 조준 중엔 더 진하게)
-    const k = a.dragging ? 1 : 0.7, edge = (draw) => { g.lineStyle(7, THEME.ink, 0.7 * k); draw(); g.lineStyle(3, 0xffffff, 0.95 * k); draw(); };
-    g.lineStyle(2, 0xffffff, 0.3 * k).strokeCircle(cx, cy, R);
+    const k = a.dragging ? 1 : 0.7;
     if (!a.lob) { // 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
       if (a.kind === 'melee') {
         const half = ((a.arc ?? 60) * Math.PI) / 180;
-        g.fillStyle(0xffffff, 0.26 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
-        edge(() => g.beginPath().moveTo(cx, cy).lineTo(cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R).arc(cx, cy, R, ang - half, ang + half, false).lineTo(cx, cy).strokePath());
+        g.fillStyle(0xffffff, 0.34 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
       } else {
         const w = a.radius * BU, nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w;
         const ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R;
-        g.fillStyle(0xffffff, 0.26 * k).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
-        edge(() => g.beginPath().moveTo(cx + nx, cy + ny).lineTo(ex + nx, ey + ny).lineTo(ex - nx, ey - ny).lineTo(cx - nx, cy - ny).closePath().strokePath());
+        g.fillStyle(0xffffff, 0.34 * k).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
       }
-      if (a.dragging) g.lineStyle(4, 0xffffff, 0.95).lineBetween(cx, cy, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R);
     }
     if (a.lob) { // 던지기: 착탄 지점과 폭발 범위
       const lx = a.lob.x * BU, ly = a.lob.y * BU;
       g.lineStyle(3, 0xffffff, 0.5 * k).lineBetween(cx, cy, lx, ly);
-      g.fillStyle(0xff7a1a, 0.26 * k).fillCircle(lx, ly, a.lob.r * BU);
-      edge(() => g.strokeCircle(lx, ly, a.lob.r * BU));
+      g.fillStyle(0xff7a1a, 0.4 * k).fillCircle(lx, ly, a.lob.r * BU);
       g.lineStyle(3, 0xffffff, 0.9).lineBetween(lx - 8, ly, lx + 8, ly).lineBetween(lx, ly - 8, lx, ly + 8);
     }
     // 조준 중인 적: 발밑 링 (빛나는 테두리는 _lockChange가 스프라이트에 입힘)

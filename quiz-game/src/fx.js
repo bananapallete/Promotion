@@ -17,18 +17,10 @@ const arcDots = (g, cx, cy, r, a0, a1, size, c, a = 1) => {
   const n = Math.max(3, Math.floor(Math.abs(a1 - a0) * r / 6));
   for (let i = 0; i <= n; i++) { const t = lerp(a0, a1, i / n); dot(g, cx + Math.cos(t) * r, cy + Math.sin(t) * r, size, c, a); }
 };
-/** 맞는 범위 부채꼴(바닥): 면 + 흰 윤곽선 + 색 도트. k = 불투명도(0~1) */
+/** 맞는 범위 부채꼴(바닥): 테두리 없이 면만. k = 불투명도(0~1) */
 function footprint(g, cx, cy, R, ang, half, c, k) {
-  g.fillStyle(c, 0.42 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
-  g.fillStyle(0xffffff, 0.12 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
-  const edge = (size, col) => {
-    if (half < Math.PI - 0.01) {
-      lineDots(g, cx, cy, cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R, size, col, k, 8);
-      lineDots(g, cx, cy, cx + Math.cos(ang + half) * R, cy + Math.sin(ang + half) * R, size, col, k, 8);
-    }
-    arcDots(g, cx, cy, R, ang - half, ang + half, size, col, k);
-  };
-  edge(8, 0x14122b); edge(5, 0xffffff); edge(3, c); // 남색 테두리 위에 흰색, 그 위에 색
+  g.fillStyle(c, 0.5 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
+  g.fillStyle(0xffffff, 0.16 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
 }
 const burst = (g, x, y, r, n, size, c, u, rot = 0) => { // 사방으로 튀는 점
   for (let i = 0; i < n; i++) { const t = rot + (i / n) * Math.PI * 2; dot(g, x + Math.cos(t) * r * u, y + Math.sin(t) * r * u, size * (1 - 0.5 * u), c, 1 - u * 0.6); }
