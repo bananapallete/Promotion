@@ -19,7 +19,8 @@ window.__game = null; // 테스트용 접근
 const game = new Game(characters, quizzes);
 window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
-for (let i = 0; i < 15; i++) game.addBot('wander', 'blue'); // 돌아다니기만 하고 공격하지 않는 봇
+const charIds = Object.keys(characters);
+for (let i = 0; i < 15; i++) game.addBot('wander', charIds[Math.floor(Math.random() * charIds.length)]); // 돌아다니기만 하고 공격하지 않는 봇
 
 let last = performance.now();
 setInterval(() => {
@@ -125,8 +126,14 @@ zone.addEventListener('pointerup', padEnd);
 zone.addEventListener('pointercancel', padEnd);
 
 const runBtn = $('#btnRun');
+const skillType = () => game.players.get(ME)?.cfg.skill?.type || 'run';
+const syncSkill = () => { runBtn.textContent = skillType() === 'dash' ? '대쉬' : '달리기'; };
 const setRun = (v) => { input.run = v; runBtn.classList.toggle('on', v); sendInput(); };
-runBtn.addEventListener('pointerdown', (e) => { runBtn.setPointerCapture(e.pointerId); setRun(true); });
+// 스킬 버튼: 달리기는 누르고 있는 동안, 대쉬는 탭하면 한 번
+runBtn.addEventListener('pointerdown', (e) => {
+  runBtn.setPointerCapture(e.pointerId);
+  if (skillType() === 'dash') { game.skill(ME); runBtn.classList.add('on'); } else setRun(true);
+});
 runBtn.addEventListener('pointerup', () => setRun(false));
 runBtn.addEventListener('pointercancel', () => setRun(false));
 
@@ -162,12 +169,16 @@ function keyMove() {
 }
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
+  if (k === 'shift' && !e.repeat && skillType() === 'dash') game.skill(ME);
   if ((k === ' ' || k === 'j') && !e.repeat) { game.attack(ME, null); e.preventDefault(); return; }
   if (!keys.has(k)) { keys.add(k); keyMove(); }
 });
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
 
 // ---------- 테스트 패널 ----------
+// 캐릭터 선택 그리드와 봇 종류
+$('#chars').innerHTML = charIds.map((id, i) => `<button type="button" data-act="char" data-id="${id}" class="${i ? '' : 'sel'}">${characters[id].name}</button>`).join('');
+$('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });
 $('#gear').addEventListener('click', () => { $('#panel').hidden = !$('#panel').hidden; });
 $('#panel').addEventListener('click', (e) => {
@@ -187,7 +198,7 @@ $('#panel').addEventListener('click', (e) => {
     case 'view': follow = a.v === 'follow'; document.querySelectorAll('[data-act=view]').forEach((b) => b.classList.toggle('sel', b === e.target)); break;
     case 'char': {
       const p = game.players.get(ME);
-      p.charId = a.id; p.cfg = characters[a.id]; game._refill(p);
+      p.charId = a.id; p.cfg = characters[a.id]; p.dash = null; game._refill(p); syncSkill();
       document.querySelectorAll('[data-act=char]').forEach((b) => b.classList.toggle('sel', b === e.target));
       break;
     }

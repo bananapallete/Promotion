@@ -55,6 +55,7 @@
   #panel button.go { background: var(--accent); color: #05293b; font-weight: 700; }
   #panel button.warn { background: #7a3340; }
   #panel button.sel { outline: 2px solid var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   #panel p { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
 
 </style>
@@ -93,16 +94,13 @@
   <h3>봇</h3>
   <div class="row-inline">
     <select id="b-mode"><option value="idle" selected>정지</option><option value="wander">배회</option><option value="aggro">공격형</option></select>
-    <select id="b-char"><option value="blue">근접</option><option value="blue_ranged">원거리</option></select>
+    <select id="b-char"></select>
     <button class="go" data-act="bot" type="button">추가</button>
     <button class="warn" data-act="clear" type="button">제거</button>
   </div>
   <p><label><input type="checkbox" id="b-attack" /> 공격 허용</label></p>
   <h3>캐릭터</h3>
-  <div class="row-inline">
-    <button class="sel" data-act="char" data-id="blue" type="button">근접</button>
-    <button data-act="char" data-id="blue_ranged" type="button">원거리</button>
-  </div>
+  <div class="grid" id="chars"></div>
   <h3>시점</h3>
   <div class="row-inline">
     <button class="sel" data-act="view" data-v="follow" type="button">따라가기</button>

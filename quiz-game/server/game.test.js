@@ -23,7 +23,7 @@ test('근접 공격: 피해 2~3, 한 대당 약 0.5 밀림', () => {
   const { g, a, b } = setup();
   const x0 = b.x;
   g.attack('a', null);
-  assert.ok([8, 7].includes(b.hp), `hp=${b.hp}`);
+  assert.ok([48, 47].includes(b.hp), `hp=${b.hp}`);
   run(g, 1);
   assert.ok(Math.abs(b.x - x0 - 0.5) < 0.12, `밀린 거리 ${b.x - x0}`); // 충돌로 약간 달라질 수 있음
 });
@@ -51,15 +51,15 @@ test('체력 0 → 기절 2초 → 체력 회복 + 무적 3초', () => {
   run(g, 1.9); assert.equal(b.stunned, true);
   run(g, 0.2);
   assert.equal(b.stunned, false);
-  assert.equal(b.hp, 10);
+  assert.equal(b.hp, b.cfg.hp);
   // 무적 동안은 맞아도 피해 없음
   b.x = a.x + 1; b.y = a.y;
   g.attack('a', null);
-  assert.equal(b.hp, 10);
+  assert.equal(b.hp, b.cfg.hp);
   run(g, 3.1);
   b.x = a.x + 1; b.y = a.y; b.kx = b.ky = 0;
   g.attack('a', null);
-  assert.ok(b.hp < 10);
+  assert.ok(b.hp < b.cfg.hp);
 });
 
 test('기절 중에는 이동 불가', () => {
@@ -77,7 +77,7 @@ test('원거리: 사거리 5, 밀림 0.3, 피해 1', () => {
   const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
   a.x = 10; a.y = 10; b.x = 14.5; b.y = 10; a.kx = a.ky = b.kx = b.ky = 0;
   g.attack('a', null);
-  assert.equal(b.hp, 9);
+  assert.equal(b.hp, 49);
   run(g, 1);
   assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
   b.x = 15.6; // 5.6 > 사거리
@@ -90,10 +90,10 @@ test('원거리: 사거리 5, 밀림 0.3, 피해 1', () => {
 test('직접 조준: 드래그한 방향으로만 맞는다', () => {
   const { g, a, b } = setup();
   g.attack('a', { x: 0, y: -1 }); // 위쪽으로 조준 → b는 오른쪽에 있음
-  assert.equal(b.hp, 10);
+  assert.equal(b.hp, b.cfg.hp);
   run(g, 0.4);
   g.attack('a', { x: 1, y: 0 });
-  assert.ok(b.hp < 10);
+  assert.ok(b.hp < b.cfg.hp);
 });
 
 test('캐릭터끼리 겹치지 않는다', () => {
@@ -192,7 +192,7 @@ test('더미 봇은 기본적으로 공격하지 않는다', () => {
   const bot = g.addBot('aggro', 'blue');
   bot.x = 21; bot.y = 10;
   run(g, 5);
-  assert.equal(p.hp, 10);
+  assert.equal(p.hp, p.cfg.hp);
 });
 
 test('더미 봇(공격형)이 가까운 참가자를 때린다 (공격 허용을 켰을 때)', () => {
@@ -203,7 +203,7 @@ test('더미 봇(공격형)이 가까운 참가자를 때린다 (공격 허용�
   const bot = g.addBot('aggro', 'blue');
   bot.x = 25; bot.y = 10;
   run(g, 5);
-  assert.ok(p.hp < 10 || p.stunned || g.t < p.invUntil, `hp=${p.hp}`);
+  assert.ok(p.hp < p.cfg.hp || p.stunned || g.t < p.invUntil, `hp=${p.hp}`);
 });
 
 test('이동 속도는 항상 일정: 조이스틱을 살짝 밀어도 같은 속도, 가속 없음', () => {
@@ -326,7 +326,7 @@ test('조준 미리보기: 직접 조준한 방향의 적을 가리키고, 실�
   assert.equal(pv.manual, true);
   assert.equal(pv.targetId, 'u');
   g.attack('a', { x: 0, y: -1 });
-  assert.ok(up.hp < 10 && right.hp === 10, '미리보기가 가리킨 대상만 맞음');
+  assert.ok(up.hp < up.cfg.hp && right.hp === right.cfg.hp, '미리보기가 가리킨 대상만 맞음');
 });
 
 test('조준 미리보기: 3타 차례에는 늘어난 사거리를 보여준다', () => {
@@ -492,4 +492,94 @@ test('봇: 정지·공격형 테스트 봇은 문제를 풀지 않는다', () =>
   const idle = g.addBot('idle', 'blue'); idle.x = 20; idle.y = 20;
   g.ask(1); run(g, 3.1); run(g, 10);
   assert.ok(Math.abs(idle.x - 20) < 0.01 && Math.abs(idle.y - 20) < 0.01);
+});
+
+// ---------- 캐릭터별 규칙 ----------
+const duo = (a, b) => {
+  const g = new Game(chars, quizzes);
+  g.coinsSpawned = COIN.maxTotal; // 타이머 동전이 섞이지 않게
+  const A = g.join({ token: 'a', name: 'A', charId: a });
+  const B = g.join({ token: 'b', name: 'B', charId: b });
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.kx = A.ky = B.kx = B.ky = 0;
+  return { g, A, B };
+};
+
+test('체력은 모든 캐릭터가 45 이상 (기준 50)', () => {
+  assert.equal(chars.blue.hp, 50);
+  for (const c of Object.values(chars)) assert.ok(c.hp >= 45, c.name);
+});
+
+test('귀상어 돌진: 3칸 달려가 처음 닿은 상대를 날리고 멈춘다. 쿨타임 6초', () => {
+  const { g, A, B } = duo('hammerhead', 'blue');
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  g.skill('a');
+  g.setInput('a', { mx: 0, my: 0, run: false }); // 돌진 중에는 입력과 상관없이 나아감
+  run(g, 0.4);
+  assert.equal(B.hp, B.cfg.hp - 3, '돌진 피해 3');
+  assert.ok(B.x > 12.8, `크게 날아감: ${B.x}`);
+  assert.ok(A.x < 11.5, `부딪히면 멈춤: ${A.x}`);
+  const x = A.x; g.skill('a'); run(g, 0.3);
+  assert.ok(Math.abs(A.x - x) < 0.01 || A.x - x < 0.01, '쿨타임 중에는 안 나감');
+  assert.ok(g.snapshot().players.find((p) => p.id === 'a').rg < 6);
+  run(g, 6); g.setInput('a', { mx: 0, my: 0, run: false }); g.skill('a');
+  assert.ok(g._dashing(A), '쿨타임이 지나면 다시 나감 (입력 없으면 바라보는 방향)');
+});
+
+test('귀상어 박치기: 부채꼴 ±90° 안의 상대를 모두 때린다', () => {
+  const { g, A, B } = duo('hammerhead', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  B.x = 11.0; B.y = 10; C.x = 10.9; C.y = 9.1; // 앞쪽과 위쪽 가까이
+  g.attack('a', { x: 1, y: 0 });
+  assert.equal(B.hp, B.cfg.hp - 3);
+  assert.equal(C.hp, C.cfg.hp - 3);
+});
+
+test('개구리 도약: 4칸을 다른 캐릭터를 뛰어넘어 이동한다 (충돌 없음)', () => {
+  const { g, A, B } = duo('frog', 'blue');
+  B.x = 12; B.y = 10;
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  g.skill('a');
+  run(g, 0.2);
+  assert.ok(A.x > 11.5 && A.x < 13, `도약 도중 상대와 겹침 허용: ${A.x}`);
+  run(g, 0.4);
+  assert.ok(A.x > 14, `상대 너머까지: ${A.x}`);
+  assert.equal(B.hp, B.cfg.hp, '도약은 피해 없음');
+  assert.ok(Math.hypot(A.x - B.x, A.y - B.y) >= A.cfg.radius + B.cfg.radius - 0.01, '착지 후엔 겹치지 않음');
+});
+
+test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려온다', () => {
+  const { g, A, B } = duo('frog', 'blue');
+  B.x = 13; B.y = 10; // 3칸 앞
+  g.attack('a', null);
+  assert.equal(B.hp, B.cfg.hp - 1);
+  run(g, 0.6);
+  assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
+  B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
+  g.attack('a', null); assert.equal(B.hp, hp, '3.5 밖은 안 맞음');
+});
+
+test('래브라도: 동전 줍는 반경이 넓다 (1.6 vs 기본 1.0)', () => {
+  const { g, A, B } = duo('labrador', 'blue');
+  A.x = 5; A.y = 5; B.x = 25; B.y = 15;
+  g.coinsSpawned = 0; g.coinClock = -1e9; // 수동 생성만
+  g.spawnCoin(6.5, 5); g.spawnCoin(26.5, 15);
+  run(g, 0.5);
+  assert.equal(A.coins, 1);
+  assert.equal(B.coins, 0);
+});
+
+test('달리기 캐릭터는 스킬 입력이 아무 일도 하지 않는다', () => {
+  const { g, A } = duo('blue', 'blue');
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  g.skill('a');
+  assert.equal(g._dashing(A), false);
+});
+
+test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진이 끊긴다', () => {
+  const { g, A } = duo('hammerhead', 'blue');
+  g.setInput('a', { mx: 1, my: 0, run: true });
+  g.update(DT);
+  assert.equal(A.running, false);
+  g.skill('a'); g.knockOut('a'); g.update(DT);
+  assert.equal(g._dashing(A), false);
 });

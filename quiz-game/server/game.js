@@ -85,6 +85,7 @@ export class Game {
       hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
+      skillReadyAt: 0, dash: null, dashPass: false,
       score: 0, coins: 0, zone: null, zoneSince: 0,
       ai: { nextThink: 0, mx: 0, my: 0 },
     };
@@ -153,6 +154,7 @@ export class Game {
     p.hp = p.cfg.hp;
     p.runGauge = p.cfg.runGauge;
     p.exhausted = false;
+    p.skillReadyAt = 0;
   }
 
   _startMoving() {
@@ -225,22 +227,29 @@ export class Game {
   }
 
   // 그 방향으로 공격했을 때 맞는 대상
-  _pickTarget(p, range, dx, dy) {
+  // 그 방향으로 공격했을 때 맞는 대상들 (가까운 순). 근접은 부채꼴(arcDeg, 기본 ±60°), 원거리는 직선
+  _pickTargets(p, range, dx, dy) {
     const a = p.cfg.attack;
-    let target = null, tDist = Infinity;
+    const cosMin = Math.cos(((a.arcDeg ?? 60) * Math.PI) / 180);
+    const hits = [];
     for (const o of this._enemies(p)) {
       const vx = o.x - p.x, vy = o.y - p.y;
       const along = vx * dx + vy * dy; // 조준 방향으로의 거리
       if (along <= 0) continue;
       if (a.type === 'melee') {
         const d = Math.hypot(vx, vy);
-        if (d <= range && along / d >= 0.5 && d < tDist) { target = o; tDist = d; } // 전방 ±60도
+        if (d <= range && along / d >= cosMin) hits.push({ o, dist: d });
       } else {
         const perp = Math.abs(vx * dy - vy * dx);
-        if (along <= range && perp <= o.cfg.radius && along < tDist) { target = o; tDist = along; }
+        if (along <= range && perp <= o.cfg.radius) hits.push({ o, dist: along });
       }
     }
-    return { target, tDist };
+    return hits.sort((x, y) => x.dist - y.dist);
+  }
+
+  _pickTarget(p, range, dx, dy) {
+    const h = this._pickTargets(p, range, dx, dy)[0];
+    return { target: h ? h.o : null, tDist: h ? h.dist : Infinity };
   }
 
   /** 조준 표시용: 지금 조준하면 어디를 향하고 누가 맞는지 (공격은 하지 않음) */
@@ -250,12 +259,12 @@ export class Game {
     const { range, step } = this._comboState(p);
     const dir = this._aimDir(p, aim, range);
     const { target } = this._pickTarget(p, range, dir.dx, dir.dy);
-    return { dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, radius: p.cfg.radius, targetId: target ? target.id : null };
+    return { dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc: p.cfg.attack.arcDeg ?? 60, radius: p.cfg.radius, targetId: target ? target.id : null };
   }
 
   _tryAttack(p, aim) {
     const a = p.cfg.attack;
-    if (this.t < p.nextAttackAt || p.stunned) return;
+    if (this.t < p.nextAttackAt || p.stunned || this._dashing(p)) return;
     if (p.running && !a.canAttackWhileRunning) return;
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
@@ -268,9 +277,9 @@ export class Game {
     p.lastAttackAt = this.t;
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
-    const { target, tDist } = this._pickTarget(p, range, dx, dy);
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, step, len: r2(target ? tDist : range) });
-    if (target) this._hit(target, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1);
+    const hits = this._pickTargets(p, range, dx, dy);
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] ? hits[0].dist : range) });
+    for (const h of a.multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
   }
 
   _ko(target) {
@@ -339,7 +348,7 @@ export class Game {
       for (const p of active) {
         if (p.stunned) continue; // 쓰러진 캐릭터는 못 줍는다 (봇은 줍는다)
         const d = Math.hypot(p.x - c.x, p.y - c.y);
-        if (d <= COIN.pickupRadius && d < bd) { best = p; bd = d; }
+        if (d <= (p.cfg.pickupRadius ?? COIN.pickupRadius) && d < bd) { best = p; bd = d; }
       }
       if (best) {
         this.coins.delete(c.id);
@@ -351,21 +360,43 @@ export class Game {
 
   _hit(target, attacker, dx, dy, dmgMul = 1, knockMul = 1) {
     const a = attacker.cfg.attack;
+    const dmg = Math.round((a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1))) * dmgMul);
+    this._applyHit(target, attacker, dmg, a.knockback * knockMul, dx, dy);
+  }
+
+  _applyHit(target, attacker, rawDmg, knock, dx, dy) {
     if (this.t < target.invUntil) { // 무적: 피해도 밀림도 없음
       this.events.push({ e: 'block', id: target.id, x: r2(target.x), y: r2(target.y) });
       return;
     }
-    const dmg = target.stunned ? 0 : Math.round((a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1))) * dmgMul);
+    const dmg = target.stunned ? 0 : rawDmg;
     if (dmg > 0) {
       target.hp = Math.max(0, target.hp - dmg);
       if (target.hp === 0) this._ko(target);
     }
-    // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knockback (BU)
+    // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knock (BU, 음수면 끌어당김)
     if (!target.stunned) {
-      target.kx += dx * a.knockback * knockMul * KNOCK_DECAY;
-      target.ky += dy * a.knockback * knockMul * KNOCK_DECAY;
+      target.kx += dx * knock * KNOCK_DECAY;
+      target.ky += dy * knock * KNOCK_DECAY;
     }
     this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, x: r2(target.x), y: r2(target.y) });
+  }
+
+  // ---------- 스킬: 돌진/도약 (달리기 캐릭터는 달리기 버튼을 누르고 있는 방식) ----------
+  _dashing(p) {
+    return !!(p.dash && this.t < p.dash.until);
+  }
+
+  skill(id) {
+    const p = this.players.get(id);
+    const sk = p?.cfg.skill;
+    if (!p || p.stunned || sk?.type !== 'dash' || this.t < p.skillReadyAt || this._dashing(p)) return;
+    const len = Math.hypot(p.input.mx, p.input.my);
+    const dx = len > 0.1 ? p.input.mx / len : p.face, dy = len > 0.1 ? p.input.my / len : 0;
+    p.dash = { dx, dy, speed: sk.distance / sk.duration, until: this.t + sk.duration, pass: !!sk.pass, hitDmg: sk.hitDmg || 0, hitKnock: sk.hitKnock || 0 };
+    p.skillReadyAt = this.t + sk.cooldown;
+    if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
+    this.events.push({ e: 'dash', id: p.id, dx: r2(dx), dy: r2(dy), kind: sk.pass ? 'hop' : 'charge' });
   }
 
   // ---------- 매 틱 ----------
@@ -400,11 +431,20 @@ export class Game {
       p.invUntil = this.t + c.invincibleSec;
     }
 
+    if (p.stunned) p.dash = null;
+    const dashing = this._dashing(p);
+    if (!dashing) p.dash = null;
+    p.dashPass = dashing && p.dash.pass;
+    const runSkill = (c.skill?.type ?? 'run') === 'run';
+
     let vx = 0, vy = 0, running = false;
     const len = Math.hypot(p.input.mx, p.input.my);
     p.moving = !p.stunned && len > 0.1;
-    if (p.moving) {
-      running = p.input.run && p.runGauge > 0 && !p.exhausted;
+    if (dashing) { // 돌진/도약 중에는 입력과 상관없이 정해진 속도로 일직선
+      vx = p.dash.dx * p.dash.speed; vy = p.dash.dy * p.dash.speed;
+      p.moving = true; running = true;
+    } else if (p.moving) {
+      running = runSkill && p.input.run && p.runGauge > 0 && !p.exhausted;
       // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
       const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
       const speed = (running ? c.runSpeed : c.walkSpeed) * slow;
@@ -413,7 +453,7 @@ export class Game {
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
     }
     p.running = running;
-    if (running) {
+    if (dashing) { /* 돌진 중에는 달리기 게이지를 건드리지 않음 */ } else if (running) {
       p.runGauge = Math.max(0, p.runGauge - dt);
       if (p.runGauge === 0) p.exhausted = true;
     } else {
@@ -428,6 +468,15 @@ export class Game {
     if (Math.abs(p.kx) < 0.01) p.kx = 0;
     if (Math.abs(p.ky) < 0.01) p.ky = 0;
     this._clamp(p);
+
+    if (dashing && p.dash.hitDmg) { // 돌진: 처음 닿은 상대를 날리고 멈춤
+      for (const o of this._enemies(p)) {
+        if (o.stunned || Math.hypot(o.x - p.x, o.y - p.y) > p.cfg.radius + o.cfg.radius + 0.25) continue;
+        this._applyHit(o, p, p.dash.hitDmg, p.dash.hitKnock, p.dash.dx, p.dash.dy);
+        p.dash.until = this.t;
+        break;
+      }
+    }
   }
 
   _clamp(p) {
@@ -441,6 +490,7 @@ export class Game {
       for (let i = 0; i < list.length; i++) {
         for (let j = i + 1; j < list.length; j++) {
           const a = list[i], b = list[j];
+          if (a.dashPass || b.dashPass) continue; // 도약 중에는 다른 캐릭터를 뛰어넘음
           const min = a.cfg.radius + b.cfg.radius;
           let dx = b.x - a.x, dy = b.y - a.y;
           let d = Math.hypot(dx, dy);
@@ -512,7 +562,10 @@ export class Game {
         hp: p.hp, mhp: p.cfg.hp,
         st: p.stunned ? 1 : 0, inv: this.t < p.invUntil ? 1 : 0,
         a: p.moving ? (p.running ? 'run' : 'walk') : 'idle',
-        rg: r2(p.runGauge), mrg: p.cfg.runGauge,
+        ...(p.cfg.skill?.type === 'dash'
+          ? { k: 'dash', rg: r2(p.cfg.skill.cooldown - Math.max(0, p.skillReadyAt - this.t)), mrg: p.cfg.skill.cooldown } // 쿨타임 진행도
+          : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
+        tn: p.cfg.tint || null, zs: p.cfg.scale || 1,
         sc: this.totalScore(p), cn: p.coins,
       });
     }

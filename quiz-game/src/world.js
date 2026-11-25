@@ -109,7 +109,7 @@ export class WorldScene extends Phaser.Scene {
     g.lineStyle(a.dragging ? 3 : 2, 0xffffff, a.dragging ? 0.6 : 0.2).strokeCircle(cx, cy, R);
     if (a.dragging) { // 조준선: 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
       if (a.kind === 'melee') {
-        const half = Math.PI / 3;
+        const half = ((a.arc ?? 60) * Math.PI) / 180;
         g.fillStyle(0xffffff, 0.22).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
         g.lineStyle(3, 0xffffff, 0.8).beginPath().moveTo(cx, cy).lineTo(cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R).arc(cx, cy, R, ang - half, ang + half, false).lineTo(cx, cy).strokePath();
       } else {
@@ -150,14 +150,16 @@ export class WorldScene extends Phaser.Scene {
   }
 
   makeView(p) {
-    const sprite = this.add.sprite(0, 0, `${p.s}-idle`).setOrigin(SPRITE.anchor[0] / SPRITE.cell, SPRITE.anchor[1] / SPRITE.cell).setScale(SPR_SCALE);
+    const sprite = this.add.sprite(0, 0, `${p.s}-idle`).setOrigin(SPRITE.anchor[0] / SPRITE.cell, SPRITE.anchor[1] / SPRITE.cell).setScale(SPR_SCALE * (p.zs || 1));
+    const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 임시 모습: 스프라이트가 오면 tint를 지운다
+    if (tint) sprite.setTint(tint);
     sprite.play(`${p.s}-idle`);
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
     const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
-    const v = { sprite, name, bar, status, coinIcon, coinTxt, root: [sprite, name, bar, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, p };
+    const v = { sprite, name, bar, status, coinIcon, coinTxt, root: [sprite, name, bar, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -173,11 +175,14 @@ export class WorldScene extends Phaser.Scene {
       const len = e.len * BU;
       const line = this.add.graphics().setDepth(5000);
       if (e.kind === 'ranged') {
-        line.lineStyle(5, 0xffd54a, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
+        const tongue = e.fx === 'tongue'; // 개구리 혀: 굵은 분홍 직선 + 끝 동그라미
+        line.lineStyle(tongue ? 9 : 5, tongue ? 0xff6f91 : 0xffd54a, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
+        if (tongue) line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
       } else {
         const a = Math.atan2(e.dy, e.dx);
         const big = step === 2; // 3타 휘두르기는 더 크고 굵은 궤적
-        line.lineStyle(big ? 12 : 7, 0xffffff, 1).beginPath().arc(x0, y0, (big ? 1.3 : 0.9) * BU, a - (big ? 1.0 : 0.7), a + (big ? 1.0 : 0.7)).strokePath();
+        const half = e.arc ? (e.arc * Math.PI) / 180 * 0.85 : big ? 1.0 : 0.7; // 귀상어는 넓게
+        line.lineStyle(big ? 12 : 7, 0xffffff, 1).beginPath().arc(x0, y0, (big ? 1.3 : 0.9) * BU, a - half, a + half).strokePath();
       }
       this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
     } else if (e.e === 'hit' && v) {
@@ -186,6 +191,12 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: 650, onComplete: () => t.destroy() });
       const ring = this.add.circle(e.x * BU, e.y * BU - 0.6 * BU, 8, 0xffffff, 0.9).setDepth(5500);
       this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
+    } else if (e.e === 'dash' && v) {
+      if (e.kind === 'hop') v.hopUntil = now + 350;
+      for (let i = 0; i < 5; i++) { // 먼지 연출
+        const d = this.add.circle(v.x - e.dx * i * 12 + (Math.random() - 0.5) * 10, v.y - 4 - Math.random() * 8, 5, 0xffffff, 0.8).setDepth(v.y - 1);
+        this.tweens.add({ targets: d, alpha: 0, scale: 2.2, duration: 280 + i * 40, onComplete: () => d.destroy() });
+      }
     } else if (e.e === 'block') {
       const t = this.add.text(e.x * BU, e.y * BU - 1.9 * BU, '무적', { fontFamily: 'sans-serif', fontSize: '20px', color: '#2e86de', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5).setDepth(6000);
       this.tweens.add({ targets: t, y: t.y - 26, alpha: 0, duration: 500, onComplete: () => t.destroy() });
@@ -219,22 +230,26 @@ export class WorldScene extends Phaser.Scene {
       const p = v.p;
       v.x += (v.tx - v.x) * k;
       v.y += (v.ty - v.y) * k;
-      v.sprite.setPosition(v.x, v.y).setDepth(v.y);
+      const hop = v.hopUntil > now ? Math.sin(Math.PI * (1 - (v.hopUntil - now) / 350)) * 1.3 * BU : 0; // 도약: 포물선으로 뜸
+      v.sprite.setPosition(v.x, v.y - hop).setDepth(v.y);
       v.sprite.setFlipX(p.f < 0);
+      const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
+      if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
+      v.sprite.setScale(SPR_SCALE * (p.zs || 1));
 
       // 모션: 공격 중이면 유지, 아니면 이동 상태에 맞춰
       if (now >= v.punchUntil) v.sprite.play(`${p.s}-${p.st ? 'idle' : p.a}`, true);
 
       // 맞았을 때 0.1초 하얗게
       if (now < v.flashUntil) { v.sprite.setTintFill(0xffffff); v.flashing = true; }
-      else if (v.flashing) { v.sprite.clearTint(); v.flashing = false; }
+      else if (v.flashing) { v.sprite.clearTint(); if (v.tint) v.sprite.setTint(v.tint); v.flashing = false; }
 
       // 기절: 쓰러진 모습 / 무적: 깜빡임
       v.sprite.setAngle(p.st ? 80 * p.f : 0);
       v.sprite.setAlpha(p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1);
 
       // 체력바 + 이름
-      const bx = v.x, by = v.y - 1.7 * BU, bw = 0.95 * BU, bh = 7;
+      const bx = v.x, by = v.y - 1.7 * BU * (p.zs || 1), bw = 0.95 * BU, bh = 7;
       v.bar.clear().setDepth(v.y + 1);
       v.bar.fillStyle(0x000000, 0.35).fillRect(bx - bw / 2 - 1, by - 1, bw + 2, bh + 2);
       v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);

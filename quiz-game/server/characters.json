@@ -3,13 +3,16 @@
     "name": "파란티 근접",
     "sprite": "blue",
     "radius": 0.5,
-    "hp": 10,
+    "hp": 50,
     "walkSpeed": 6,
     "runSpeed": 9,
     "runGauge": 5,
     "runRecharge": 10,
     "stunSec": 2,
     "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
     "attack": {
       "type": "melee",
       "dmgMin": 2,
@@ -18,6 +21,7 @@
       "range": 1.2,
       "knockback": 0.5,
       "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.5,
       "combo": [
         {
           "dmg": 1,
@@ -34,21 +38,23 @@
           "range": 1.15,
           "knockback": 1.6
         }
-      ],
-      "moveSpeedWhileAttacking": 0.5
+      ]
     }
   },
   "blue_ranged": {
     "name": "파란티 원거리",
     "sprite": "blue",
     "radius": 0.5,
-    "hp": 10,
+    "hp": 50,
     "walkSpeed": 6,
     "runSpeed": 9,
     "runGauge": 5,
     "runRecharge": 10,
     "stunSec": 2,
     "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
     "attack": {
       "type": "ranged",
       "dmgMin": 1,
@@ -57,6 +63,115 @@
       "range": 5,
       "knockback": 0.3,
       "canAttackWhileRunning": false
+    }
+  },
+  "hammerhead": {
+    "name": "귀상어",
+    "sprite": "blue",
+    "tint": "#9fb4c8",
+    "scale": 1.15,
+    "radius": 0.6,
+    "hp": 60,
+    "walkSpeed": 5,
+    "runSpeed": 7.5,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "dash",
+      "distance": 3,
+      "duration": 0.25,
+      "cooldown": 6,
+      "hitDmg": 3,
+      "hitKnock": 1.5
+    },
+    "attack": {
+      "type": "melee",
+      "dmgMin": 3,
+      "dmgMax": 3,
+      "interval": 0.6,
+      "range": 1.3,
+      "arcDeg": 90,
+      "multi": true,
+      "knockback": 0.9,
+      "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.5
+    }
+  },
+  "labrador": {
+    "name": "래브라도",
+    "sprite": "blue",
+    "tint": "#ffd98a",
+    "radius": 0.5,
+    "hp": 45,
+    "walkSpeed": 7,
+    "runSpeed": 10.5,
+    "runGauge": 6,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "pickupRadius": 1.6,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "melee",
+      "dmgMin": 1,
+      "dmgMax": 2,
+      "interval": 0.25,
+      "range": 1.1,
+      "knockback": 0.2,
+      "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.6,
+      "combo": [
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1.5,
+          "range": 1,
+          "knockback": 1.5
+        }
+      ]
+    }
+  },
+  "frog": {
+    "name": "개구리",
+    "sprite": "blue",
+    "tint": "#8be28b",
+    "scale": 0.85,
+    "radius": 0.42,
+    "hp": 50,
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "dash",
+      "distance": 4,
+      "duration": 0.35,
+      "cooldown": 5,
+      "pass": true
+    },
+    "attack": {
+      "type": "ranged",
+      "fx": "tongue",
+      "dmgMin": 1,
+      "dmgMax": 1,
+      "interval": 0.5,
+      "range": 3.5,
+      "knockback": -0.4,
+      "canAttackWhileRunning": true
     }
   }
 }

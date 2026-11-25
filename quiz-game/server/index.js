@@ -30,7 +30,7 @@ function lanOrigin() {
 }
 
 app.get('/api/characters', (_req, res) => {
-  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type }])));
+  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', tint: c.tint || null, scale: c.scale || 1 }])));
 });
 app.get('/api/info', (_req, res) => res.json({ lanOrigin: lanOrigin(), publicUrl: process.env.PUBLIC_URL || null, hostKeyRequired: !!HOST_KEY }));
 
@@ -63,6 +63,7 @@ io.on('connection', (socket) => {
 
   socket.on('input', (i) => { if (socket.data.pid) game.setInput(socket.data.pid, i); });
   socket.on('attack', (aim) => { if (socket.data.pid) game.attack(socket.data.pid, aim); });
+  socket.on('skill', () => { if (socket.data.pid) game.skill(socket.data.pid); });
 
   socket.on('screen:join', () => socket.join('screens'));
 
@@ -96,7 +97,8 @@ io.on('connection', (socket) => {
 });
 
 // 기본 봇: 돌아다니기만 하고 공격하지 않는 15마리 (호스트 화면에서 제거 가능)
-for (let i = 0; i < 15; i++) game.addBot('wander', 'blue');
+const charIds = Object.keys(characters);
+for (let i = 0; i < 15; i++) game.addBot('wander', charIds[Math.floor(Math.random() * charIds.length)]);
 
 // ---------- 루프 ----------
 let last = performance.now();

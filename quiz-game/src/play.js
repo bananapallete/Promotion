@@ -10,16 +10,35 @@ const save = (v) => { try { localStorage.setItem(LS, JSON.stringify(v)); } catch
 let me = null; // { token, name, charId }
 
 // ---------- 입장 ----------
+// 선택 카드의 미리보기: 대기 모션 첫 프레임에 임시 색(tint)을 곱해서 그린다
+function drawPreview(canvas, c, img) {
+  const g = canvas.getContext('2d'), n = canvas.width, size = Math.round(n * 0.9 * (c.scale || 1));
+  const t = document.createElement('canvas'); t.width = t.height = n;
+  const x = t.getContext('2d');
+  const ox = Math.round((n - size) / 2 + size * 0.1), oy = n - size + Math.round(size * 0.06); // 발(그림자)이 아래쪽에 오게
+  x.drawImage(img, 0, 0, 256, 256, ox, oy, size, size);
+  if (c.tint) { x.globalCompositeOperation = 'multiply'; x.fillStyle = c.tint; x.fillRect(0, 0, n, n); x.globalCompositeOperation = 'destination-in'; x.drawImage(img, 0, 0, 256, 256, ox, oy, size, size); }
+  g.clearRect(0, 0, n, n); g.drawImage(t, 0, 0);
+}
 async function buildJoin() {
   const chars = await (await fetch('/api/characters')).json();
-  $('#chars').innerHTML = Object.entries(chars).map(([id, c], i) =>
-    `<label><input type="radio" name="char" value="${id}" ${i === 0 ? 'checked' : ''}/> ${c.name}</label>`).join('');
+  const entries = Object.entries(chars);
+  $('#chars').innerHTML = entries.map(([id, c], i) =>
+    `<label><input type="radio" name="char" value="${id}" ${i === 0 ? 'checked' : ''}/><canvas width="104" height="104" data-id="${id}"></canvas><b>${c.name}</b><small>${c.type === 'melee' ? '근접' : '원거리'} · ${c.skill === 'dash' ? '대쉬' : '달리기'}</small></label>`).join('');
   $('#join-ui').hidden = false;
+  const bySprite = {};
+  for (const e of entries) (bySprite[e[1].sprite] ||= []).push(e);
+  for (const [sprite, ids] of Object.entries(bySprite)) {
+    const img = new Image();
+    img.onload = () => ids.forEach(([id, c]) => drawPreview(document.querySelector(`canvas[data-id="${id}"]`), c, img));
+    img.src = `/characters/${sprite}/idle.png`;
+  }
 }
 function join(data) {
   socket.emit('join', data, (res) => {
     if (!res?.ok) { $('#err').textContent = res?.error || '입장 실패'; showJoin(); return; }
-    me = { token: res.token, name: res.name, charId: res.charId };
+    me = { token: res.token, name: res.name, charId: res.charId, skill: res.cfg?.skill?.type || 'run' };
+    runBtn.textContent = me.skill === 'dash' ? '대쉬' : '달리기';
     save(me);
     $('#join-ui').hidden = true;
     $('#game-ui').hidden = false;
@@ -83,7 +102,11 @@ zone.addEventListener('pointercancel', padEnd);
 // 달리기 (누르고 있는 동안)
 const runBtn = $('#btnRun');
 const setRun = (v) => { input.run = v; runBtn.classList.toggle('on', v); mark(); };
-runBtn.addEventListener('pointerdown', (e) => { runBtn.setPointerCapture(e.pointerId); setRun(true); });
+// 스킬 버튼: 달리기는 누르고 있는 동안, 대쉬는 탭하면 한 번
+runBtn.addEventListener('pointerdown', (e) => {
+  runBtn.setPointerCapture(e.pointerId);
+  if (me?.skill === 'dash') { socket.emit('skill'); runBtn.classList.add('on'); } else setRun(true);
+});
 runBtn.addEventListener('pointerup', () => setRun(false));
 runBtn.addEventListener('pointercancel', () => setRun(false));
 
@@ -122,6 +145,7 @@ function keyMove() {
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
   const k = e.key.toLowerCase();
+  if (k === 'shift' && !e.repeat && me?.skill === 'dash') socket.emit('skill');
   if ((k === ' ' || k === 'j') && !e.repeat) { socket.emit('attack', null); e.preventDefault(); return; }
   if (!keys.has(k)) { keys.add(k); keyMove(); }
 });
