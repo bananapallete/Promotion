@@ -176,7 +176,7 @@
       "multi": true,
       "canAttackWhileRunning": false,
       "projectile": {
-        "speed": 10,
+        "speed": 7,
         "lob": true,
         "explodeRadius": 1.8,
         "art": "bottle"

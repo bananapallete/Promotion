@@ -128,10 +128,10 @@ test('화염병: 포물선으로 날아가 착탄 지점에서 범위 폭발, �
   g.attack('a', { x: 1, y: 0, m: 5 / 6.5 }); // 직접 조준: 5칸 앞에 착탄
   assert.equal(near.hp, 50, '던진 순간에는 안 맞음');
   const flight = g.projectiles.get(1).T;
-  assert.ok(Math.abs(flight - 0.5) < 0.05, `비행 시간 ${flight}`);
+  assert.ok(Math.abs(flight - 5 / 7) < 0.05, `비행 시간 ${flight} (속도 7)`);
   run(g, 0.3); assert.equal(near.hp, 50, '날아가는 중');
   g.events = [];
-  run(g, 0.4);
+  run(g, flight - 0.3 + 0.1);
   const boom = g.events.find((e) => e.e === 'boom');
   assert.ok(boom && Math.abs(boom.x - 15) < 0.01 && boom.r === 1.8);
   const bd = chars.bomber.attack.dmgMin;
@@ -667,7 +667,8 @@ test('DPS 계산: 콤보 평균, 명중률, 범위, 돌진 피해를 반영한�
   assert.ok(Math.abs(blue.basic - ((a.dmgMin + a.dmgMax) / 2) * ((2 + a.combo[2].dmg) / 3) * shotsOf(chars.blue) / FIGHT_SEC) < 1e-9);
   assert.ok(dpsOf(chars.brawler).dps > dpsOf(chars.brawler).basic, '돌진 피해가 더해짐');
   assert.ok(dpsOf(chars.witch).dps < dpsOf(chars.witch).basic, '느린 투사체는 명중률로 깎임');
-  assert.ok(dpsOf(chars.bomber).dps > dpsOf(chars.bomber).basic * 0.75, '범위 공격은 보정이 붙음');
+  assert.ok(dpsOf(chars.bomber).dps > dpsOf(chars.bomber).basic * 0.65, '범위 공격은 보정이 붙음');
+  assert.ok(dpsOf(chars.blue).dps < dpsOf({ ...chars.blue, ammo: undefined }).dps, '탄창이 있으면 교전 DPS가 낮아짐');
 });
 
 test('모든 캐릭터가 서버 규칙으로 문제없이 싸운다 (공격 → 스킬 → 이동)', () => {

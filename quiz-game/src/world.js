@@ -269,7 +269,7 @@ export class WorldScene extends Phaser.Scene {
       v.bar.fillStyle(0x3a3f4d, 1).fillRect(bx - bw / 2, by, bw, bh);
       v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);
       v.bar.fillStyle(0xffffff, 0.3).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), 4); // 윗면 하이라이트
-      if (p.mam) { // 탄창: 체력바 아래 칸 (가득 = 주황, 장전 중인 칸은 차오름)
+      if (p.mam && p.id === this.focusId) { // 탄창은 내 것만 (가득 = 주황, 장전 중인 칸은 차오름). 빔프로젝터엔 내 캐릭터가 없어서 안 나옴
         const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 7, h = 10;
         for (let i = 0; i < p.mam; i++) {
           const x0 = bx - bw / 2 + i * (sw + gap), f = i < p.am ? 1 : i === p.am ? p.amf : 0;

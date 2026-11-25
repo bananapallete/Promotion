@@ -1,5 +1,5 @@
 // 캐릭터 균형 계산: 초당 피해(DPS)와 전투력 지수. 테스트와 tools/balance.mjs가 함께 쓴다.
-const HIT = { stone: 0.8, arrow: 0.9, orb: 0.65, spark: 0.8, star: 0.8, bottle: 0.75 }; // 투사체는 피할 수 있어서 명중률을 깎는다
+const HIT = { stone: 0.8, arrow: 0.9, orb: 0.65, spark: 0.8, star: 0.8, bottle: 0.65 }; // 투사체는 피할 수 있어서 명중률을 깎는다
 const AREA = 1.15; // 범위·관통 공격은 평균 1.15명을 맞힌다고 본다
 export const FIGHT_SEC = 10; // 한 번의 교전을 이만큼으로 보고 쏠 수 있는 발수를 센다
 
