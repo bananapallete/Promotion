@@ -6,7 +6,7 @@ import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
 import { burstFx, hitFx, meleeFx, muzzleFx, ultBanner } from './fx.js';
-import { auraOff, auraTick, blink, burnTick, meteorFall, quake, shockRing, speedLines, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
+import { auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
@@ -33,7 +33,7 @@ export class WorldScene extends Phaser.Scene {
   preload() {
     this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
     for (const s of SPRITES) {
-      for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : [])]) {
+      for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : []), ...(sprites[s]?.ult ? ['ult'] : [])]) {
         this.load.spritesheet(`${s}-${m}`, hooks.spriteUrl(s, m), { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
       }
     }
@@ -66,6 +66,7 @@ export class WorldScene extends Phaser.Scene {
 
     for (const s of SPRITES) {
       const n = sprites[s]?.idle ? sprites[s] : null; // 없으면 blue(constants의 프레임 수)
+      if (sprites[s]?.ult) this.anims.create({ key: `${s}-ult`, frames: this.anims.generateFrameNumbers(`${s}-ult`, { start: 0, end: sprites[s].ult - 1 }), frameRate: s === 'shiba' ? 9 : 16, repeat: -1 }); // 채널링 궁극기 모션
       if (sprites[s]?.die) this.anims.create({ key: `${s}-die`, frames: this.anims.generateFrameNumbers(`${s}-die`, { start: 0, end: sprites[s].die - 1 }), frameRate: 9, repeat: 0 });
       SPRITE.attackSteps.forEach((st, i) => {
         // 새 스프라이트의 공격은 한 동작(0번은 준비 자세)이라 단계마다 1~끝을 그 시간에 맞춰 재생
@@ -231,6 +232,12 @@ export class WorldScene extends Phaser.Scene {
       ultBanner(this, v, e.name, BU);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'charm') {
+      shockRing(this, { x: e.x, y: e.y, r: e.r }, BU, 'pink');
+    } else if (e.e === 'snipeAim') {
+      snipeAim(this, e, BU);
+    } else if (e.e === 'beam') {
+      beamFx(this, e, BU);
     } else if (e.e === 'pull') {
       tongues(this, e, BU);
     } else if (e.e === 'blink') {
@@ -240,7 +247,7 @@ export class WorldScene extends Phaser.Scene {
     } else if (e.e === 'wallHit') {
       hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
-      if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else burstFx(this, e, BU);
+      if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
       warnFx(this, e, BU);
       meteorFall(this, e, BU);
@@ -257,7 +264,7 @@ export class WorldScene extends Phaser.Scene {
         line.lineStyle(9, 0xff6f91, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
         line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
         this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
-      } else meleeFx(this, e, v, BU);
+      } else { meleeFx(this, e, v, BU); if (e.fx === 'smash') orcDust(this, e, v, BU, v.p.id === this.focusId); }
     } else if (e.e === 'hit' && v) {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
       const crit = !!e.crit;
@@ -270,10 +277,7 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
     } else if (e.e === 'dash' && v) {
       if (e.kind === 'hop') v.hopUntil = now + 350;
-      for (let i = 0; i < 5; i++) { // 먼지 연출
-        const d = this.add.circle(v.x - e.dx * i * 12 + (Math.random() - 0.5) * 10, v.y - 4 - Math.random() * 8, 5, 0xffffff, 0.8).setDepth(v.y - 1);
-        this.tweens.add({ targets: d, alpha: 0, scale: 2.2, duration: 280 + i * 40, onComplete: () => d.destroy() });
-      }
+      dashFx(this, e, v, BU); // 캐릭터마다 다른 대쉬 이펙트
     } else if (e.e === 'block') {
       const t = this.add.text(e.x * BU, e.y * BU - 1.9 * BU, '무적', { fontFamily: 'sans-serif', fontSize: '20px', color: '#2e86de', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5).setDepth(6000);
       this.tweens.add({ targets: t, y: t.y - 26, alpha: 0, duration: 500, onComplete: () => t.destroy() });
@@ -315,14 +319,19 @@ export class WorldScene extends Phaser.Scene {
       this._dust(v, p, now);
       if (p.ub > 0 && !p.sl) auraTick(this, v, now, BU); else auraOff(v);
       if (p.bn) burnTick(this, v, now, BU);
+      if (p.cm) heartTick(this, v, now, BU);
+      orbitTick(this, v, now, BU);
       v.sprite.setFlipX(p.f < 0);
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
-      v.sprite.setScale(SPR_SCALE * (p.zs || 1));
+      v.zsCur = (v.zsCur ?? (p.zs || 1)) + ((p.zs || 1) - (v.zsCur ?? (p.zs || 1))) * Math.min(1, (delta / 1000) * 8); // 진화 등 크기 변화는 부드럽게
+      v.sprite.setScale(SPR_SCALE * v.zsCur);
 
       // 모션: 공격 중이면 유지, 아니면 이동 상태에 맞춰
       const dies = p.st && sprites[p.s]?.die; // 기절하면 죽음 모션을 한 번 재생하고 누운 채로 둠
+      const chan = p.ch && sprites[p.s]?.ult; // 채널링 궁극기 중엔 전용 모션을 계속 재생
       if (dies) { if (!v.dead) { v.dead = true; v.sprite.play(`${p.s}-die`); } }
+      else if (chan) { v.dead = false; v.sprite.play(`${p.s}-ult`, true); }
       else { v.dead = false; if (now >= v.punchUntil) v.sprite.play(`${p.s}-${p.st ? 'idle' : p.a}`, true); }
 
       // 맞았을 때 0.1초 하얗게
@@ -337,7 +346,7 @@ export class WorldScene extends Phaser.Scene {
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;
       const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2;
       // 머리 위 UI는 캐릭터의 실제 머리 꼭대기 위에 쌓는다 (내 게이지가 아래로 늘어나도 캐릭터를 가리지 않게 전체를 위로 올림)
-      const headPx = (SPRITE.anchor[1] - (BOUNDS[p.s] ?? 20)) * SPR_SCALE * (p.zs || 1);
+      const headPx = (SPRITE.anchor[1] - (BOUNDS[p.s] ?? 20)) * SPR_SCALE * (v.zsCur ?? (p.zs || 1));
       const gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) : 0, below = gauges ? 7 + gauges * 5 + (gauges - 1) * 7 + 2 : 0;
       const by = v.y - headPx - 10 - below - bh - bd;
       const bx0 = v.x - bw / 2; // 바 왼쪽 끝

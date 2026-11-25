@@ -1,10 +1,11 @@
 // 궁극기: 때리거나 맞으면 충전되고, 가득 차면 쓸 수 있다. 종류(type)는 6가지이고 캐릭터마다 수치만 다르다.
 //   rush 돌진(닿는 상대 모두) · burst 내 주변 범위(화상·회전 가능) · buff 일정 시간 강화(은신 포함) · barrage 투사체 난사 · meteor 예고 후 폭발 · zone 바닥 범위 지속 피해(진흙은 느려짐+회복)
+//   channel 서서 시전(채널링: 느려지고 맞으면 끊김) · charm 매혹 · orbit 몸 주위를 도는 별 · snipe 조준 뒤 관통 빔
 //   pull 혀로 끌어당김 · wave 맵을 쓸고 가는 파도 · magnet 동전 끌어당김 · chain 순간이동 연타 · wall 막는 벽
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -67,6 +68,45 @@ const RUN = {
   buff(g, p, u) { // 일정 시간 강화: 이동(spd) 공격속도(atk) 피해(dmg) 무적(inv) 크리티컬 확정(crit) 줍기 범위(pickup)
     p.buff = { until: g.t + u.sec, spd: u.spd ?? 1, atk: u.atk ?? 1, dmg: u.dmg ?? 1, crit: !!u.crit, pickup: u.pickup ?? 1, stealth: !!u.stealth, assassin: u.assassin ?? 0 };
     if (u.inv) p.invUntil = Math.max(p.invUntil, g.t + u.sec);
+    if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
+    if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
+    if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  channel(g, p, u) { // 서서 시전하는 동안 tick마다 주변을 때림. 느려지고, 기절하면 끊김
+    const ch = p.channel = { until: g.t + u.sec, move: u.move ?? 0.4 };
+    if (u.inv) p.invUntil = Math.max(p.invUntil, g.t + u.sec);
+    for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {
+      later(g, i * u.tick, () => {
+        if (p.channel !== ch || p.stunned) return;
+        g.events.push({ e: 'burst', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, fx: u.fx });
+        hitArea(g, p, p.x, p.y, u.radius, u.dmg, 0, u.fx, 0, u.burn ? (o) => { o.burnUntil = g.t + u.burn.sec; o.burnBy = p.id; o.burnNext = g.t + u.burn.tick; o.burnDmg = u.burn.dmg; } : undefined);
+      });
+    }
+  },
+
+  charm(g, p, u) { // 범위 안 상대가 나에게 걸어오고, 그동안 공격·스킬을 못 씀
+    for (const o of g._enemies(p)) if (Math.hypot(o.x - p.x, o.y - p.y) <= u.radius) { o.charmUntil = g.t + u.sec; o.charmBy = p.id; }
+    g.events.push({ e: 'charm', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius });
+  },
+
+  orbit(g, p, u) { // 몸 주위를 도는 별: 닿는 상대를 gap초마다 한 번씩 때림
+    p.orbit = { until: g.t + u.sec, n: u.n, r: u.r, w: u.speed, a0: 0, t0: g.t, dmg: u.dmg, gap: u.hitGap ?? 0.6, hit: new Map() };
+  },
+
+  snipe(g, p, u, dx, dy, near) { // 제자리에서 aim초 조준(못 움직임) 뒤 굵은 관통 빔
+    p.rootUntil = Math.max(p.rootUntil, g.t + u.aim + 0.25);
+    g.events.push({ e: 'snipeAim', id: p.id, x: r2(p.x), y: r2(p.y), dx: r2(dx), dy: r2(dy), sec: u.aim, range: u.range, width: u.width });
+    later(g, u.aim, () => {
+      if (p.stunned) return;
+      let ax = dx, ay = dy;
+      if (near && !near.stunned) { const d = Math.hypot(near.x - p.x, near.y - p.y) || 1; ax = (near.x - p.x) / d; ay = (near.y - p.y) / d; }
+      g.events.push({ e: 'beam', id: p.id, x: r2(p.x), y: r2(p.y), dx: r2(ax), dy: r2(ay), range: u.range, width: u.width });
+      for (const o of g._enemies(p)) {
+        const vx = o.x - p.x, vy = o.y - p.y, along = vx * ax + vy * ay, perp = Math.abs(vx * ay - vy * ax);
+        if (along > 0 && along <= u.range && perp <= u.width / 2 + o.cfg.radius) g._applyHit(o, p, u.dmg, 0, ax, ay, 'arrow');
+      }
+    });
   },
 
   barrage(g, p, u, dx, dy) { // 투사체 n발: ring 사방 / fan 부채꼴 / line 조준 방향으로 연속
@@ -193,6 +233,20 @@ export function updateUlts(g) {
     }
   }
   for (const w of [...g.walls.values()]) if (g.t >= w.until) g.walls.delete(w.id);
+  for (const p of g.players.values()) {
+    if (p.baseCfg && (!p.buff || g.t >= p.buff.until)) { p.cfg = p.baseCfg; p.baseCfg = null; } // 진화 끝: 원래 크기
+    const o = p.orbit;
+    if (!o) continue;
+    if (g.t >= o.until || p.stunned) { p.orbit = null; continue; }
+    for (let i = 0; i < o.n; i++) {
+      const a = o.a0 + o.w * (g.t - o.t0) + (i / o.n) * Math.PI * 2, sx = p.x + Math.cos(a) * o.r, sy = p.y + Math.sin(a) * o.r;
+      for (const e of g._enemies(p)) {
+        if (e.stunned || (o.hit.get(e.id) ?? 0) > g.t || Math.hypot(e.x - sx, e.y - sy) > 0.7 + e.cfg.radius) continue;
+        o.hit.set(e.id, g.t + o.gap);
+        g._applyHit(e, p, o.dmg, 0, (e.x - sx) || 1, e.y - sy, 'star');
+      }
+    }
+  }
 }
 
 /** 성벽: 주인 말고는 지나갈 수 없다 (안에 있으면 가까운 쪽 면으로 밀어냄) */

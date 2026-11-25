@@ -53,12 +53,7 @@ export function meleeFx(scene, e, v, BU) {
         if (u > 0.25) star(g, cx + Math.cos(ang) * R, cy - 0.45 * BU + Math.sin(ang) * R, 10 * (1 - u) + 4, c);
       });
       break;
-    case 'smash': // 땅 내려찍기: 균열 + 파편
-      play(scene, 380, (g, u) => {
-        for (let i = -3; i <= 3; i++) { const t = ang + i * half / 3.5; lineDots(g, cx + Math.cos(t) * R * 0.25, cy + Math.sin(t) * R * 0.25, cx + Math.cos(t) * R * 0.95 * Math.min(1, u * 2.5), cy + Math.sin(t) * R * 0.95 * Math.min(1, u * 2.5), 4, 0x5a3a22, 1 - u * 0.6, 7); }
-        burst(g, cx + Math.cos(ang) * R * 0.7, cy + Math.sin(ang) * R * 0.7, R * 0.5, 9, 8, c, u);
-      });
-      break;
+    case 'smash': break; // 땅 내려찍기: 맞는 범위 면만 (먼지 파도·균열은 ultFx.orcDust)
     case 'stomp': // 주변 전체 쿵: 충격 고리
       play(scene, 420, (g, u) => {
         arcDots(g, cx, cy, R * (0.4 + 0.6 * u), 0, Math.PI * 2, 6, 0xffffff, 1 - u);

@@ -2,7 +2,7 @@
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
 import { blockWalls, buffOf, charge, CHARGE_TAKEN, ultReady, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
-import { COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
+import { RUN_DRAIN, COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -95,7 +95,7 @@ export class Game {
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
-      ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
+      charmUntil: 0, charmBy: null, channel: null, orbit: null, ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
@@ -169,7 +169,7 @@ export class Game {
     p.hp = p.cfg.hp;
     p.runGauge = p.cfg.runGauge;
     p.exhausted = false;
-    p.skillReadyAt = 0; p.ult = 0; p.buff = null; p.rootUntil = 0;
+    p.skillReadyAt = 0; p.ult = 0; p.buff = null; p.rootUntil = 0; p.baseCfg = null; p.channel = null; p.charmUntil = 0; p.orbit = null;
     p.ammoF = p.cfg.ammo?.max ?? 99;
   }
 
@@ -290,7 +290,7 @@ export class Game {
 
   _tryAttack(p, aim) {
     const a = p.cfg.attack;
-    if (this.t < p.nextAttackAt || p.stunned || this.t < p.rootUntil || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
+    if (this.t < p.nextAttackAt || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
     if (p.running && !a.canAttackWhileRunning) return;
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
@@ -539,7 +539,7 @@ export class Game {
   // ---------- 궁극기 ----------
   ult(id, aim) {
     const p = this.players.get(id);
-    if (!p || p.stunned || this.t < p.rootUntil || this._dashing(p) || !ultReady(p)) return false;
+    if (!p || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || !ultReady(p)) return false;
     useUlt(this, p, aim);
     return true;
   }
@@ -552,13 +552,13 @@ export class Game {
   skill(id) {
     const p = this.players.get(id);
     const sk = p?.cfg.skill;
-    if (!p || p.stunned || this.t < p.rootUntil || sk?.type !== 'dash' || this.t < p.skillReadyAt || this._dashing(p)) return;
+    if (!p || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || sk?.type !== 'dash' || this.t < p.skillReadyAt || this._dashing(p)) return;
     const len = Math.hypot(p.input.mx, p.input.my);
     const dx = len > 0.1 ? p.input.mx / len : p.face, dy = len > 0.1 ? p.input.my / len : 0;
     p.dash = { dx, dy, speed: sk.distance / sk.duration, until: this.t + sk.duration, pass: !!sk.pass, hitDmg: sk.hitDmg || 0, hitKnock: sk.hitKnock || 0 };
     p.skillReadyAt = this.t + sk.cooldown;
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
-    this.events.push({ e: 'dash', id: p.id, dx: r2(dx), dy: r2(dy), kind: sk.pass ? 'hop' : 'charge' });
+    this.events.push({ e: 'dash', id: p.id, dx: r2(dx), dy: r2(dy), kind: sk.pass ? 'hop' : 'charge', dist: sk.distance });
   }
 
   // ---------- 매 틱 ----------
@@ -595,6 +595,11 @@ export class Game {
       const w = p.windup; p.windup = null;
       if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step, w.arc, w.multi);
     }
+    if (this.t < p.charmUntil) { // 매혹: 걸은 사람 쪽으로 걸어가고 가까워지면 멈춘다
+      const by = this.players.get(p.charmBy);
+      if (by) { const cx = by.x - p.x, cy = by.y - p.y, d = Math.hypot(cx, cy); p.input = d > 1.2 ? { mx: cx / d, my: cy / d, run: false } : { mx: 0, my: 0, run: false }; }
+    }
+    if (p.channel && (p.stunned || this.t >= p.channel.until)) { p.channel = null; this.events.push({ e: 'channelEnd', id: p.id }); } // 시전 끝/끊김
     if (p.stunned && this.t >= p.stunUntil) { // 기절 해제 → 체력 회복 + 무적
       p.stunned = false;
       p.hp = c.hp;
@@ -621,14 +626,14 @@ export class Game {
       // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
       const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
       const boost = (this.t < p.speedUntil ? ITEM.shoe.mul : 1) * (buffOf(this, p)?.spd ?? 1); // 신발 · 궁극기 강화
-      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
+      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (p.channel ? p.channel.move : 1) * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
     }
     p.running = running;
     if (dashing) { /* 돌진 중에는 달리기 게이지를 건드리지 않음 */ } else if (running) {
-      p.runGauge = Math.max(0, p.runGauge - dt);
+      p.runGauge = Math.max(0, p.runGauge - dt * RUN_DRAIN);
       if (p.runGauge === 0) p.exhausted = true;
     } else {
       p.runGauge = Math.min(c.runGauge, p.runGauge + (c.runGauge / c.runRecharge) * dt);
@@ -744,7 +749,7 @@ export class Game {
     for (const p of this.players.values()) {
       if (!p.connected) continue;
       players.push({
-        id: p.id, n: p.name, c: p.charId, s: p.cfg.sprite, b: p.isBot ? 1 : 0,
+        id: p.id, n: p.name, c: p.charId, s: buffOf(this, p)?.morph || p.cfg.sprite, b: p.isBot ? 1 : 0,
         x: r2(p.x), y: r2(p.y), f: p.face,
         hp: p.hp, mhp: p.cfg.hp,
         st: p.stunned ? 1 : 0, inv: this.t < p.invUntil ? 1 : 0,
@@ -752,9 +757,9 @@ export class Game {
         ...(p.cfg.skill?.type === 'dash'
           ? { k: 'dash', rg: r2(p.cfg.skill.cooldown - Math.max(0, p.skillReadyAt - this.t)), mrg: p.cfg.skill.cooldown } // 쿨타임 진행도
           : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
-        tn: p.cfg.tint || null, zs: p.cfg.scale || 1,
+        tn: p.cfg.tint || null, zs: buffOf(this, p)?.morph ? 1 : (p.cfg.scale || 1) * (buffOf(this, p)?.scale || 1),
         am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
-        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, sl: this._stealthed(p) ? 1 : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
+        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, sl: this._stealthed(p) ? 1 : 0, ch: p.channel ? 1 : 0, cm: this.t < p.charmUntil ? 1 : 0, ob: p.orbit && this.t < p.orbit.until ? { a: r2(p.orbit.a0 + p.orbit.w * (this.t - p.orbit.t0)), w: p.orbit.w, n: p.orbit.n, r: p.orbit.r } : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
         sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
       });
     }

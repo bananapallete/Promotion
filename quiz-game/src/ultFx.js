@@ -11,6 +11,8 @@ const PAL = { // 어두운 색 → 밝은 색
   orb: [0x3a2370, 0x6a3fb0, 0xb072ff, 0xe3c9ff, 0xffffff].map(rgb),
   egg: [0x7a4a10, 0xc27a10, 0xf2a31b, 0xffd54a, 0xfff7c2].map(rgb),
   quake: [0x4a3524, 0x7a5a3c, 0xa8845a, 0xd9c08f, 0xf3ecd6].map(rgb),
+  pink: [0x7a2a4a, 0xd94a8a, 0xff8fb8, 0xffc2d8, 0xffffff].map(rgb),
+  water: [0x1d4a9a, 0x3a7ae0, 0x7ab8ff, 0xcfe8ff, 0xffffff].map(rgb),
 };
 const palOf = (kind) => PAL[kind] || PAL.fire;
 const easeOut = (t) => 1 - (1 - t) ** 3;
@@ -191,7 +193,7 @@ export function quake(scene, e, BU) {
   }
   if (scene.focusId) scene.cameras.main.shake(260, 0.006);
 }
-export function shockRing(scene, e, BU) { ringAnim(scene, e.x * BU, e.y * BU, e.r, 'fire', BU); ringAnim(scene, e.x * BU, e.y * BU, e.r * 0.6, 'quake', BU, 4997); }
+export function shockRing(scene, e, BU, kind = 'fire') { ringAnim(scene, e.x * BU, e.y * BU, e.r, kind, BU); ringAnim(scene, e.x * BU, e.y * BU, e.r * 0.6, kind === 'fire' ? 'quake' : kind, BU, 4997); }
 
 // ---------- 지속 범위: 불꽃·화살비 ----------
 function flameTex(scene, f) {
@@ -406,4 +408,108 @@ export function mudBubbleTex(scene, f) {
     if (f > 1) put(4, 4, [196, 158, 112]);
     ink(put, w, h, (x, y) => lit[y * w + x]);
   });
+}
+
+// ---------- 오크 평타: 먼지 파도 (시안 A) + 가운데 균열 ----------
+export function orcDust(scene, e, v, BU, mine) {
+  const ang = Math.atan2(e.dy, e.dx), R = (e.range || 4) * BU, half = ((e.arc ?? 28) * Math.PI) / 180, per = mine ? 2 : 1;
+  for (let band = 0; band < 4; band++) for (let k = 0; k < per; k++) {
+    const d = R * (0.2 + band * 0.25), lat = (Math.random() - 0.5) * 2 * d * Math.tan(half) * 0.8;
+    const x = v.x + Math.cos(ang) * d - Math.sin(ang) * lat, y = v.y + Math.sin(ang) * d + Math.cos(ang) * lat;
+    scene.time.delayedCall(band * 60 + k * 25, () => {
+      const s = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(1.8 + band * 0.5).setDepth(y + 5).setFlipX(e.dx < 0).setAlpha(0.92);
+      s.play('dust'); s.once('animationcomplete', () => s.destroy());
+      scene.tweens.add({ targets: s, y: y - 18, duration: 420 });
+    });
+  }
+  const pts = []; for (let i = 0; i <= 18; i++) { const t = (i / 18) * R * 0.95 + 20, j = (Math.random() - 0.5) * 14 * Math.min(1, i / 6); pts.push([v.x + Math.cos(ang) * t - Math.sin(ang) * j, v.y + Math.sin(ang) * t + Math.cos(ang) * j - 4]); }
+  drawLoop(scene, 900, (g, u) => { // 균열: 앞으로 달려 나가고 천천히 사라짐
+    const upto = Math.floor(Math.min(1, u * 4) * 18), fade = u > 0.6 ? 1 - (u - 0.6) / 0.4 : 1;
+    for (let i = 1; i <= upto; i++) { dotLine(g, ...pts[i - 1], ...pts[i], 9, 0x14122b, fade); dotLine(g, ...pts[i - 1], ...pts[i], 6, 0x4a3524, fade); }
+  }, -47);
+}
+
+// ---------- 대쉬 이펙트: 캐릭터마다 다르게 (잔상 + 시작/끝 먼지 + 고유 연출) ----------
+const DASH = {
+  girl_long: { tint: 0xff8fb0, cols: [0xff8fb0, 0xffffff] }, brawler: { tint: 0xffa43a, cols: [0xffa43a, 0xffffff] }, knight: { tint: 0xcfe3f5, cols: [0xcfe3f5, 0xffffff, 0x8e97a3] },
+  hammerhead: { tint: 0x5aa7ff, cols: [0xcfe8ff, 0x5aa7ff, 0xffffff] }, shiba: { tint: 0xff9a3c, cols: [0xffd84a, 0xff7a1a] }, pig: { tint: 0xc9a070, cols: [0xc9a070, 0x8a6a42] },
+};
+export function dashFx(scene, e, v, BU) {
+  const id = v.p.s, c = DASH[id] || { tint: 0xffffff, cols: [0xffffff] }, dist = (e.dist ?? 3) * BU, sp = v.sprite;
+  const at = (t) => [v.x + e.dx * dist * t, v.y + e.dy * dist * t];
+  for (let i = 0; i < 4; i++) { // 잔상: 지나간 자리에 색을 입힌 캐릭터가 남았다 사라짐
+    scene.time.delayedCall(i * 55, () => {
+      const [gx, gy] = at(i * 0.22);
+      const gh = scene.add.image(gx, gy, sp.texture.key, sp.frame.name).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX).setTint(c.tint).setAlpha(0.55).setDepth(gy - 1);
+      scene.tweens.add({ targets: gh, alpha: 0, duration: 260, onComplete: () => gh.destroy() });
+    });
+  }
+  const puffAt = (x, y, s, tint) => { const p = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(s).setDepth(y + 5).setAlpha(0.9); if (tint) p.setTint(tint); p.play('dust'); p.once('animationcomplete', () => p.destroy()); };
+  puffAt(v.x, v.y, 1.3, id === 'pig' ? 0xa88860 : 0);
+  const [ex, ey] = at(1); scene.time.delayedCall(260, () => puffAt(ex, ey, 1.6, id === 'pig' ? 0xa88860 : 0));
+  const sparks = (n, size, up) => { for (let i = 0; i < n; i++) { const [px, py] = at(Math.random()), col = c.cols[i % c.cols.length]; const r = scene.add.rectangle(px + (Math.random() - 0.5) * 20, py - 6 - Math.random() * 20, size, size, col).setDepth(py + 3); scene.tweens.add({ targets: r, y: r.y + (up ? -26 : 10 + Math.random() * 12), alpha: 0, duration: 300 + Math.random() * 200, delay: Math.random() * 200, onComplete: () => r.destroy() }); } };
+  if (id === 'girl_long' || id === 'brawler') speedLines(scene, { x: v.x / BU, y: v.y / BU, dx: e.dx, dy: e.dy, dist: e.dist }, BU);
+  if (id === 'brawler') { shockRing(scene, { x: v.x / BU, y: v.y / BU, r: 1.1 }, BU); sparks(8, 6, false); }
+  if (id === 'knight') sparks(14, 4, false);                                       // 갑옷이 긁히며 튀는 불꽃
+  if (id === 'hammerhead') { sparks(16, 6, true); shockRing(scene, { x: v.x / BU, y: v.y / BU, r: 1.2 }, BU, 'water'); } // 물방울 + 물보라 고리
+  if (id === 'girl_long') sparks(8, 5, true);
+  if (id === 'shiba') for (let i = 0; i < 6; i++) { // 꼬리 불꽃이 길게 남음
+    [0, 1, 2, 3].forEach((f) => flameTex(scene, f)); const [fx, fy] = at(i / 6);
+    scene.time.delayedCall(i * 40, () => { const f = scene.add.image(fx, fy - 8, `ux-flame-${i % 4}`).setScale(DOT * 0.7).setOrigin(0.5, 1).setDepth(fy + 4); scene.tweens.add({ targets: f, y: f.y - 14, alpha: 0, duration: 380, onComplete: () => f.destroy() }); });
+  }
+  if (id === 'pig') for (let i = 0; i < 6; i++) { const [px, py] = at(i / 6); scene.time.delayedCall(i * 40, () => puffAt(px, py, 1.2 + Math.random() * 0.5, 0xa88860)); sparks(1, 7, true); }
+}
+
+// ---------- 채널링: 도는 칼날 · 불꽃 고리 ----------
+export function spinFx(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU - 0.45 * BU, R = e.r * BU * 0.85;
+  drawLoop(scene, 300, (g, u) => {
+    for (let k = 0; k < 3; k++) { const a0 = u * 5 + (k * Math.PI * 2) / 3; for (let i = 0; i < 12; i++) { const a = a0 + i * 0.09, age = 1 - i / 12; sq(g, x + Math.cos(a) * R, y + Math.sin(a) * R * 0.45, 8 * age + 3, 0xffffff, (1 - u) * age); } }
+  });
+  shockRing(scene, { x: e.x, y: e.y, r: e.r * 0.7 }, BU, 'water');
+}
+export function fireRing(scene, e, BU) {
+  shockRing(scene, e, BU);
+  [0, 1, 2, 3].forEach((f) => flameTex(scene, f));
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2, x = e.x * BU + Math.cos(a) * e.r * BU * 0.85, y = e.y * BU + Math.sin(a) * e.r * BU * 0.85;
+    const f = scene.add.image(x, y, `ux-flame-${i % 4}`).setScale(DOT * 0.8).setOrigin(0.5, 1).setDepth(y + 4);
+    scene.tweens.add({ targets: f, y: y - 18, alpha: 0, duration: 420, delay: i * 12, onComplete: () => f.destroy() });
+  }
+}
+
+// ---------- 매혹: 하트가 머리 위로 떠오름 ----------
+export function heartTick(scene, v, now, BU) {
+  if (now < (v.heartAt || 0)) return;
+  v.heartAt = now + 260;
+  const h = scene.add.image(v.x + (Math.random() - 0.5) * 0.8 * BU, v.y - 1.6 * BU, 'item-heart').setScale(DOT * 0.55).setDepth(v.y + 6);
+  scene.tweens.add({ targets: h, y: h.y - 0.9 * BU, alpha: 0, duration: 700, onComplete: () => h.destroy() });
+}
+
+// ---------- 별 궤도: 몸 주위를 도는 별 ----------
+export function orbitTick(scene, v, now, BU) {
+  const ob = v.p.ob;
+  if (!ob) { v.orbit?.forEach((s) => s.destroy()); v.orbit = null; return; }
+  if (!v.orbit || v.orbit.length !== ob.n) { v.orbit?.forEach((s) => s.destroy()); v.orbit = Array.from({ length: ob.n }, () => scene.add.image(0, 0, 'pj-star').setScale(DOT)); }
+  if (ob.a !== v.obLast) { v.obLast = ob.a; v.obAt = now; }
+  const a0 = ob.a + (ob.w * (now - v.obAt)) / 1000;
+  v.orbit.forEach((s, i) => { const a = a0 + (i / ob.n) * Math.PI * 2, y = v.y + Math.sin(a) * ob.r * BU; s.setPosition(v.x + Math.cos(a) * ob.r * BU, y - 0.5 * BU).setRotation(now / 80).setDepth(y + 3); });
+}
+
+// ---------- 저격: 조준선 → 굵은 빔 ----------
+export function snipeAim(scene, e, BU) {
+  const x0 = e.x * BU, y0 = e.y * BU - 0.5 * BU, x1 = x0 + e.dx * e.range * BU, y1 = y0 + e.dy * e.range * BU;
+  drawLoop(scene, e.sec * 1000, (g, u) => {
+    const a = 0.3 + 0.5 * Math.abs(Math.sin(u * 14)); dotLine(g, x0, y0, x1, y1, 4, 0xff3b30, a, 10);
+    sq(g, x0 + e.dx * 26, y0 + e.dy * 26, 10 + u * 22, 0x5ad8ff, 0.9); sq(g, x0 + e.dx * 26, y0 + e.dy * 26, 6 + u * 14, 0xffffff, 0.9); // 총구에 모이는 빛
+  }, -44);
+}
+export function beamFx(scene, e, BU) {
+  const x0 = e.x * BU + e.dx * 26, y0 = e.y * BU - 0.5 * BU + e.dy * 26, x1 = e.x * BU + e.dx * e.range * BU, y1 = e.y * BU - 0.5 * BU + e.dy * e.range * BU, w = e.width * BU;
+  drawLoop(scene, 380, (g, u) => {
+    const k = 1 - u;
+    dotLine(g, x0, y0, x1, y1, w * 0.7 * k + 8, 0x14122b, 1, 8); dotLine(g, x0, y0, x1, y1, w * 0.5 * k + 4, 0x5ad8ff, 1, 8); dotLine(g, x0, y0, x1, y1, w * 0.22 * k + 2, 0xffffff, 1, 8);
+    for (let i = 0; i < 8; i++) { const t = (i + u) / 8; sq(g, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + Math.sin(i * 3 + u * 9) * 18 * k, 6, 0xffffff, k); }
+  }, 6100);
+  if (scene.focusId === e.id) scene.cameras.main.shake(120, 0.004);
 }

@@ -20,6 +20,9 @@ export const COIN = {
   dropLockSec: 3.5, // 떨어진 동전은 이 시간 동안 아무도 못 줍는다 (그동안 깜빡임)
   dropOnNoAnswer: true, // 무응답도 틀린 것으로 보고 떨어뜨림
 };
+// 달리기 게이지는 이 배수로 빨리 닳는다 (대쉬 캐릭터는 게이지가 없어서 균형을 맞추기 위함)
+export const RUN_DRAIN = 1.4;
+
 // 아이템: 하트(체력 회복) · 신발(잠깐 빨라짐). 동전처럼 맵에 생기고 닿으면 자동으로 먹는다
 export const ITEM = {
   spawnEverySec: 8, // 이 간격으로 하트/신발 중 하나가 생김

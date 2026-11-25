@@ -25,7 +25,8 @@
   "walk": 6,
   "run": 6,
   "combo": 6,
-  "die": 6
+  "die": 6,
+  "ult": 8
  },
  "girl_short": {
   "idle": 4,
@@ -60,7 +61,8 @@
   "walk": 6,
   "run": 6,
   "combo": 6,
-  "die": 6
+  "die": 6,
+  "ult": 8
  },
  "witch": {
   "idle": 4,
@@ -123,7 +125,8 @@
   "walk": 8,
   "run": 8,
   "combo": 6,
-  "die": 6
+  "die": 6,
+  "ult": 4
  },
  "blue": {
   "die": 6

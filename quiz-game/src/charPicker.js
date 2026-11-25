@@ -1,6 +1,6 @@
 // 캐릭터 선택(시안 B): 위에 고른 캐릭터를 크게(대기 2초 → 공격 3번 → 달리기 3초 → 쓰러짐 반복) + 능력 3줄, 아래에 역할 탭과 작은 카드 모음.
 import sprites from '../shared/sprites.json';
-import { SPRITE } from '../shared/constants.js';
+import { RUN_DRAIN, SPRITE } from '../shared/constants.js';
 import { HEART_PALETTE, heartRows, SHOE_PALETTE, SHOE_ROWS, SWORD_ROWS } from '../shared/itemPixels.js';
 
 const TABS = [['all', '전체'], ['rec', '추천'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리']];
@@ -49,7 +49,7 @@ const num = (n) => (Number.isInteger(n) ? n : +n.toFixed(2));
 export function skillText(c) {
   const s = c.sk || {};
   if (s.type === 'dash') return `${num(s.distance)}칸 돌진 · 쿨 ${num(s.cooldown)}초${s.hitDmg ? ` · 피해 ${s.hitDmg}` : ''}`;
-  return `${num(c.runGauge)}초 달리기`;
+  return `${num(c.runGauge / RUN_DRAIN)}초 달리기`;
 }
 
 /** 도트 아이콘 캔버스 */

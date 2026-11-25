@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Game } from './game.js';
-import { CRIT, PHASE } from '../shared/constants.js';
+import { CRIT, PHASE, RUN_DRAIN } from '../shared/constants.js';
 
 CRIT.chance = 0; // 테스트는 정확한 피해 숫자를 확인하므로 크리티컬은 꺼둔다 (크리티컬 테스트에서만 켬)
 
@@ -171,13 +171,13 @@ test('캐릭터끼리 겹치지 않는다', () => {
   assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= 0.99);
 });
 
-test('달리기: 5초 뒤 바닥, 10초 뒤 가득, 문제 시작 시 가득', () => {
+test('달리기: 게이지가 40% 빨리 닳아 5초짜리가 약 3.6초 뒤 바닥, 10초 뒤 가득, 문제 시작 시 가득', () => {
   const { g, a } = setup();
   a.x = 5; a.y = 5; // 넓은 곳에서 (맵 벽에 막히지 않게 대각선 왕복은 생략하고 짧게 확인)
   g.setInput('a', { mx: 0, my: 1, run: true });
   run(g, 2); // 맵 경계에 닿아도 입력 중이면 달리는 것으로 본다
-  assert.ok(a.runGauge < 3.2 && a.runGauge > 2.7, `gauge=${a.runGauge}`);
-  run(g, 3.1); // 총 5.1초 → 바닥난 직후
+  assert.ok(Math.abs(a.runGauge - (5 - 2 * RUN_DRAIN)) < 0.2, `gauge=${a.runGauge}`);
+  run(g, 5 / RUN_DRAIN - 2 + 0.2); // 바닥난 직후
   assert.ok(a.runGauge < 0.2, `gauge=${a.runGauge}`);
   assert.equal(a.exhausted, true);
   g.setInput('a', { mx: 0, my: 0, run: false });
@@ -937,14 +937,22 @@ test('보물 탐지(래브라도): 맵의 동전을 전부 줍는다', () => {
   assert.ok(A.buff && A.buff.spd > 1);
 });
 
-test('불꽃 꼬리(시바견): 범위 피해 뒤 3초 동안 화상 피해', () => {
+test('불꽃 꼬리(시바견): 서서 시전하며 범위 피해 + 화상, 시전 중 느려지고 기절하면 끊김', () => {
   const { g, A, B } = duo('shiba', 'blue');
   A.x = 10; A.y = 10; B.x = 11.5; B.y = 10;
   A.ult = A.cfg.ult.need; g.ult('a', null);
-  const hp0 = B.hp; assert.ok(hp0 < B.cfg.hp, '범위 피해');
-  run(g, 3.2);
-  assert.ok(hp0 - B.hp >= 6, `화상 누적 ${hp0 - B.hp}`);
-  const hp1 = B.hp; run(g, 1); assert.equal(B.hp, hp1, '화상 끝남');
+  assert.ok(A.channel && g.snapshot().players.find((p) => p.id === 'a').ch === 1, '시전 중');
+  assert.equal(g.attack('a', null), undefined);
+  const hp0 = B.hp; assert.ok(hp0 < B.cfg.hp, '첫 틱 피해');
+  g.setInput('a', { mx: 1, my: 0, run: false }); const x = A.x; run(g, 1);
+  assert.ok(A.x - x < A.cfg.walkSpeed * 0.3 * 1.1, `느려짐 ${A.x - x}`);
+  run(g, 3);
+  assert.ok(hp0 - B.hp >= 10, `틱 + 화상 누적 ${hp0 - B.hp}`);
+  assert.equal(A.channel, null, '시전 끝');
+  // 기절하면 끊김
+  A.x = 10; A.y = 10; B.x = 11.5; B.y = 10; B.hp = B.cfg.hp; B.invUntil = 0; A.ult = A.cfg.ult.need; g.ult('a', null);
+  g.knockOut('a'); run(g, 1);
+  assert.equal(A.channel, null);
 });
 
 test('번개 5연타(파란티): 가까운 상대 뒤로 이동해 연타하고 마지막은 크게', () => {
@@ -968,13 +976,60 @@ test('그림자(고양이): 자동 조준 불가, 첫 일격 3배 크리티컬 �
   assert.equal(g._stealthed(A), false, '은신 해제');
 });
 
-test('신난 회전(강아지): 도는 동안 무적이고 주변을 계속 때린다', () => {
+test('신난 회전(강아지): 채널링 — 도는 동안 계속 때리고, 0.7배 속도로 움직일 수 있다', () => {
   const { g, A, B } = duo('puppy', 'blue');
   A.x = 10; A.y = 10; B.x = 11; B.y = 10;
   A.ult = A.cfg.ult.need; g.ult('a', null);
-  assert.ok(A.invUntil > g.t + 3.9);
+  assert.ok(A.channel && A.channel.move === 0.7);
   run(g, 2);
   assert.ok(B.cfg.hp - B.hp >= 3 * 6, `여러 번 맞음 ${B.cfg.hp - B.hp}`);
+});
+
+test('진화(병아리): 닭으로 변하고 몸집이 커지며 체력 회복, 끝나면 원래대로', () => {
+  const { g, A } = duo('chick', 'blue');
+  A.hp = 10; const r0 = A.cfg.radius, base = A.cfg;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.ok(A.cfg.radius > r0 * 1.5, '몸집 커짐');
+  const snap = g.snapshot().players.find((p) => p.id === 'a');
+  assert.equal(snap.s, 'chicken', '닭 그림으로 변신 (도트 크기 유지)'); assert.equal(snap.zs, 1);
+  assert.ok(A.hp > 10, '회복');
+  run(g, 5.2);
+  assert.equal(A.cfg, base, '원래 설정으로 복귀');
+});
+
+test('매혹(공주): 범위 안 상대가 공주 쪽으로 걸어오고 공격을 못 한다', () => {
+  const { g, A, B } = duo('princess', 'blue');
+  A.x = 10; A.y = 10; B.x = 14; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  g.attack('b', null);
+  assert.equal(A.hp, A.cfg.hp, '공격 못 함');
+  run(g, 1.2);
+  assert.ok(Math.hypot(B.x - A.x, B.y - A.y) < 2.2, `다가옴 ${B.x - A.x}`);
+  run(g, 2);
+  assert.ok(g.t > B.charmUntil, '풀림');
+});
+
+test('별 궤도(단발 소녀): 몸 주위를 도는 별이 가까운 상대를 때린다', () => {
+  const { g, A, B } = duo('girl_short', 'blue');
+  A.x = 10; A.y = 10; B.x = 11.7; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  run(g, 1.5);
+  assert.ok(B.hp < B.cfg.hp, '맞음');
+  assert.ok(g.snapshot().players.find((p) => p.id === 'a').ob, '스냅샷에 궤도');
+  run(g, 4);
+  assert.equal(A.orbit, null, '5초 뒤 끝');
+});
+
+test('저격(파란티 원거리): 조준하는 동안 못 움직이고, 뒤에 일직선 관통 빔', () => {
+  const { g, A, B } = duo('blue_ranged', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  A.x = 5; A.y = 10; B.x = 9; B.y = 10; C.x = 14; C.y = 10.3;
+  A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
+  g.setInput('a', { mx: 0, my: 1, run: false }); const y0 = A.y; run(g, 1);
+  assert.ok(Math.abs(A.y - y0) < 0.2, '조준 중 못 움직임');
+  assert.equal(B.hp, B.cfg.hp, '아직 안 쐈음');
+  run(g, 0.4);
+  assert.equal(B.cfg.hp - B.hp, A.cfg.ult.dmg); assert.equal(C.cfg.hp - C.hp, A.cfg.ult.dmg, '관통');
 });
 
 test('방패 성벽(기사): 상대의 투사체와 이동을 막고, 주인은 지나갈 수 있다', () => {
