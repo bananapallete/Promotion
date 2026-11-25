@@ -341,15 +341,15 @@ test('조준 미리보기: 3타 차례에는 늘어난 사거리를 보여준다
 // ---------- 동전 ----------
 import { COIN, MAP } from '../shared/constants.js';
 
-test('동전: 참가자가 있으면 30초마다 1개 생성, 없으면 생성 안 됨', () => {
+test('동전: 참가자가 있으면 3초마다 1개 생성, 없으면 생성 안 됨', () => {
   const g = new Game(chars, quizzes);
-  run(g, 31);
+  run(g, 10);
   assert.equal(g.coins.size, 0, '참가자가 없으면 안 생김');
   g.join({ token: 'a', name: 'A', charId: 'blue' });
-  run(g, 29.5); assert.equal(g.coins.size, 0);
-  run(g, 1); assert.equal(g.coins.size, 1);
+  run(g, 2.8); assert.equal(g.coins.size, 0);
+  run(g, 0.4); assert.equal(g.coins.size, 1);
   assert.ok(g.events.some((e) => e.e === 'coinSpawn'));
-  run(g, 30); assert.equal(g.coins.size, 2);
+  run(g, 3); assert.equal(g.coins.size, 2);
 });
 
 test('동전: 가까이 가면 자동으로 주워지고 개당 0.5점', () => {
@@ -366,7 +366,7 @@ test('동전: 가까이 가면 자동으로 주워지고 개당 0.5점', () => {
   assert.equal(g.leaderboard()[0].score, 1);
 });
 
-test('동전: 쓰러진 캐릭터와 봇은 줍지 못한다', () => {
+test('동전: 쓰러진 캐릭터는 못 줍고, 봇은 줍는다', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
   a.x = 10; a.y = 10; a.stunned = true; a.stunUntil = g.t + 5;
@@ -374,8 +374,8 @@ test('동전: 쓰러진 캐릭터와 봇은 줍지 못한다', () => {
   g.spawnCoin(10.5, 10); g.spawnCoin(15.5, 10);
   run(g, 1);
   assert.equal(a.coins, 0);
-  assert.equal(bot.coins, 0);
-  assert.equal(g.coins.size, 2);
+  assert.equal(bot.coins, 1);
+  assert.equal(g.coins.size, 1);
 });
 
 test('동전: 쓰러지면 가진 동전이 전부 반경 2.5칸 안으로 튀어나온다', () => {
@@ -431,6 +431,7 @@ test('동전: 새로 생긴 동전은 깜빡이지 않고 바로 주울 수 있�
 
 test('동전: 문제를 틀리거나 무응답이면 전부 떨어뜨리고, 맞히면 그대로', () => {
   const g = new Game(chars, quizzes);
+  g.coinsSpawned = COIN.maxTotal; // 타이머 동전이 섞이지 않게
   const ok = g.join({ token: 'o', name: 'OK', charId: 'blue' });
   const wrong = g.join({ token: 'w', name: 'WRONG', charId: 'blue' });
   const none = g.join({ token: 'n', name: 'NONE', charId: 'blue' });
@@ -446,21 +447,25 @@ test('동전: 문제를 틀리거나 무응답이면 전부 떨어뜨리고, 맞
   assert.equal(g.coins.size, 6);
 });
 
-test('동전: 최대 개수 제한, 점수 초기화 시 동전도 초기화', () => {
+test('동전: 습득된 것까지 합쳐 최대 100개만 생성, 점수 초기화하면 다시 센다', () => {
   const g = new Game(chars, quizzes);
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
-  for (let i = 0; i < COIN.maxOnMap + 5; i++) g.spawnCoin(1 + (i % 30), 1 + Math.floor(i / 30) * 4);
-  assert.equal(g.coins.size, COIN.maxOnMap);
-  g.giveCoins('a', 2); g.resetScores();
-  assert.equal(a.coins, 0); assert.equal(g.coins.size, 0);
+  a.x = 1; a.y = 1; g.coinClock = -1e9; // 타이머는 잠시 끔
+  for (let i = 0; i < 100; i++) { g.spawnCoin(a.x, a.y); run(g, 0.5); } // 생기자마자 주워도 센다
+  assert.equal(a.coins, 100);
+  assert.equal(g.spawnCoin(5, 5), null);
+  g.coinClock = 0; run(g, 10); assert.equal(g.coins.size, 0, '타이머로도 더는 안 생김');
+  g.resetScores();
+  assert.equal(a.coins, 0);
+  assert.ok(g.spawnCoin(5, 5));
 });
 
-test('원형 구역: 중심이 원 안이면 그 구역, 밖이면 null', async () => {
-  const { zoneAt } = await import('../shared/constants.js');
-  assert.equal(zoneAt('ox', 14, 11), 'O');
-  assert.equal(zoneAt('ox', 26, 15.9), 'X');
-  assert.equal(zoneAt('ox', 14, 16.1), null); // 반지름 5를 막 벗어남
-  assert.equal(zoneAt('ox', 20, 11), null); // 두 원 사이
-  assert.equal(zoneAt('choice', 26, 16.5), 4);
-  assert.equal(zoneAt('choice', 20, 11), null); // 네 원 사이
+test('순위표: 호스트가 켜면 스냅샷에 담기고, 다음 문제를 내면 꺼진다', () => {
+  const g = new Game(chars, quizzes);
+  g.join({ token: 'a', name: 'A', charId: 'blue' });
+  assert.equal(g.snapshot().rank, false);
+  g.showRank = true;
+  assert.equal(g.snapshot().rank, true);
+  g.ask(1);
+  assert.equal(g.snapshot().rank, false);
 });

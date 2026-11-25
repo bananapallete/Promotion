@@ -88,11 +88,15 @@ io.on('connection', (socket) => {
     for (let i = 0; i < n; i++) game.addBot(d?.mode, d?.charId);
   });
   host('host:clearBots', () => game.clearBots());
+  host('host:rank', (d) => { game.showRank = !!d?.on; });
   host('host:spawnCoin', () => { game.spawnCoin(); });
   host('host:botAttack', (d) => { game.botsCanAttack = !!d?.on; });
 
   socket.on('disconnect', () => { if (socket.data.pid) game.setConnected(socket.data.pid, false); });
 });
+
+// 기본 봇: 돌아다니기만 하고 공격하지 않는 15마리 (호스트 화면에서 제거 가능)
+for (let i = 0; i < 15; i++) game.addBot('wander', 'blue');
 
 // ---------- 루프 ----------
 let last = performance.now();

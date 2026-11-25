@@ -19,9 +19,7 @@ window.__game = null; // 테스트용 접근
 const game = new Game(characters, quizzes);
 window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
-game.addBot('idle', 'blue');
-game.addBot('idle', 'blue');
-game.addBot('wander', 'blue_ranged');
+for (let i = 0; i < 15; i++) game.addBot('wander', 'blue'); // 돌아다니기만 하고 공격하지 않는 봇
 
 let last = performance.now();
 setInterval(() => {
@@ -34,13 +32,16 @@ setInterval(() => {
 const { scene } = startWorld('game', { fill: true });
 window.__world = scene; // 테스트용 접근
 let follow = true;
-scene.onFrame = (sc) => {
+let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
+scene.onFrame = (sc, dt) => {
   const cam = sc.cameras.main;
   const v = sc.views.get(ME);
   const w = sc.scale.width, h = sc.scale.height;
   if (follow && v) {
     // 세로 화면은 폭 16.5칸, 가로 화면은 폭 24칸이 보이도록 (1칸 = 몸 폭 1개)
-    cam.setZoom(w / ((h > w ? 16.5 : 24) * BU));
+    runT = Math.max(0, Math.min(1, runT + (v.p.a === 'run' ? dt : -dt) / 400));
+    const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
+    cam.setZoom(w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))); // 달리면 1.3배 줌 아웃
     cam.centerOn(v.x, v.y - 30);
   } else {
     cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));

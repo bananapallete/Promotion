@@ -42,6 +42,8 @@ $('#qlist').addEventListener('click', (e) => {
 
 $('#end').addEventListener('click', () => socket.emit('host:end'));
 $('#coin').addEventListener('click', () => socket.emit('host:spawnCoin'));
+let rankOn = false;
+$('#rank').addEventListener('click', () => socket.emit('host:rank', { on: !rankOn }));
 $('#gather').addEventListener('click', () => socket.emit('host:gather'));
 $('#reset').addEventListener('click', () => { if (confirm('초기화?')) socket.emit('host:reset'); });
 
@@ -60,6 +62,8 @@ $('#b-clear').addEventListener('click', () => socket.emit('host:clearBots'));
 
 const phaseName = { [PHASE.LOBBY]: '대기', [PHASE.READING]: '읽기', [PHASE.MOVING]: '이동', [PHASE.REVEAL]: '정답' };
 socket.on('state', (s) => {
+  rankOn = !!s.rank;
+  $('#rank').classList.toggle('sel', rankOn);
   $('#s-phase').textContent = phaseName[s.phase];
   $('#s-left').textContent = s.left > 0 ? `${Math.ceil(s.left)}` : '-';
   const humans = s.players.filter((p) => !p.b);

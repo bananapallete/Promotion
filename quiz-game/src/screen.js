@@ -26,7 +26,7 @@ socket.on('state', (s) => {
 
 function hud(s) {
   const banner = $('#banner'), timer = $('#timer'), reveal = $('#reveal'), lb = $('#lb');
-  $('#join').hidden = s.phase !== PHASE.LOBBY;
+  $('#join').hidden = s.phase !== PHASE.LOBBY || s.rank;
 
   if (s.q && s.phase !== PHASE.LOBBY) {
     banner.hidden = false;
@@ -47,8 +47,15 @@ function hud(s) {
     reveal.innerHTML = `정답 ${ans} · ${winners.length}명<small>${top}</small>`;
   } else reveal.hidden = true;
 
+  const rk = $('#rank');
+  rk.hidden = !s.rank;
+  if (s.rank) {
+    const html = (s.lb || []).slice(0, 10).map((r, i) => `<div><b>${i + 1}</b><span>${esc(r.name)}</span><i>${fmtScore(r.score)}</i></div>`).join('');
+    if (rk.innerHTML !== html) rk.innerHTML = html;
+  }
+
   const rows = (s.lb || []).slice(0, 5);
-  lb.hidden = !rows.length;
+  lb.hidden = !rows.length || s.rank;
   lb.innerHTML = rows.map((r, i) => `<span>${i + 1}. ${esc(r.name)}<b>${fmtScore(r.score)}</b></span>`).join('');
 }
 

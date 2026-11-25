@@ -22,6 +22,13 @@ body.screen { display: grid; place-items: center; overflow: hidden; }
 #lb { position: absolute; bottom: 1cqw; left: 50%; transform: translateX(-50%); display: flex; gap: .8cqw; background: rgba(29,36,51,.85); padding: .6cqw 1.2cqw; border-radius: 99px; font-size: 1.25cqw; }
 #lb[hidden] { display: none; }
 #lb span b { color: var(--accent); margin-left: .3cqw; }
+#rank { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); min-width: 30cqw; background: rgba(29,36,51,.95); border-radius: 1.6cqw; padding: 1.4cqw 2.4cqw; font-size: 2cqw; display: grid; gap: .5cqw; }
+#rank[hidden] { display: none; }
+#rank div { display: grid; grid-template-columns: 3cqw 1fr auto; gap: 1.4cqw; align-items: baseline; }
+#rank b { color: var(--accent); }
+#rank div:first-child { color: #ffd54a; font-weight: 800; }
+#rank i { font-style: normal; font-variant-numeric: tabular-nums; }
+.card button.sel { outline: 2px solid var(--accent); }
 #join { position: absolute; top: 4cqw; left: 50%; transform: translateX(-50%); background: rgba(29,36,51,.93); border-radius: 1.6cqw; padding: 1.6cqw 2cqw; text-align: center; }
 #join[hidden] { display: none; }
 #join img { width: 13cqw; height: 13cqw; background: #fff; border-radius: .8cqw; padding: .6cqw; display: block; margin: .8cqw auto; image-rendering: pixelated; }

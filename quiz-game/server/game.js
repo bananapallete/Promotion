@@ -36,6 +36,8 @@ export class Game {
     this.coins = new Map(); // 맵 위의 동전 id → {id,x,y,readyAt,lockUntil}
     this.coinSeq = 0;
     this.coinClock = 0;
+    this.coinsSpawned = 0; // 지금까지 생성한 동전 수 (습득된 것 포함)
+    this.showRank = false; // 빔프로젝터에 순위표를 띄울지
     this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
   }
 
@@ -105,6 +107,7 @@ export class Game {
     if (!q) return false;
     this.question = q;
     this.reveal = null;
+    this.showRank = false;
     this.phase = PHASE.READING;
     this.phaseEnd = this.t + READ_SEC;
     for (const p of this.players.values()) this._refill(p); // 문제마다 체력·달리기 게이지 가득
@@ -132,6 +135,8 @@ export class Game {
   resetScores() {
     for (const p of this.players.values()) { p.score = 0; p.coins = 0; }
     this.coins.clear();
+    this.coinsSpawned = 0;
+    this.showRank = false;
     this.phase = PHASE.LOBBY;
     this.question = null;
     this.reveal = null;
@@ -282,7 +287,8 @@ export class Game {
 
   // ---------- 동전 ----------
   spawnCoin(x, y) {
-    if (this.coins.size >= COIN.maxOnMap) return null;
+    if (this.coinsSpawned >= COIN.maxTotal) return null;
+    this.coinsSpawned++;
     if (x == null) {
       for (let i = 0; i < 12; i++) { // 다른 동전과 너무 가깝지 않은 곳
         x = rand(1, MAP.w - 1); y = rand(1, MAP.h - 1);
@@ -328,7 +334,7 @@ export class Game {
       if (this.t < c.readyAt) continue; // 생성 직후이거나, 떨어진 뒤 줍기 금지 시간 중
       let best = null, bd = Infinity;
       for (const p of active) {
-        if (p.isBot || p.stunned) continue; // 봇과 쓰러진 캐릭터는 못 줍는다
+        if (p.stunned) continue; // 쓰러진 캐릭터는 못 줍는다 (봇은 줍는다)
         const d = Math.hypot(p.x - c.x, p.y - c.y);
         if (d <= COIN.pickupRadius && d < bd) { best = p; bd = d; }
       }
@@ -501,6 +507,7 @@ export class Game {
       left: this.phase === PHASE.READING || this.phase === PHASE.MOVING ? r2(Math.max(0, this.phaseEnd - this.t)) : 0,
       q,
       reveal: this.reveal,
+      rank: this.showRank,
       coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),
       players,
       ev: events,
