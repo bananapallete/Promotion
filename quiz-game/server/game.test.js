@@ -570,9 +570,9 @@ const duo = (a, b) => {
   return { g, A, B };
 };
 
-test('체력 기준은 50 (파란티), 모든 캐릭터는 35~80', () => {
+test('체력 기준은 50 (파란티), 모든 캐릭터는 30~90', () => {
   assert.equal(chars.blue.hp, 50);
-  for (const c of Object.values(chars)) assert.ok(c.hp >= 35 && c.hp <= 80, c.name);
+  for (const c of Object.values(chars)) assert.ok(c.hp >= 30 && c.hp <= 90, c.name);
 });
 
 test('귀상어 돌진: 3칸 달려가 처음 닿은 상대를 날리고 멈춘다. 쿨타임 6초', () => {
@@ -657,7 +657,7 @@ test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 끌어당기는 �
   for (const [id, c] of Object.entries(chars)) {
     const v = powerIndex(c);
     assert.ok(v >= (id === 'frog' ? 15 : 17) && v <= 21.5, `${c.name}: ${v.toFixed(1)}`);
-    assert.ok(c.hp >= 35 && c.hp <= 80, `${c.name} 체력`);
+    assert.ok(c.hp >= 30 && c.hp <= 90, `${c.name} 체력`);
   }
 });
 

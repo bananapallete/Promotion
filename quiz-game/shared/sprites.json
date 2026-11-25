@@ -58,5 +58,53 @@
   "walk": 6,
   "run": 6,
   "combo": 6
+ },
+ "chick": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "chicken": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "frog": {
+  "idle": 4,
+  "walk": 4,
+  "run": 8,
+  "combo": 6
+ },
+ "hammerhead": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "hippo": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "labrador": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "pig": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
+ },
+ "shiba": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6
  }
 }

@@ -492,8 +492,7 @@
   },
   "hammerhead": {
     "name": "귀상어",
-    "sprite": "blue",
-    "tint": "#9fb4c8",
+    "sprite": "hammerhead",
     "scale": 1.15,
     "radius": 0.6,
     "hp": 60,
@@ -530,8 +529,7 @@
   },
   "labrador": {
     "name": "래브라도",
-    "sprite": "blue",
-    "tint": "#ffd98a",
+    "sprite": "labrador",
     "radius": 0.5,
     "hp": 45,
     "walkSpeed": 7,
@@ -578,8 +576,7 @@
   },
   "frog": {
     "name": "개구리",
-    "sprite": "blue",
-    "tint": "#8be28b",
+    "sprite": "frog",
     "scale": 0.85,
     "radius": 0.42,
     "hp": 50,
@@ -605,6 +602,200 @@
     "ammo": {
       "max": 3,
       "reload": 1.5
+    }
+  },
+  "shiba": {
+    "name": "시바견",
+    "sprite": "shiba",
+    "radius": 0.45,
+    "hp": 45,
+    "walkSpeed": 7,
+    "runSpeed": 10.5,
+    "runGauge": 6,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "dash",
+      "distance": 3.5,
+      "duration": 0.25,
+      "cooldown": 5,
+      "hitDmg": 3,
+      "hitKnock": 1.2
+    },
+    "attack": {
+      "type": "melee",
+      "dmgMin": 5,
+      "dmgMax": 5,
+      "interval": 0.35,
+      "range": 1.1,
+      "knockback": 0.4,
+      "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.7,
+      "combo": [
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1,
+          "range": 1,
+          "knockback": 1
+        },
+        {
+          "dmg": 1.5,
+          "range": 1,
+          "knockback": 1.5
+        }
+      ]
+    },
+    "scale": 0.9,
+    "ammo": {
+      "max": 3,
+      "reload": 1.05
+    }
+  },
+  "hippo": {
+    "name": "하마",
+    "sprite": "hippo",
+    "radius": 0.75,
+    "hp": 90,
+    "walkSpeed": 4,
+    "runSpeed": 6.0,
+    "runGauge": 4,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "melee",
+      "dmgMin": 7,
+      "dmgMax": 7,
+      "interval": 1.0,
+      "range": 1.4,
+      "knockback": 1.6,
+      "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.4,
+      "arcDeg": 150,
+      "multi": true
+    },
+    "scale": 1.35,
+    "ammo": {
+      "max": 3,
+      "reload": 2.2
+    }
+  },
+  "pig": {
+    "name": "돼지",
+    "sprite": "pig",
+    "radius": 0.6,
+    "hp": 75,
+    "walkSpeed": 4.5,
+    "runSpeed": 6.75,
+    "runGauge": 4,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "dash",
+      "distance": 4,
+      "duration": 0.3,
+      "cooldown": 6,
+      "hitDmg": 5,
+      "hitKnock": 2.5
+    },
+    "attack": {
+      "type": "melee",
+      "dmgMin": 7,
+      "dmgMax": 7,
+      "interval": 0.7,
+      "range": 1.2,
+      "knockback": 1.0,
+      "canAttackWhileRunning": true,
+      "moveSpeedWhileAttacking": 0.5
+    },
+    "scale": 1.1,
+    "ammo": {
+      "max": 3,
+      "reload": 2.1
+    }
+  },
+  "chicken": {
+    "name": "닭",
+    "sprite": "chicken",
+    "radius": 0.45,
+    "hp": 40,
+    "walkSpeed": 6,
+    "runSpeed": 9.0,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "dash",
+      "distance": 3,
+      "duration": 0.3,
+      "cooldown": 5,
+      "pass": true
+    },
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 6,
+      "dmgMax": 6,
+      "interval": 1.0,
+      "range": 5.5,
+      "knockback": 0.6,
+      "multi": true,
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 7,
+        "lob": true,
+        "explodeRadius": 1.2,
+        "art": "stone"
+      }
+    },
+    "scale": 0.9,
+    "ammo": {
+      "max": 3,
+      "reload": 2.2
+    }
+  },
+  "chick": {
+    "name": "병아리",
+    "sprite": "chick",
+    "radius": 0.35,
+    "hp": 30,
+    "walkSpeed": 8,
+    "runSpeed": 12.0,
+    "runGauge": 6,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 4,
+      "dmgMax": 4,
+      "interval": 0.35,
+      "range": 5,
+      "knockback": 0.1,
+      "canAttackWhileRunning": true,
+      "projectile": {
+        "speed": 13,
+        "radius": 0.2,
+        "pierce": true,
+        "art": "arrow"
+      }
+    },
+    "scale": 0.7,
+    "ammo": {
+      "max": 3,
+      "reload": 1.05
     }
   }
 }
