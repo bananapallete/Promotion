@@ -11,9 +11,14 @@
   button, select { font: inherit; }
 
   #stage { position: absolute; inset: 0; }
+  #charbar { position: fixed; left: 0; right: 0; top: max(8px, env(safe-area-inset-top, 0px)); padding: 0 calc(max(16px, env(safe-area-inset-right, 0px)) + 56px) 0 max(16px, env(safe-area-inset-left, 0px)); display: flex; gap: 6px; overflow-x: auto; touch-action: pan-x; scrollbar-width: none; z-index: 15; }
+  #charbar::-webkit-scrollbar { display: none; }
+  #charbar button { flex: none; display: flex; align-items: center; gap: 6px; padding: 9px 13px; border: 0; border-radius: 99px; background: rgba(40,50,74,.92); color: var(--ink); font-size: 13px; white-space: nowrap; cursor: pointer; }
+  #charbar button.sel { background: var(--accent); color: #05293b; font-weight: 700; }
+  #charbar i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #fff8; }
   #game, #game canvas { width: 100% !important; height: 100% !important; display: block; }
   #hud { position: absolute; inset: 0; pointer-events: none; }
-  #top { position: absolute; left: 0; right: 0; top: max(8px, env(safe-area-inset-top, 0px)); padding: 0 calc(max(16px, env(safe-area-inset-right, 0px)) + 52px) 0 max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+  #top { position: absolute; left: 0; right: 0; top: calc(max(8px, env(safe-area-inset-top, 0px)) + 48px); padding: 0 calc(max(16px, env(safe-area-inset-right, 0px)) + 52px) 0 max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 
   #me { flex: 1 1 150px; max-width: 220px; background: rgba(21,27,41,.82); border-radius: 12px; padding: 8px 10px; display: grid; gap: 5px; font-size: 12px; font-weight: 700; }
   #me .row { display: flex; justify-content: space-between; }
@@ -32,7 +37,7 @@
   #reveal.bad { background: var(--bad); color: #3b0b0b; }
   #reveal[hidden] { display: none; }
 
-  #lzone { position: fixed; left: 0; top: 130px; bottom: 0; width: 50%; touch-action: none; z-index: 1; }
+  #lzone { position: fixed; left: 0; top: 190px; bottom: 0; width: 50%; touch-action: none; z-index: 1; }
 #padHint { position: fixed; left: max(92px, 25vw); bottom: 110px; width: 110px; height: 110px; transform: translate(-50%, 50%); border-radius: 50%; border: 2px dashed #ffffff40; display: grid; place-items: center; color: #ffffff70; font-size: 12px; pointer-events: none; transition: opacity .15s; }
 #padHint.off { opacity: 0; }
 #pad { position: fixed; left: 0; top: 0; width: 132px; height: 132px; transform: translate(-50%, -50%); border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff40; pointer-events: none; opacity: 0; transition: opacity .12s; z-index: 2; }
@@ -60,6 +65,7 @@
 
 </style>
 
+<div id="charbar"></div>
 <div id="stage">
   <div id="game"></div>
   <div id="hud">
@@ -99,8 +105,6 @@
     <button class="warn" data-act="clear" type="button">제거</button>
   </div>
   <p><label><input type="checkbox" id="b-attack" /> 공격 허용</label></p>
-  <h3>캐릭터</h3>
-  <div class="grid" id="chars"></div>
   <h3>시점</h3>
   <div class="row-inline">
     <button class="sel" data-act="view" data-v="follow" type="button">따라가기</button>

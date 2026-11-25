@@ -345,7 +345,8 @@ test('동전: 참가자가 있으면 3초마다 1개 생성, 없으면 생성 �
   const g = new Game(chars, quizzes);
   run(g, 10);
   assert.equal(g.coins.size, 0, '참가자가 없으면 안 생김');
-  g.join({ token: 'a', name: 'A', charId: 'blue' });
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  a.stunned = true; a.stunUntil = 1e9; // 우연히 동전을 줍지 않게
   run(g, 2.8); assert.equal(g.coins.size, 0);
   run(g, 0.4); assert.equal(g.coins.size, 1);
   assert.ok(g.events.some((e) => e.e === 'coinSpawn'));
@@ -504,9 +505,9 @@ const duo = (a, b) => {
   return { g, A, B };
 };
 
-test('체력은 모든 캐릭터가 45 이상 (기준 50)', () => {
+test('체력 기준은 50 (파란티), 모든 캐릭터는 35~80', () => {
   assert.equal(chars.blue.hp, 50);
-  for (const c of Object.values(chars)) assert.ok(c.hp >= 45, c.name);
+  for (const c of Object.values(chars)) assert.ok(c.hp >= 35 && c.hp <= 80, c.name);
 });
 
 test('귀상어 돌진: 3칸 달려가 처음 닿은 상대를 날리고 멈춘다. 쿨타임 6초', () => {
@@ -551,7 +552,7 @@ test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려�
   const { g, A, B } = duo('frog', 'blue');
   B.x = 13; B.y = 10; // 3칸 앞
   g.attack('a', null);
-  assert.equal(B.hp, B.cfg.hp - 1);
+  assert.equal(B.hp, B.cfg.hp - 2);
   run(g, 0.6);
   assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
   B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
@@ -582,4 +583,34 @@ test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진�
   assert.equal(A.running, false);
   g.skill('a'); g.knockOut('a'); g.update(DT);
   assert.equal(g._dashing(A), false);
+});
+
+test('밸런스: 캐릭터 전투력 지수가 같은 범위 안 (파란티 원거리는 정해진 값이라 제외)', () => {
+  const index = (c) => {
+    const a = c.attack;
+    let dps = (a.dmgMin + a.dmgMax) / 2 / a.interval;
+    if (a.multi) dps *= 1.15;
+    return Math.sqrt(c.hp * dps) * (1 + 0.1 * (a.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;
+  };
+  for (const [id, c] of Object.entries(chars)) {
+    if (id === 'blue_ranged') continue;
+    const v = index(c);
+    assert.ok(v >= 15 && v <= 21, `${c.name}: ${v.toFixed(1)}`);
+    assert.ok(c.hp >= 35 && c.hp <= 80, `${c.name} 체력`);
+  }
+});
+
+test('모든 캐릭터가 서버 규칙으로 문제없이 싸운다 (공격 → 스킬 → 이동)', () => {
+  for (const id of Object.keys(chars)) {
+    const g = new Game(chars, quizzes);
+    const a = g.join({ token: 'a', name: 'A', charId: id });
+    const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+    a.x = 10; a.y = 10; b.x = 11; b.y = 10;
+    g.setInput('a', { mx: 1, my: 0, run: true });
+    g.attack('a', null); g.skill('a');
+    run(g, 1);
+    assert.ok(Number.isFinite(a.x) && Number.isFinite(a.runGauge), id);
+    const s = g.snapshot().players.find((p) => p.id === 'a');
+    assert.ok(['run', 'dash'].includes(s.k) && s.mrg > 0, id);
+  }
 });

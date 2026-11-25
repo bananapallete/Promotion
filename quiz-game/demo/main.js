@@ -177,7 +177,15 @@ addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); 
 
 // ---------- 테스트 패널 ----------
 // 캐릭터 선택 그리드와 봇 종류
-$('#chars').innerHTML = charIds.map((id, i) => `<button type="button" data-act="char" data-id="${id}" class="${i ? '' : 'sel'}">${characters[id].name}</button>`).join('');
+// 캐릭터 바(상단): 탭하면 바로 바뀜
+$('#charbar').innerHTML = charIds.map((id, i) => `<button type="button" data-id="${id}" class="${i ? '' : 'sel'}"><i style="background:${characters[id].tint || '#4a7bd1'}"></i>${characters[id].name}</button>`).join('');
+function pickChar(id) {
+  const p = game.players.get(ME);
+  p.charId = id; p.cfg = characters[id]; p.dash = null; game._refill(p); syncSkill();
+  document.querySelectorAll('#charbar button').forEach((b) => b.classList.toggle('sel', b.dataset.id === id));
+  document.querySelector(`#charbar button[data-id="${id}"]`).scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+$('#charbar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pickChar(b.dataset.id); });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });
 $('#gear').addEventListener('click', () => { $('#panel').hidden = !$('#panel').hidden; });
@@ -196,12 +204,7 @@ $('#panel').addEventListener('click', (e) => {
     case 'clear': game.clearBots(); break;
     case 'bot': game.addBot($('#b-mode').value, $('#b-char').value); break;
     case 'view': follow = a.v === 'follow'; document.querySelectorAll('[data-act=view]').forEach((b) => b.classList.toggle('sel', b === e.target)); break;
-    case 'char': {
-      const p = game.players.get(ME);
-      p.charId = a.id; p.cfg = characters[a.id]; p.dash = null; game._refill(p); syncSkill();
-      document.querySelectorAll('[data-act=char]').forEach((b) => b.classList.toggle('sel', b === e.target));
-      break;
-    }
+    case 'char': pickChar(a.id); break;
   }
 });
 

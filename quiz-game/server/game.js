@@ -278,7 +278,7 @@ export class Game {
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
     const hits = this._pickTargets(p, range, dx, dy);
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] ? hits[0].dist : range) });
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] && !(a.multi && a.type === 'ranged') ? hits[0].dist : range) });
     for (const h of a.multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
   }
 
