@@ -4,6 +4,7 @@ import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
+import BOUNDS from '../shared/spriteBounds.json';
 import { burstFx, hitFx, meleeFx, muzzleFx, rushFx, ultBanner, warnFx } from './fx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
@@ -340,7 +341,10 @@ export class WorldScene extends Phaser.Scene {
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;
       const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2;
-      const by = v.y - 2.05 * BU * (p.zs || 1) + (me ? 0 : 4);
+      // 머리 위 UI는 캐릭터의 실제 머리 꼭대기 위에 쌓는다 (내 게이지가 아래로 늘어나도 캐릭터를 가리지 않게 전체를 위로 올림)
+      const headPx = (SPRITE.anchor[1] - (BOUNDS[p.s] ?? 20)) * SPR_SCALE * (p.zs || 1);
+      const gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) + 1 : 0, below = gauges ? 7 + gauges * 5 + (gauges - 1) * 7 + 2 : 0;
+      const by = v.y - headPx - 10 - below - bh - bd;
       const bx0 = v.x - bw / 2; // 바 왼쪽 끝
       const bx = v.x;
       const f = Math.max(0, p.hp / p.mhp), low = f <= 0.3;
