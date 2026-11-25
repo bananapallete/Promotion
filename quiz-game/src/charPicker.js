@@ -11,17 +11,17 @@ const CSS = `
 .pk{--cream:#e8d0a9;--cream-hi:#f6e6c8;--wood:#b27c53;--wood-dk:#7a4e32;--text:#5a3a24;--leaf:#b4d36a;--leaf-dk:#6e9a3a;--navy:#14122b;color:var(--text)}
 .pk-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
 .pk-tabs::-webkit-scrollbar{display:none}
-.pk-tabs button{flex:1 0 auto;padding:8px 9px;border:3px solid var(--wood);border-radius:8px;background:var(--cream-hi);color:var(--text);font:700 14px/1 inherit;box-shadow:0 3px 0 var(--wood-dk);cursor:pointer}
+.pk-tabs button{flex:1 0 auto;padding:6px 8px;border:2px solid var(--wood);border-radius:6px;background:var(--cream-hi);color:var(--text);font:700 12px/1 inherit;box-shadow:0 2px 0 var(--wood-dk);cursor:pointer}
 .pk-tabs button.on{background:var(--leaf);border-color:var(--leaf-dk);box-shadow:0 3px 0 #4d7226}
-.pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:6px 0 14px}
-.pc{position:relative;display:grid;justify-items:center;gap:2px;padding:8px 6px;background:var(--cream);border:3px solid var(--wood-dk);border-radius:8px;box-shadow:0 4px 0 var(--wood-dk),inset 0 0 0 2px var(--cream-hi);cursor:pointer;text-align:center}
-.pc.sel{background:var(--leaf);border-color:var(--leaf-dk);box-shadow:0 4px 0 #4d7226,inset 0 0 0 2px var(--cream-hi)}
-.pc canvas{width:128px;height:128px;image-rendering:pixelated;background:linear-gradient(#0000 62%,#5fa34c55 62%);border-radius:4px}
-.pc b{font-size:15px}
-.pc em{font-style:normal;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--cream-hi);border:2px solid var(--wood)}
-.pc button.more{margin-top:4px;padding:5px 12px;border:2px solid var(--wood);border-radius:6px;background:var(--cream-hi);color:var(--text);font:700 12px/1 inherit;box-shadow:0 2px 0 var(--wood-dk);cursor:pointer}
-.pc .detail{width:100%;display:grid;gap:4px;margin-top:6px;padding:6px 8px;background:var(--cream-hi);border:2px solid var(--wood);border-radius:6px;text-align:left;font-size:12px;line-height:1.35}
-.pc .detail i{font-style:normal;font-weight:800;color:var(--leaf-dk);margin-right:6px}
+.pk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:6px;margin:4px 0 12px}
+.pc{position:relative;display:grid;justify-items:center;gap:1px;padding:5px 4px 6px;background:var(--cream);border:2px solid var(--wood-dk);border-radius:6px;box-shadow:0 3px 0 var(--wood-dk),inset 0 0 0 1px var(--cream-hi);cursor:pointer;text-align:center}
+.pc.sel{background:var(--leaf);border-color:var(--leaf-dk);box-shadow:0 3px 0 #4d7226,inset 0 0 0 1px var(--cream-hi)}
+.pc canvas{width:52px;height:52px;background:linear-gradient(#0000 62%,#5fa34c55 62%);border-radius:4px}
+.pc b{font-size:12px}
+.pc em{font-style:normal;font-size:10px;font-weight:700;padding:0 6px;border-radius:99px;background:var(--cream-hi);border:1px solid var(--wood)}
+.pc button.more{margin-top:2px;padding:3px 8px;border:1px solid var(--wood);border-radius:4px;background:var(--cream-hi);color:var(--text);font:700 10px/1 inherit;box-shadow:0 2px 0 var(--wood-dk);cursor:pointer}
+.pc .detail{width:100%;display:grid;gap:3px;margin-top:4px;padding:4px 6px;background:var(--cream-hi);border:1px solid var(--wood);border-radius:4px;text-align:left;font-size:10px;line-height:1.3}
+.pc .detail i{font-style:normal;font-weight:800;color:var(--leaf-dk);margin-right:4px}
 .pc .detail[hidden]{display:none}
 `;
 
@@ -55,7 +55,7 @@ export function mountPicker(root, chars, opts) {
   root.classList.add('pk');
   root.innerHTML = `<div class="pk-tabs">${ROLES.map(([k, n]) => `<button type="button" data-r="${k}" class="${k === 'all' ? 'on' : ''}">${n}</button>`).join('')}</div>
   <div class="pk-grid">${entries.map(([id, c]) => `<div class="pc ${id === value ? 'sel' : ''}" data-id="${id}" data-role="${c.role}" role="button" tabindex="0">
-    <canvas width="128" height="128"></canvas><b>${c.name}</b><em>${ROLE_NAME[c.role] || ''}</em>
+    <canvas width="104" height="104"></canvas><b>${c.name}</b><em>${ROLE_NAME[c.role] || ''}</em>
     <button type="button" class="more">더보기</button>
     <div class="detail" hidden><div><i>공격</i>${c.atkInfo || ''}</div><div><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i>${skillText(c)}</div></div></div>`).join('')}</div>`;
 
@@ -81,9 +81,9 @@ export function mountPicker(root, chars, opts) {
       for (const p of k.tl) { part = p; if (t < p.ms) break; t -= p.ms; }
       const { m, f } = part.at(t), im = sheet(k.c.sprite, m);
       if (!im.complete || !im.naturalWidth) continue;
-      k.g.imageSmoothingEnabled = false;
-      k.g.clearRect(0, 0, 128, 128);
-      k.g.drawImage(im, f * CELL, 0, CELL, CELL, 0, 0, 128, 128);
+      k.g.imageSmoothingEnabled = true; k.g.imageSmoothingQuality = 'high'; // 작게 줄여 그리므로 부드럽게
+      k.g.clearRect(0, 0, 104, 104);
+      k.g.drawImage(im, f * CELL, 0, CELL, CELL, 0, 0, 104, 104);
     }
   };
   raf = requestAnimationFrame(tick);
