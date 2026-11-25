@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { COIN, COMBO_RESET_SEC, CRIT, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
+import { COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -36,6 +36,9 @@ export class Game {
     this.coins = new Map(); // 맵 위의 동전 id → {id,x,y,readyAt,lockUntil}
     this.coinSeq = 0;
     this.coinClock = 0;
+    this.items = new Map(); // 맵 위의 하트/신발 id → {id,k,x,y}
+    this.itemSeq = 0;
+    this.itemClock = 0;
     this.coinsSpawned = 0; // 지금까지 생성한 동전 수 (습득된 것 포함)
     this.showRank = false; // 빔프로젝터에 순위표를 띄울지
     this.projectiles = new Map(); // 날아가는 투사체 id → {...}
@@ -85,7 +88,7 @@ export class Game {
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
-      hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
+      speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
@@ -140,6 +143,7 @@ export class Game {
   resetScores() {
     for (const p of this.players.values()) { p.score = 0; p.coins = 0; }
     this.coins.clear();
+    this.items.clear();
     this.coinsSpawned = 0;
     this.showRank = false;
     this.phase = PHASE.LOBBY;
@@ -212,7 +216,7 @@ export class Game {
     const combo = a.combo;
     const step = combo && this.t - p.lastAttackAt <= COMBO_RESET_SEC ? p.comboStep : 0;
     const m = combo?.[step] || {};
-    return { combo, step, m, range: a.range * (m.range ?? 1) };
+    return { combo, step, m, range: a.range * (m.range ?? 1), arc: m.arc ?? a.arcDeg ?? 60, multi: m.multi ?? a.multi };
   }
 
   // 조준 방향: 직접 조준 > 사거리 안에서 가장 가까운 상대(자동 조준) > 바라보는 방향
@@ -233,9 +237,9 @@ export class Game {
 
   // 그 방향으로 공격했을 때 맞는 대상
   // 그 방향으로 공격했을 때 맞는 대상들 (가까운 순). 근접은 부채꼴(arcDeg, 기본 ±60°), 원거리는 직선
-  _pickTargets(p, range, dx, dy) {
+  _pickTargets(p, range, dx, dy, arc = p.cfg.attack.arcDeg ?? 60) {
     const a = p.cfg.attack;
-    const cosMin = Math.cos(((a.arcDeg ?? 60) * Math.PI) / 180);
+    const cosMin = Math.cos((arc * Math.PI) / 180);
     const hits = [];
     for (const o of this._enemies(p)) {
       const vx = o.x - p.x, vy = o.y - p.y;
@@ -252,8 +256,8 @@ export class Game {
     return hits.sort((x, y) => x.dist - y.dist);
   }
 
-  _pickTarget(p, range, dx, dy) {
-    const h = this._pickTargets(p, range, dx, dy)[0];
+  _pickTarget(p, range, dx, dy, arc) {
+    const h = this._pickTargets(p, range, dx, dy, arc)[0];
     return { target: h ? h.o : null, tDist: h ? h.dist : Infinity };
   }
 
@@ -261,17 +265,17 @@ export class Game {
   aimPreview(id, aim) {
     const p = this.players.get(id);
     if (!p) return null;
-    const { range, step } = this._comboState(p);
+    const { range, step, arc } = this._comboState(p);
     const dir = this._aimDir(p, aim, range);
     const pr = p.cfg.attack.projectile;
-    let { target } = this._pickTarget(p, range, dir.dx, dir.dy);
+    let { target } = this._pickTarget(p, range, dir.dx, dir.dy, arc);
     let lob = null;
     if (pr?.lob) { // 던지기: 착탄 지점과 폭발 범위, 그 안의 가장 가까운 상대를 조준 대상으로 표시
       const L = this._lobLanding(p, dir, range, aim);
       lob = { x: r2(L.x), y: r2(L.y), r: pr.explodeRadius };
       target = this._enemies(p).filter((o) => Math.hypot(o.x - L.x, o.y - L.y) <= pr.explodeRadius + o.cfg.radius).sort((u, v) => Math.hypot(u.x - L.x, u.y - L.y) - Math.hypot(v.x - L.x, v.y - L.y))[0] || null;
     }
-    return { lob, dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc: p.cfg.attack.arcDeg ?? 60, radius: p.cfg.radius, targetId: target ? target.id : null };
+    return { lob, dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc, radius: p.cfg.radius, targetId: target ? target.id : null };
   }
 
   _tryAttack(p, aim) {
@@ -280,7 +284,7 @@ export class Game {
     if (p.running && !a.canAttackWhileRunning) return;
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
-    const { combo, step, m, range } = this._comboState(p);
+    const { combo, step, m, range, arc, multi } = this._comboState(p);
     const { dx, dy, near } = this._aimDir(p, aim, range);
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval;
@@ -296,19 +300,19 @@ export class Game {
       return;
     }
     if (a.windup) { // 예고 후 타격: 범위를 보여 주는 동안 피할 수 있다
-      p.windup = { at: this.t + a.windup, range, dx, dy, m, step };
+      p.windup = { at: this.t + a.windup, range, dx, dy, m, step, arc, multi };
       p.attackUntil += a.windup;
-      this.events.push({ e: 'windup', id: p.id, dx: r2(dx), dy: r2(dy), range: r2(range), arc: a.arcDeg ?? 60, sec: a.windup });
+      this.events.push({ e: 'windup', id: p.id, dx: r2(dx), dy: r2(dy), range: r2(range), arc, sec: a.windup, fx: a.fx });
       return;
     }
-    this._strike(p, range, dx, dy, m, step);
+    this._strike(p, range, dx, dy, m, step, arc, multi);
   }
 
-  _strike(p, range, dx, dy, m, step) {
+  _strike(p, range, dx, dy, m, step, arc, multi) {
     const a = p.cfg.attack;
-    const hits = this._pickTargets(p, range, dx, dy);
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] && !(a.multi && a.type === 'ranged') ? hits[0].dist : range) });
-    for (const h of a.multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
+    const hits = this._pickTargets(p, range, dx, dy, arc);
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc, step, range: r2(range), len: r2(hits[0] && !(multi && a.type === 'ranged') ? hits[0].dist : range) });
+    for (const h of multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
   }
 
   // ---------- 투사체 ----------
@@ -348,7 +352,7 @@ export class Game {
           const d = Math.hypot(o.x - q.tx, o.y - q.ty);
           if (d > q.r + o.cfg.radius) continue;
           const nx = d > 1e-6 ? (o.x - q.tx) / d : 1, ny = d > 1e-6 ? (o.y - q.ty) / d : 0;
-          this._applyHit(o, { id: q.owner }, this._projDamage(q), q.knock, nx, ny);
+          this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, nx, ny, q.art);
         }
         continue;
       }
@@ -362,7 +366,7 @@ export class Game {
         const k = l2 > 0 ? Math.max(0, Math.min(1, ((o.x - px) * sx + (o.y - py) * sy) / l2)) : 0;
         if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
         q.hit.add(o.id);
-        this._applyHit(o, { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy);
+        this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
         if (!q.pierce) { gone = true; break; }
       }
       if (gone) this.projectiles.delete(q.id);
@@ -445,20 +449,59 @@ export class Game {
     }
   }
 
+  // ---------- 아이템: 하트(체력 회복) · 신발(이동 속도 증가) ----------
+  spawnItem(k, x, y) {
+    if (this.items.size >= ITEM.maxOnMap) return null;
+    k ??= Math.random() < 0.5 ? 'heart' : 'shoe';
+    if (x == null) { x = rand(1.5, MAP.w - 1.5); y = rand(1.5, MAP.h - 1.5); }
+    const it = { id: ++this.itemSeq, k, x, y };
+    this.items.set(it.id, it);
+    this.events.push({ e: 'itemSpawn', id: it.id, k, x: r2(x), y: r2(y) });
+    return it;
+  }
+
+  _updateItems(dt, active) {
+    if (active.some((p) => !p.isBot)) {
+      this.itemClock += dt;
+      if (this.itemClock >= ITEM.spawnEverySec) { this.itemClock = 0; this.spawnItem(); }
+    }
+    for (const it of [...this.items.values()]) {
+      let best = null, bd = Infinity;
+      for (const p of active) {
+        if (p.stunned || (it.k === 'heart' && p.hp >= p.cfg.hp)) continue; // 체력이 가득이면 하트는 남겨 둠
+        const d = Math.hypot(p.x - it.x, p.y - it.y);
+        if (d <= (p.cfg.pickupRadius ?? ITEM.pickupRadius) && d < bd) { best = p; bd = d; }
+      }
+      if (!best) continue;
+      this.items.delete(it.id);
+      let amount = 0;
+      if (it.k === 'heart') {
+        amount = Math.min(best.cfg.hp - best.hp, Math.ceil(best.cfg.hp * ITEM.heart.heal));
+        best.hp += amount;
+      } else {
+        best.speedUntil = this.t + ITEM.shoe.sec;
+      }
+      this.events.push({ e: 'itemGet', id: it.id, k: it.k, by: best.id, amount, x: r2(it.x), y: r2(it.y) });
+    }
+  }
+
   _hit(target, attacker, dx, dy, dmgMul = 1, knockMul = 1) {
     const a = attacker.cfg.attack;
     const dmg = Math.round((a.dmgMin + Math.floor(Math.random() * (a.dmgMax - a.dmgMin + 1))) * dmgMul);
-    this._applyHit(target, attacker, dmg, a.knockback * knockMul, dx, dy);
+    this._applyHit(target, attacker, dmg, a.knockback * knockMul, dx, dy, a.fx);
   }
 
-  _applyHit(target, attacker, rawDmg, knock, dx, dy) {
+  _applyHit(target, attacker, rawDmg, knock, dx, dy, fx) {
     if (this.t < target.invUntil) { // 무적: 피해도 밀림도 없음
       this.events.push({ e: 'block', id: target.id, x: r2(target.x), y: r2(target.y) });
       return;
     }
     let dmg = target.stunned ? 0 : rawDmg;
-    const crit = dmg > 0 && Math.random() < CRIT.chance;
+    const crit = dmg > 0 && Math.random() < CRIT.chance + (attacker.cfg?.attack?.critBonus ?? 0);
     if (crit) dmg = Math.round(dmg * CRIT.mul);
+    const gd = target.cfg.guard; // 방패: 바라보는 쪽에서 오는 공격은 피해가 줄어듦
+    const guard = !!(gd && dmg > 0 && (attacker.x - target.x) * target.face > 0);
+    if (guard) dmg = Math.max(1, Math.round(dmg * (1 - gd)));
     if (dmg > 0) {
       target.hp = Math.max(0, target.hp - dmg);
       if (target.hp === 0) this._ko(target);
@@ -468,7 +511,7 @@ export class Game {
       target.kx += dx * knock * KNOCK_DECAY;
       target.ky += dy * knock * KNOCK_DECAY;
     }
-    this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, crit, x: r2(target.x), y: r2(target.y) });
+    this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, crit, guard, fx, x: r2(target.x), y: r2(target.y) });
   }
 
   // ---------- 스킬: 돌진/도약 (달리기 캐릭터는 달리기 버튼을 누르고 있는 방식) ----------
@@ -503,6 +546,7 @@ export class Game {
     }
     this._collide(active);
     this._updateCoins(dt, active);
+    this._updateItems(dt, active);
     this._updateProjectiles(dt);
 
     if (this.phase === PHASE.MOVING) {
@@ -517,7 +561,7 @@ export class Game {
     const c = p.cfg;
     if (p.windup && (p.stunned || this.t >= p.windup.at)) { // 예고가 끝나면 타격 (그 전에 쓰러지면 취소)
       const w = p.windup; p.windup = null;
-      if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step);
+      if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step, w.arc, w.multi);
     }
     if (p.stunned && this.t >= p.stunUntil) { // 기절 해제 → 체력 회복 + 무적
       p.stunned = false;
@@ -543,7 +587,8 @@ export class Game {
       running = runSkill && p.input.run && p.runGauge > 0 && !p.exhausted;
       // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
       const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
-      const speed = (running ? c.runSpeed : c.walkSpeed) * slow;
+      const boost = this.t < p.speedUntil ? ITEM.shoe.mul : 1; // 신발
+      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost;
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
@@ -568,7 +613,7 @@ export class Game {
     if (dashing && p.dash.hitDmg) { // 돌진: 처음 닿은 상대를 날리고 멈춤
       for (const o of this._enemies(p)) {
         if (o.stunned || Math.hypot(o.x - p.x, o.y - p.y) > p.cfg.radius + o.cfg.radius + 0.25) continue;
-        this._applyHit(o, p, p.dash.hitDmg, p.dash.hitKnock, p.dash.dx, p.dash.dy);
+        this._applyHit(o, p, p.dash.hitDmg, p.dash.hitKnock, p.dash.dx, p.dash.dy, 'bump');
         p.dash.until = this.t;
         break;
       }
@@ -667,7 +712,7 @@ export class Game {
           : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
         tn: p.cfg.tint || null, zs: p.cfg.scale || 1,
         am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
-        sc: this.totalScore(p), cn: p.coins,
+        sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
       });
     }
     const q = this.question
@@ -682,6 +727,7 @@ export class Game {
       pj: [...this.projectiles.values()].map((q) => q.kind === 'lob'
         ? { id: q.id, k: 'l', a: q.art, x: r2(q.x), y: r2(q.y), sx: r2(q.sx), sy: r2(q.sy), tx: r2(q.tx), ty: r2(q.ty), u: r2((this.t - q.t0) / q.T), T: r2(q.T), r: q.r }
         : { id: q.id, k: 'b', a: q.art, x: r2(q.x), y: r2(q.y), vx: r2(q.vx), vy: r2(q.vy) }),
+      items: [...this.items.values()].map((i) => ({ id: i.id, k: i.k, x: r2(i.x), y: r2(i.y) })),
       coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),
       players,
       ev: events,

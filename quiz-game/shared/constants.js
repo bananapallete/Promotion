@@ -20,6 +20,14 @@ export const COIN = {
   dropLockSec: 3.5, // 떨어진 동전은 이 시간 동안 아무도 못 줍는다 (그동안 깜빡임)
   dropOnNoAnswer: true, // 무응답도 틀린 것으로 보고 떨어뜨림
 };
+// 아이템: 하트(체력 회복) · 신발(잠깐 빨라짐). 동전처럼 맵에 생기고 닿으면 자동으로 먹는다
+export const ITEM = {
+  spawnEverySec: 8, // 이 간격으로 하트/신발 중 하나가 생김
+  maxOnMap: 5,
+  pickupRadius: 1.0,
+  heart: { heal: 0.3 }, // 최대 체력의 30% 회복 (체력이 가득이면 못 먹음)
+  shoe: { sec: 5, mul: 1.4 }, // 5초 동안 이동 속도 1.4배
+};
 // 크리티컬: 맞을 때마다 이 확률로 피해가 배수로 커지고, 크리티컬일 때만 화면이 흔들린다
 export const CRIT = { chance: 0.1, mul: 1.5 };
 export const fmtScore = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));

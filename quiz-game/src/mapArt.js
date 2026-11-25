@@ -107,3 +107,63 @@ export function matTexture(scene, type, z) {
   nearest(tex);
   return key;
 }
+
+// ---------- 맵 장식물 (나무·덤불·바위·그루터기·꽃·버섯): 도트 + 4x4 디더링 음영, 바닥 그림자 ----------
+const INK = rgb(0x1d2e2a);
+const GREENS = [[0x2d6e38, 0x3f8f45, 0x5fb353, 0x8ad468], [0x2a6a4a, 0x3b8a5a, 0x57ad6c, 0x86d498], [0x4a7a2c, 0x6a9c38, 0x90bf4a, 0xbddb70]].map((l) => l.map(rgb));
+const ROCKS = [0x6f7684, 0x8b93a1, 0xaab2bf, 0xd0d6df].map(rgb);
+const BARK = [0x5a3a24, 0x7a5233, 0x9a6b42].map(rgb);
+
+/** kind·v(변형 번호)별 텍스처를 한 번만 만든다. 기준점은 아래쪽 가운데. */
+export function objectTexture(scene, kind, v = 0) {
+  const key = `obj-${kind}-${v}`;
+  if (scene.textures.exists(key)) return key;
+  const [W, H] = { tree: [36, 46], bush: [28, 20], rock: [24, 18], stump: [18, 16], flower: [16, 10], mushroom: [14, 12] }[kind];
+  const tex = scene.textures.createCanvas(key, W, H);
+  const ctx = tex.getContext();
+  const out = ctx.createImageData(W, H), o = out.data;
+  const put = (x, y, c, a = 255) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const i = (y * W + x) * 4; o[i] = c[0]; o[i + 1] = c[1]; o[i + 2] = c[2]; o[i + 3] = a; };
+  const bayer = (x, y) => (BAYER[y & 3][x & 3] + 0.5) / 16;
+  const shadow = (cx, cy, rx, ry) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1 && bayer(x, y) < 0.7) put(x, y, rgb(0x14352c), 120); };
+  /** 형태(안쪽 판정)를 받아 윤곽선 + 4단계 디더 음영으로 칠한다. 빛은 왼쪽 위 */
+  const blob = (inside, pal, x0, y0, x1, y1) => {
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      if (!inside(x, y)) continue;
+      if (!inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1)) { put(x, y, INK); continue; }
+      const t = ((x - x0) / (x1 - x0 + 1)) * 0.45 + ((y - y0) / (y1 - y0 + 1)) * 0.65 + (bayer(x, y) - 0.5) * 0.32; // 0(밝음) → 1(어두움)
+      put(x, y, pal[t < 0.28 ? 3 : t < 0.5 ? 2 : t < 0.72 ? 1 : 0]);
+    }
+  };
+  const circ = (cx, cy, r) => (x, y) => (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r;
+  const any = (...f) => (x, y) => f.some((g) => g(x, y));
+  const pal = GREENS[v % 3];
+
+  if (kind === 'tree') {
+    shadow(18, H - 3, 12, 3);
+    for (let y = 30; y < H - 2; y++) for (let x = 15; x <= 21; x++) put(x, y, x === 15 || x === 21 ? INK : x < 17 ? BARK[2] : x < 19 ? BARK[1] : BARK[0]); // 줄기
+    for (let x = 13; x <= 23; x++) put(x, H - 3, INK);
+    blob(any(circ(18, 15, 12), circ(9, 20, 8), circ(27, 20, 8), circ(18, 8, 8)), pal, 0, 0, W - 1, 31);
+  } else if (kind === 'bush') {
+    shadow(14, H - 3, 11, 3);
+    blob(any(circ(14, 11, 8), circ(7, 13, 6), circ(21, 13, 6)), pal, 0, 2, W - 1, H - 4);
+  } else if (kind === 'rock') {
+    shadow(12, H - 3, 10, 2.5);
+    blob(any(circ(12, 10, 8), circ(7, 12, 5.5), circ(17, 12, 5.5)), ROCKS, 0, 1, W - 1, H - 4);
+  } else if (kind === 'stump') {
+    shadow(9, H - 3, 8, 2.5);
+    blob((x, y) => y >= 7 && y <= 12 && ((x + 0.5 - 9) / 7) ** 2 + ((y + 0.5 - 9.5) / 3) ** 2 <= 1 || (x >= 3 && x <= 14 && y >= 9 && y <= 13), BARK.slice().reverse().concat([rgb(0xc08a58)]), 0, 6, W - 1, 13);
+    for (let x = 5; x <= 12; x++) put(x, 8, rgb(0xd9a873)); // 윗면 나이테 밝은 면
+    put(8, 8, BARK[0]); put(9, 8, BARK[0]);
+  } else if (kind === 'flower') {
+    const cols = [[0xffffff, 0xffe27a], [0xff9ec7, 0xffe27a], [0xb48cff, 0xffffff]][v % 3].map(rgb);
+    for (const [fx, fy] of [[4, 4], [10, 3], [7, 7]]) { put(fx, fy + 2, rgb(0x3f7a34)); put(fx, fy + 3, rgb(0x3f7a34)); put(fx, fy, rgb(0xf7c531)); put(fx - 1, fy, cols[0]); put(fx + 1, fy, cols[0]); put(fx, fy - 1, cols[0]); put(fx, fy + 1, cols[0]); }
+  } else { // mushroom
+    shadow(7, H - 2, 6, 2);
+    for (let y = 7; y < 11; y++) for (let x = 6; x <= 8; x++) put(x, y, x === 6 ? INK : rgb(0xf0e6d0));
+    blob(circ(7, 6, 5), [rgb(0xb02a3a), rgb(0xd94652), rgb(0xf0707a), rgb(0xffa0a6)], 1, 1, 12, 7);
+    put(5, 4, rgb(0xffffff)); put(9, 3, rgb(0xffffff)); put(8, 5, rgb(0xffffff));
+  }
+  ctx.putImageData(out, 0, 0);
+  nearest(tex);
+  return key;
+}

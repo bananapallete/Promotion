@@ -792,3 +792,53 @@ test('오크: 예고 0.4초 뒤에 부채꼴로 타격, 그 전에 쓰러지면 
   g.attack('a', null); g.knockOut('a'); run(g, w + 0.05);
   assert.equal(B.hp, B.cfg.hp, '쓰러지면 취소');
 });
+
+test('맵 장식물: 고정 배치이고 정답 구역 안에는 놓이지 않는다', async () => {
+  const { mapObjects } = await import('../shared/mapObjects.js');
+  const { ZONES, MAP } = await import('../shared/constants.js');
+  const a = mapObjects(), b = mapObjects();
+  assert.deepEqual(a, b);
+  assert.ok(a.length > 30);
+  for (const o of a) {
+    assert.ok(o.x > 0 && o.x < MAP.w && o.y > 0 && o.y < MAP.h);
+    for (const z of [...ZONES.ox, ...ZONES.choice]) assert.ok(Math.hypot(o.x - z.cx, o.y - z.cy) > z.r, `${o.kind} (${o.x},${o.y})가 구역 안`);
+  }
+});
+
+test('하트: 체력을 최대 체력의 30% 회복하고, 가득이면 못 먹는다', () => {
+  const { g, A } = duo('blue', 'blue');
+  A.x = 10; A.y = 10; A.kx = A.ky = 0;
+  g.spawnItem('heart', 10, 10);
+  run(g, 0.2);
+  assert.equal(g.items.size, 1, '체력이 가득이면 하트가 남아 있음');
+  A.hp = 20;
+  run(g, 0.2);
+  assert.equal(g.items.size, 0);
+  assert.equal(A.hp, 20 + Math.ceil(A.cfg.hp * 0.3));
+  A.hp = A.cfg.hp - 2; g.spawnItem('heart', 10, 10); run(g, 0.2);
+  assert.equal(A.hp, A.cfg.hp, '최대 체력을 넘지 않음');
+});
+
+test('신발: 5초 동안 이동 속도 1.4배', () => {
+  const { g, A, B } = duo('blue', 'blue');
+  B.x = 35; B.y = 20;
+  A.x = 6; A.y = 10; A.kx = A.ky = 0;
+  g.spawnItem('shoe', 6, 10); run(g, 0.2);
+  assert.ok(A.speedUntil > g.t + 4.5);
+  g.setInput('a', { mx: 1, my: 0, run: false });
+  const x0 = A.x; run(g, 1);
+  assert.ok(Math.abs(A.x - x0 - chars.blue.walkSpeed * 1.4) < 0.3, `x=${A.x - x0}`);
+  A.x = 6; run(g, 5); A.x = 6; const x1 = A.x; run(g, 1);
+  assert.ok(Math.abs(A.x - x1 - chars.blue.walkSpeed) < 0.3, '5초 뒤엔 원래 속도');
+});
+
+test('기사 방패: 바라보는 쪽 공격은 40% 줄고, 등 뒤 공격은 그대로', () => {
+  const { g, A, B } = duo('blue', 'knight');
+  B.face = 1; A.x = B.x + 1; A.y = B.y; // 앞
+  const hp = B.hp; g.attack('a', null);
+  const front = hp - B.hp;
+  run(g, 1.5); B.invUntil = 0; B.hp = B.cfg.hp; A.x = B.x - 1; A.y = B.y; // 등 뒤
+  g.attack('a', null);
+  const back = B.cfg.hp - B.hp;
+  assert.ok(front < back, `앞 ${front} < 뒤 ${back}`);
+});

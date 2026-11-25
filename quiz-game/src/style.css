@@ -98,3 +98,54 @@ td, th { padding: 5px 6px; text-align: left; border-bottom: 1px solid #ffffff14;
 #join-ui { position: fixed; inset: 0; max-width: none; overflow-y: auto; touch-action: pan-y; }
 #join-ui > * { max-width: 420px; margin-left: auto; margin-right: auto; }
 #join-ui #go { position: sticky; bottom: 12px; }
+
+/* ===== 디자인 스타일 (DESIGN.md): 크림 종이 + 나무 테두리 + 남색 윤곽선, 계단식 그림자 ===== */
+:root {
+  --cream: #e8d0a9; --cream-hi: #f6e6c8; --cream-lo: #dcb98a; --wood: #b27c53; --wood-dk: #7a4e32; --text: #5a3a24;
+  --leaf: #b4d36a; --leaf-dk: #6e9a3a; --rose: #b34a5c; --sky: #5aa7ff; --navy: #14122b; --empty: #7f9298;
+  --bg: #2f4a33; --panel: var(--cream); --ink: var(--cream-hi); --mute: #c9b48e; --accent: var(--leaf-dk); --ok: var(--rose); --bad: #e0505a;
+  --frame: 3px solid var(--wood-dk); --lift: 0 4px 0 var(--wood-dk), inset 0 0 0 2px var(--cream-hi);
+}
+/* 종이 패널 */
+.card, #banner, #timer, #lb, #rank, #join, #conn, #reveal, .chars label, #hudbar .row b {
+  --mute: #8b6a4a; --ink: var(--text);
+  background: var(--cream); color: var(--text); border: var(--frame); border-radius: 8px; box-shadow: var(--lift);
+}
+#timer { border-radius: 50%; }
+#lb, #conn { border-radius: 99px; }
+#banner .qn, #rank b, #lb span b, .card h2 { color: var(--leaf-dk); }
+#rank div:first-child { color: var(--rose); }
+#reveal { background: var(--leaf); color: var(--text); }
+#timer.low { color: var(--rose); }
+#join img { border: var(--frame); border-radius: 4px; }
+/* 버튼: 크림색 + 아래 그림자, 누르면 내려앉음 */
+button { font-weight: 700; }
+.card button, .card select, .primary {
+  background: var(--cream-hi); color: var(--text); border: 3px solid var(--wood); border-radius: 8px; box-shadow: 0 3px 0 var(--wood-dk); transition: transform .06s, box-shadow .06s;
+}
+.card button:active, .primary:active { transform: translateY(3px); box-shadow: 0 0 0 var(--wood-dk); }
+.card button.go, .primary { background: var(--leaf); border-color: var(--leaf-dk); box-shadow: 0 3px 0 #4d7226; color: var(--text); }
+.card button.warn { background: #e9a0ab; border-color: var(--rose); box-shadow: 0 3px 0 #7d2e3d; color: #4a1420; }
+.card button.sel, .card button.go.sel { outline: 3px solid var(--navy); outline-offset: 1px; }
+.card input, .card input[type=text], .card input[type=number], .panel input[type=text] { background: var(--cream-hi); color: var(--text); border: 3px solid var(--wood); border-radius: 8px; }
+.stat span { background: var(--cream-hi); border: 2px solid var(--wood); border-radius: 6px; }
+td, th, .qrow { border-bottom-color: #7a4e3233; }
+/* 캐릭터 고르기 */
+.chars label { border-radius: 8px; }
+.chars label:has(input:checked) { background: var(--leaf); border-color: var(--leaf-dk); box-shadow: 0 4px 0 #4d7226, inset 0 0 0 2px var(--cream-hi); }
+.chars label:has(input:checked) b { color: var(--text); }
+/* 폰 HUD: 체력은 게임 속 하트 바와 같은 모양(칸 눈금) */
+.bar { height: 14px; background: var(--empty); border: 3px solid var(--navy); border-radius: 3px; overflow: hidden; position: relative; }
+.bar > i { background: var(--rose); box-shadow: inset 0 3px 0 #e9a0ab88; }
+.bar.run > i { background: var(--sky); box-shadow: inset 0 3px 0 #ffffff55; }
+.bar::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(20% - 2px), var(--navy) calc(20% - 2px) 20%); opacity: .8; pointer-events: none; }
+.bar.run::after { display: none; }
+#hudbar .row { font-size: 15px; }
+#ammo i { height: 10px; border-radius: 2px; border: 2px solid var(--navy); box-shadow: none; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), var(--empty) 0); }
+/* 조작 버튼: 남색 윤곽 + 계단식 그림자 */
+.abtn { border: 4px solid var(--navy); box-shadow: 0 5px 0 #0007, inset 0 0 0 3px #ffffff40; }
+#btnAtk { background: #d9606f; }
+#btnRun { background: #5aa7ff; }
+#btnRun.on, #btnAtk:active { transform: translateY(4px) scale(.96); box-shadow: 0 1px 0 #0007, inset 0 0 0 3px #ffffff40; }
+#stick { border: 3px solid var(--navy); background: var(--cream-hi); }
+#pad { border: 3px solid #ffffff55; }

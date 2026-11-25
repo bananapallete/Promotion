@@ -70,6 +70,23 @@
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   #panel p { margin: 8px 0 0; color: var(--mute); font-size: 12px; line-height: 1.5; }
 
+  /* 디자인 스타일 (DESIGN.md) */
+  :root { --cream: #e8d0a9; --cream-hi: #f6e6c8; --wood: #b27c53; --wood-dk: #7a4e32; --text: #5a3a24; --leaf: #b4d36a; --leaf-dk: #6e9a3a; --rose: #b34a5c; --sky: #5aa7ff; --navy: #14122b; --empty: #7f9298; --bg: #2f4a33; --ok: var(--rose); --accent: var(--leaf-dk); }
+  #me, #banner, #phase, #reveal, #gear, #panel, #uiToggle { background: var(--cream); color: var(--text); border: 3px solid var(--wood-dk); border-radius: 8px; box-shadow: 0 4px 0 var(--wood-dk), inset 0 0 0 2px var(--cream-hi); --mute: #8b6a4a; --ink: var(--text); }
+  #phase { border-radius: 99px; }
+  #qn { color: var(--leaf-dk); }
+  #reveal.ok { background: var(--leaf); color: var(--text); } #reveal.bad { background: #e9a0ab; color: #4a1420; }
+  #charbar button { background: var(--cream); color: var(--text); border: 3px solid var(--wood); border-radius: 8px; box-shadow: 0 3px 0 var(--wood-dk); }
+  #charbar button.sel { background: var(--leaf); border-color: var(--leaf-dk); color: var(--text); box-shadow: 0 3px 0 #4d7226; }
+  .bar { height: 12px; background: var(--empty); border: 3px solid var(--navy); border-radius: 3px; position: relative; }
+  .bar > i { background: var(--rose); box-shadow: inset 0 3px 0 #e9a0ab88; }
+  .bar.run > i { background: var(--sky); box-shadow: inset 0 3px 0 #ffffff55; }
+  .bar::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(20% - 2px), var(--navy) calc(20% - 2px) 20%); }
+  .bar.run::after { display: none; }
+  .abtn { border: 4px solid var(--navy); box-shadow: 0 5px 0 #0007, inset 0 0 0 3px #ffffff40; }
+  #btnAtk { background: #d9606f; } #btnRun { background: #5aa7ff; }
+  #ammo i { height: 10px; border-radius: 2px; border: 2px solid var(--navy); box-shadow: none; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), var(--empty) 0); }
+  #stick { border: 3px solid var(--navy); background: var(--cream-hi); }
 </style>
 
 <div id="charbar"></div>

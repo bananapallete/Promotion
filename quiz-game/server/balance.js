@@ -13,7 +13,7 @@ export function shotsOf(c, sec = FIGHT_SEC) {
 export function dpsOf(c) {
   const a = c.attack;
   const comboMul = a.combo ? (2 + (a.combo[2].dmg ?? 1)) / 3 : 1;
-  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * shotsOf(c) / FIGHT_SEC;
+  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * (1 + (a.critBonus ?? 0) * 0.5) * shotsOf(c) / FIGHT_SEC;
   const hit = a.projectile ? HIT[a.projectile.art] ?? 0.8 : a.fx === 'tongue' ? 0.95 : 1;
   const skill = c.skill?.hitDmg ? c.skill.hitDmg / c.skill.cooldown : 0;
   return { basic, dps: basic * hit * (a.multi ? AREA : 1) + skill };
@@ -21,5 +21,5 @@ export function dpsOf(c) {
 
 /** 전투력 지수: sqrt(체력 × DPS) × 사거리 보정 × 이동 속도 보정 */
 export function powerIndex(c) {
-  return Math.sqrt(c.hp * dpsOf(c).dps) * (1 + 0.1 * (c.attack.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;
+  return Math.sqrt(c.hp * (1 + (c.guard ?? 0) * 0.5) * dpsOf(c).dps) * (1 + 0.1 * (c.attack.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;
 }

@@ -2,15 +2,19 @@
 import Phaser from 'phaser';
 import { MAP, PHASE, SPRITE, ZONES } from '../shared/constants.js';
 import { CoinLayer } from './coins.js';
+import { ItemLayer } from './items.js';
+import { THEME } from '../shared/theme.js';
+import { hitFx, meleeFx, muzzleFx } from './fx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
-import { buildFloor, MAT_MARGIN, matTexture, TILE } from './mapArt.js';
+import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
+import { mapObjects } from '../shared/mapObjects.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
 export const WORLD_W = MAP.w * BU;
 export const WORLD_H = MAP.h * BU;
 
-export const hooks = { spriteUrl: (s, m) => `characters/${s}/${m}.png` }; // 데모 페이지가 이미지 경로를 바꿔 끼울 수 있게
+export const hooks = { spriteUrl: (s, m) => `characters/${s}/${m}.png`, fxUrl: (n) => `fx/${n}.png` }; // 데모 페이지가 이미지 경로를 바꿔 끼울 수 있게
 const SPRITES = ['blue', ...Object.keys(sprites)]; // 스프라이트 폴더 이름 (public/characters/<name>/)
 const SPR_SCALE = 0.34; // 256px 셀 → 화면. 몸 폭이 약 1.1BU가 되도록
 const FLASH_MS = 100; // 맞았을 때 하얗게 번쩍이는 시간
@@ -25,6 +29,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
     for (const s of SPRITES) {
       for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : [])]) {
         this.load.spritesheet(`${s}-${m}`, hooks.spriteUrl(s, m), { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
@@ -37,13 +42,20 @@ export class WorldScene extends Phaser.Scene {
     buildFloor(this);
     this.add.image(0, 0, 'floor').setOrigin(0).setScale(BU / TILE).setDepth(-100);
 
+    for (const o of mapObjects()) { // 맵 장식물: 아래쪽 기준으로 캐릭터와 앞뒤가 맞게 겹침 (꽃·버섯은 바닥에 깔림)
+      const low = o.kind === 'flower';
+      this.add.image(o.x * BU, o.y * BU, objectTexture(this, o.kind, o.v)).setOrigin(0.5, 1).setScale(BU / TILE).setDepth(low ? -90 : o.y * BU);
+    }
     this.zoneGfx = this.add.graphics().setDepth(-80);
     this.teleGfx = this.add.graphics().setDepth(-45); // 예고 범위 (타격 전 붉은 부채꼴)
     this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
     this.aim = null;
     this.lockId = null;
+    this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('dust', { start: 0, end: 4 }), frameRate: 12, repeat: 0 });
     this.coins = new CoinLayer(this, BU);
     this.coins.create();
+    this.items = new ItemLayer(this, BU);
+    this.items.create();
     this.proj = new ProjectileLayer(this, BU);
     this.proj.create();
     this.zoneImgs = [];
@@ -105,6 +117,19 @@ export class WorldScene extends Phaser.Scene {
     }, onComplete: () => ring.destroy() });
   }
 
+  // 걷거나 달리는 동안 발 뒤로 먼지가 남음 (달리면 더 크고 자주)
+  _dust(v, p, now) {
+    const dx = v.x - (v.lx ?? v.x); v.lx = v.x;
+    const moving = !p.st && (p.a === 'walk' || p.a === 'run') && v.hopUntil <= now;
+    if (!moving || now < (v.dustAt || 0)) return;
+    const run = p.a === 'run';
+    v.dustAt = now + (run ? 110 : 240);
+    const back = Math.abs(dx) > 0.3 ? -Math.sign(dx) : -p.f; // 가는 방향의 반대쪽
+    const d = this.add.sprite(v.x + back * 0.42 * BU, v.y - 2, 'dust').setOrigin(0.5, 1).setScale((run ? 1.5 : 1) * (p.zs || 1) * 1.1).setFlipX(back < 0).setAlpha(0.9).setDepth(v.y - 1);
+    d.play('dust');
+    d.once('animationcomplete', () => d.destroy());
+  }
+
   _drawTelegraph(now) {
     const g = this.teleGfx;
     g.clear();
@@ -129,25 +154,27 @@ export class WorldScene extends Phaser.Scene {
     if (!me) return;
 
     const cx = me.x, cy = me.y, R = a.range * BU, ang = Math.atan2(a.dy, a.dx);
-    // 공격 사거리: 평소엔 옅게, 직접 조준 중엔 또렷하게
-    g.lineStyle(a.dragging ? 3 : 2, 0xffffff, a.dragging ? 0.6 : 0.2).strokeCircle(cx, cy, R);
-    if (a.dragging && !a.lob) { // 조준선: 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
+    // 공격 범위는 항상 또렷하게 (직접 조준 중엔 더 진하게)
+    const k = a.dragging ? 1 : 0.7, edge = (draw) => { g.lineStyle(7, THEME.ink, 0.7 * k); draw(); g.lineStyle(3, 0xffffff, 0.95 * k); draw(); };
+    g.lineStyle(2, 0xffffff, 0.3 * k).strokeCircle(cx, cy, R);
+    if (!a.lob) { // 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
       if (a.kind === 'melee') {
         const half = ((a.arc ?? 60) * Math.PI) / 180;
-        g.fillStyle(0xffffff, 0.22).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
-        g.lineStyle(3, 0xffffff, 0.8).beginPath().moveTo(cx, cy).lineTo(cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R).arc(cx, cy, R, ang - half, ang + half, false).lineTo(cx, cy).strokePath();
+        g.fillStyle(0xffffff, 0.26 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
+        edge(() => g.beginPath().moveTo(cx, cy).lineTo(cx + Math.cos(ang - half) * R, cy + Math.sin(ang - half) * R).arc(cx, cy, R, ang - half, ang + half, false).lineTo(cx, cy).strokePath());
       } else {
         const w = a.radius * BU, nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w;
         const ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R;
-        g.fillStyle(0xffffff, 0.22).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
-        g.lineStyle(3, 0xffffff, 0.8).lineBetween(cx + nx, cy + ny, ex + nx, ey + ny).lineBetween(cx - nx, cy - ny, ex - nx, ey - ny).lineBetween(ex + nx, ey + ny, ex - nx, ey - ny);
+        g.fillStyle(0xffffff, 0.26 * k).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
+        edge(() => g.beginPath().moveTo(cx + nx, cy + ny).lineTo(ex + nx, ey + ny).lineTo(ex - nx, ey - ny).lineTo(cx - nx, cy - ny).closePath().strokePath());
       }
-      g.lineStyle(4, 0xffffff, 0.95).lineBetween(cx, cy, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R);
+      if (a.dragging) g.lineStyle(4, 0xffffff, 0.95).lineBetween(cx, cy, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R);
     }
-    if (a.lob && (a.dragging || a.targetId)) { // 던지기: 착탄 지점과 폭발 범위
+    if (a.lob) { // 던지기: 착탄 지점과 폭발 범위
       const lx = a.lob.x * BU, ly = a.lob.y * BU;
-      g.lineStyle(3, 0xffffff, 0.5).lineBetween(cx, cy, lx, ly);
-      g.fillStyle(0xff7a1a, 0.18).fillCircle(lx, ly, a.lob.r * BU).lineStyle(4, 0xffd84a, 0.9).strokeCircle(lx, ly, a.lob.r * BU);
+      g.lineStyle(3, 0xffffff, 0.5 * k).lineBetween(cx, cy, lx, ly);
+      g.fillStyle(0xff7a1a, 0.26 * k).fillCircle(lx, ly, a.lob.r * BU);
+      edge(() => g.strokeCircle(lx, ly, a.lob.r * BU));
       g.lineStyle(3, 0xffffff, 0.9).lineBetween(lx - 8, ly, lx + 8, ly).lineBetween(lx, ly - 8, lx, ly + 8);
     }
     // 조준 중인 적: 발밑 링 (빛나는 테두리는 _lockChange가 스프라이트에 입힘)
@@ -177,6 +204,7 @@ export class WorldScene extends Phaser.Scene {
     }
     for (const e of s.ev || []) this.handleEvent(e);
     this.coins.apply(s);
+    this.items.apply(s);
     this.proj.apply(s);
   }
 
@@ -187,10 +215,12 @@ export class WorldScene extends Phaser.Scene {
     sprite.play(`${p.s}-idle`);
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
+    const heart = this.add.image(0, 0, 'item-heart');
+    const shoe = this.add.image(0, 0, 'item-shoe').setScale(1.5).setVisible(false);
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
     const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
-    const v = { sprite, name, bar, status, coinIcon, coinTxt, root: [sprite, name, bar, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
+    const v = { sprite, name, bar, heart, shoe, status, coinIcon, coinTxt, root: [sprite, name, bar, heart, shoe, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -204,21 +234,14 @@ export class WorldScene extends Phaser.Scene {
       const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
       v.sprite.play(`${v.p.s}-atk${step}`, false);
       v.punchUntil = now + SPRITE.attackSteps[step].ms;
-      if (e.kind === 'proj') return; // 투사체 공격은 날아가는 모습이 효과
-      const x0 = v.x, y0 = v.y - 0.55 * BU; // 가슴 높이에서 나가는 효과
-      const len = e.len * BU;
-      const line = this.add.graphics().setDepth(5000);
-      if (e.kind === 'ranged') {
-        const tongue = e.fx === 'tongue'; // 개구리 혀: 굵은 분홍 직선 + 끝 동그라미
-        line.lineStyle(tongue ? 9 : 5, tongue ? 0xff6f91 : 0xffd54a, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
-        if (tongue) line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
-      } else {
-        const a = Math.atan2(e.dy, e.dx);
-        const big = step === 2; // 3타 휘두르기는 더 크고 굵은 궤적
-        const half = e.arc ? (e.arc * Math.PI) / 180 * 0.85 : big ? 1.0 : 0.7; // 귀상어는 넓게
-        line.lineStyle(big ? 12 : 7, 0xffffff, 1).beginPath().arc(x0, y0, (big ? 1.3 : 0.9) * BU, a - half, a + half).strokePath();
-      }
-      this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
+      if (e.kind === 'proj') { muzzleFx(this, e, v, BU); return; } // 투사체 공격은 날아가는 모습이 효과
+      if (e.kind === 'ranged') { // 개구리 혀: 굵은 분홍 직선 + 끝 동그라미
+        const x0 = v.x, y0 = v.y - 0.55 * BU, len = e.len * BU;
+        const line = this.add.graphics().setDepth(5000);
+        line.lineStyle(9, 0xff6f91, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
+        line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
+        this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
+      } else meleeFx(this, e, v, BU);
     } else if (e.e === 'hit' && v) {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
       const crit = !!e.crit;
@@ -226,6 +249,7 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: crit ? 900 : 650, onComplete: () => t.destroy() });
       // 화면 흔들림은 크리티컬이 터졌을 때만, 그리고 내가 때리거나 맞은 것만 (봇끼리의 크리티컬마다 흔들리면 정신없어서)
       if (crit && this.focusId && (e.id === this.focusId || e.by === this.focusId)) this.cameras.main.shake(130, 0.006);
+      hitFx(this, e, BU);
       const ring = this.add.circle(e.x * BU, e.y * BU - 0.6 * BU, 8, 0xffffff, 0.9).setDepth(5500);
       this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
     } else if (e.e === 'dash' && v) {
@@ -270,6 +294,7 @@ export class WorldScene extends Phaser.Scene {
       v.y += (v.ty - v.y) * k;
       const hop = v.hopUntil > now ? Math.sin(Math.PI * (1 - (v.hopUntil - now) / 350)) * 1.3 * BU : 0; // 도약: 포물선으로 뜸
       v.sprite.setPosition(v.x, v.y - hop).setDepth(v.y);
+      this._dust(v, p, now);
       v.sprite.setFlipX(p.f < 0);
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
@@ -288,28 +313,38 @@ export class WorldScene extends Phaser.Scene {
       v.sprite.setAngle(p.st && !dies ? 80 * p.f : 0);
       v.sprite.setAlpha(p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1);
 
-      // 체력바 + 이름
-      const bx = v.x, by = v.y - 2.05 * BU * (p.zs || 1), bw = 1.9 * BU, bh = 14; // 지난번의 2배 크기 (머리 위로 올림)
+      // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
+      const me = p.id === this.focusId, sz = me ? 1 : 0.72;
+      const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2, ds = me ? 2.6 : 1.8;
+      const hw = 14 * ds, by = v.y - 2.05 * BU * (p.zs || 1) + (me ? 0 : 4);
+      const bx0 = v.x - (hw + bw) / 2 + hw - 4; // 바 왼쪽 끝 (하트가 살짝 겹침)
+      const bx = v.x;
+      const f = Math.max(0, p.hp / p.mhp), low = f <= 0.3;
       v.bar.clear().setDepth(v.y + 1);
-      v.bar.fillStyle(0x14122b, 1).fillRect(bx - bw / 2 - 3, by - 3, bw + 6, bh + 6); // 남색 테두리
-      v.bar.fillStyle(0x3a3f4d, 1).fillRect(bx - bw / 2, by, bw, bh);
-      v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);
-      v.bar.fillStyle(0xffffff, 0.3).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), 4); // 윗면 하이라이트
-      if (p.mam && p.id === this.focusId) { // 탄창은 내 것만 (가득 = 주황, 장전 중인 칸은 차오름). 빔프로젝터엔 내 캐릭터가 없어서 안 나옴
+      v.bar.fillStyle(THEME.ink, 1).fillRect(bx0 - bd, by - bd, bw + bd * 2, bh + bd * 2); // 남색 테두리
+      v.bar.fillStyle(THEME.hpEmpty, 1).fillRect(bx0, by, bw, bh);
+      v.bar.fillStyle(low ? THEME.hpLow : THEME.hpFill, 1).fillRect(bx0, by, bw * f, bh);
+      v.bar.fillStyle(THEME.hpShine, 0.55).fillRect(bx0, by, bw * f, Math.max(2, bh * 0.28)); // 윗면 하이라이트
+      for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
+      v.heart.setPosition(bx0 - 4 + hw / 2 - bd, by + bh / 2).setScale(ds).setDepth(v.y + 2);
+      if (p.hp <= 0) v.heart.setTintFill(0x8a9ba5); else v.heart.clearTint();
+      v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
+      if (p.mam && me) { // 탄창은 내 것만 (가득 = 주황, 장전 중인 칸은 차오름). 빔프로젝터엔 내 캐릭터가 없어서 안 나옴
         const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 7, h = 10;
         for (let i = 0; i < p.mam; i++) {
-          const x0 = bx - bw / 2 + i * (sw + gap), f = i < p.am ? 1 : i === p.am ? p.amf : 0;
-          v.bar.fillStyle(0x14122b, 1).fillRect(x0 - 3, y0 - 3, sw + 6, h + 6).fillStyle(0x3a3f4d, 1).fillRect(x0, y0, sw, h).fillStyle(0xffb020, 1).fillRect(x0, y0, sw * f, h);
+          const x0 = bx0 + i * (sw + gap), f2 = i < p.am ? 1 : i === p.am ? p.amf : 0;
+          v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 3, y0 - 3, sw + 6, h + 6).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, sw, h).fillStyle(THEME.ammo, 1).fillRect(x0, y0, sw * f2, h);
         }
       }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
       const bk = Math.max(0, 1 - (now - v.bump) / 250);
-      v.coinIcon.setVisible(shown > 0).setPosition(bx + bw / 2 + 18, by + 7).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
-      v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx + bw / 2 + 30, by + 7).setDepth(v.y + 1);
+      v.coinIcon.setVisible(shown > 0).setPosition(bx0 + bw + (p.sp > 0 ? 40 : 18), by + 7).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
+      v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx0 + bw + (p.sp > 0 ? 52 : 30), by + 7).setDepth(v.y + 1);
     }
     this.coins.update(now);
+    this.items.update(now);
     this.proj.update(now);
     this._drawAim(now);
     this.onFrame?.(this, delta);

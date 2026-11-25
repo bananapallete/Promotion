@@ -38,7 +38,8 @@
           "range": 1.15,
           "knockback": 1.6
         }
-      ]
+      ],
+      "fx": "punch"
     },
     "ammo": {
       "max": 3,
@@ -71,7 +72,8 @@
         "speed": 12,
         "radius": 0.25,
         "art": "stone"
-      }
+      },
+      "fx": "stone"
     },
     "ammo": {
       "max": 3,
@@ -104,7 +106,8 @@
         "speed": 18,
         "radius": 0.2,
         "art": "arrow"
-      }
+      },
+      "fx": "arrow"
     },
     "scale": 1.05,
     "ammo": {
@@ -138,7 +141,8 @@
         "speed": 7,
         "radius": 0.45,
         "art": "orb"
-      }
+      },
+      "fx": "orb"
     },
     "ammo": {
       "max": 3,
@@ -173,7 +177,8 @@
         "lob": true,
         "explodeRadius": 1.8,
         "art": "bottle"
-      }
+      },
+      "fx": "bottle"
     },
     "ammo": {
       "max": 3,
@@ -222,10 +227,13 @@
         },
         {
           "dmg": 1.5,
-          "range": 0.92,
-          "knockback": 1.5
+          "range": 1.1,
+          "knockback": 1.5,
+          "arc": 180,
+          "multi": true
         }
-      ]
+      ],
+      "fx": "flurry"
     },
     "ammo": {
       "max": 3,
@@ -257,7 +265,8 @@
       "moveSpeedWhileAttacking": 0.4,
       "arcDeg": 80,
       "multi": true,
-      "windup": 0.4
+      "windup": 0.4,
+      "fx": "smash"
     },
     "scale": 1.2,
     "ammo": {
@@ -291,7 +300,8 @@
         "speed": 11,
         "radius": 0.3,
         "art": "spark"
-      }
+      },
+      "fx": "spark"
     },
     "pickupRadius": 2.0,
     "ammo": {
@@ -340,10 +350,12 @@
         },
         {
           "dmg": 2,
-          "range": 0.96,
-          "knockback": 2.0
+          "range": 1.35,
+          "knockback": 2.0,
+          "multi": true
         }
-      ]
+      ],
+      "fx": "shock"
     },
     "scale": 1.1,
     "ammo": {
@@ -373,7 +385,8 @@
       "range": 1.1,
       "knockback": 0.2,
       "canAttackWhileRunning": true,
-      "moveSpeedWhileAttacking": 1.0
+      "moveSpeedWhileAttacking": 1.0,
+      "fx": "bite"
     },
     "scale": 0.8,
     "pickupRadius": 1.4,
@@ -410,7 +423,8 @@
         "radius": 0.3,
         "pierce": true,
         "art": "star"
-      }
+      },
+      "fx": "star"
     },
     "scale": 0.95,
     "ammo": {
@@ -422,7 +436,7 @@
     "name": "기사",
     "sprite": "knight",
     "radius": 0.6,
-    "hp": 80,
+    "hp": 70,
     "walkSpeed": 4,
     "runSpeed": 6.0,
     "runGauge": 5,
@@ -440,18 +454,22 @@
     "attack": {
       "type": "melee",
       "dmgMin": 4,
-      "dmgMax": 8,
-      "interval": 0.55,
-      "range": 1.2,
+      "dmgMax": 4,
+      "interval": 0.75,
+      "range": 2.0,
       "knockback": 0.8,
       "canAttackWhileRunning": true,
-      "moveSpeedWhileAttacking": 0.5
+      "moveSpeedWhileAttacking": 0.5,
+      "fx": "thrust",
+      "arcDeg": 22,
+      "multi": true
     },
     "scale": 1.15,
     "ammo": {
       "max": 3,
       "reload": 1.65
-    }
+    },
+    "guard": 0.4
   },
   "cat": {
     "name": "고양이",
@@ -475,7 +493,9 @@
       "range": 1.1,
       "knockback": 0.3,
       "canAttackWhileRunning": true,
-      "moveSpeedWhileAttacking": 0.5
+      "moveSpeedWhileAttacking": 0.5,
+      "fx": "claw",
+      "critBonus": 0.25
     },
     "scale": 0.85,
     "ammo": {
@@ -513,7 +533,8 @@
       "multi": true,
       "knockback": 0.9,
       "canAttackWhileRunning": true,
-      "moveSpeedWhileAttacking": 0.5
+      "moveSpeedWhileAttacking": 0.5,
+      "fx": "sweep"
     },
     "ammo": {
       "max": 3,
@@ -560,7 +581,8 @@
           "range": 1,
           "knockback": 1.5
         }
-      ]
+      ],
+      "fx": "paw"
     },
     "ammo": {
       "max": 3,
@@ -641,7 +663,8 @@
           "range": 1,
           "knockback": 1.5
         }
-      ]
+      ],
+      "fx": "crescent"
     },
     "scale": 0.9,
     "ammo": {
@@ -668,12 +691,13 @@
       "dmgMin": 7,
       "dmgMax": 7,
       "interval": 1.0,
-      "range": 1.4,
+      "range": 1.5,
       "knockback": 1.6,
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.4,
-      "arcDeg": 150,
-      "multi": true
+      "arcDeg": 180,
+      "multi": true,
+      "fx": "stomp"
     },
     "scale": 1.35,
     "ammo": {
@@ -708,7 +732,8 @@
       "range": 1.2,
       "knockback": 1.0,
       "canAttackWhileRunning": true,
-      "moveSpeedWhileAttacking": 0.5
+      "moveSpeedWhileAttacking": 0.5,
+      "fx": "bump"
     },
     "scale": 1.1,
     "ammo": {
@@ -744,7 +769,8 @@
         "lob": true,
         "explodeRadius": 1.2,
         "art": "stone"
-      }
+      },
+      "fx": "egg"
     },
     "scale": 0.9,
     "ammo": {
@@ -779,7 +805,8 @@
         "radius": 0.2,
         "pierce": true,
         "art": "arrow"
-      }
+      },
+      "fx": "arrow"
     },
     "scale": 0.7,
     "ammo": {

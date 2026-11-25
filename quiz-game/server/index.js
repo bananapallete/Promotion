@@ -91,6 +91,7 @@ io.on('connection', (socket) => {
   host('host:clearBots', () => game.clearBots());
   host('host:rank', (d) => { game.showRank = !!d?.on; });
   host('host:spawnCoin', () => { game.spawnCoin(); });
+  host('host:spawnItem', (d) => { game.spawnItem(d?.k); });
   host('host:botAttack', (d) => { game.botsCanAttack = !!d?.on; });
 
   socket.on('disconnect', () => { if (socket.data.pid) game.setConnected(socket.data.pid, false); });

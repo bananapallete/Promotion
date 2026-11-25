@@ -6,6 +6,8 @@ import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 const urls = import.meta.glob('../public/characters/*/*.png', { eager: true, query: '?url', import: 'default' });
 hooks.spriteUrl = (s, m) => urls[`../public/characters/${s}/${m}.png`];
+const fxUrls = import.meta.glob('../public/fx/*.png', { eager: true, query: '?url', import: 'default' });
+hooks.fxUrl = (n) => fxUrls[`../public/fx/${n}.png`];
 
 const $ = (s) => document.querySelector(s);
 const ME = 'me';
