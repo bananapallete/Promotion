@@ -204,6 +204,7 @@ $('#charbar').innerHTML = charIds.map((id, i) => `<button type="button" data-id=
 function pickChar(id) {
   const p = game.players.get(ME);
   p.charId = id; p.cfg = characters[id]; p.dash = null; game._refill(p); syncSkill();
+  if (p.cfg.ult) p.ult = p.cfg.ult.need; // 궁극기 체험: 시작·캐릭터 변경 때마다 게이지를 가득 채움
   document.querySelectorAll('#charbar button').forEach((b) => b.classList.toggle('sel', b.dataset.id === id));
   document.querySelector(`#charbar button[data-id="${id}"]`).scrollIntoView({ inline: 'center', block: 'nearest' });
 }
