@@ -220,7 +220,7 @@ function rainTex(scene, f) {
   });
 }
 function baseTex(scene, kind, Rd) {
-  const fire = kind === 'fire', c1 = fire ? [255, 106, 26] : [90, 167, 255];
+  const fire = kind === 'fire', c1 = fire ? [255, 106, 26] : kind === 'mud' ? [112, 78, 48] : [90, 167, 255];
   return tex(scene, `ux-base-${kind}-${Rd}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => {
     for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { const d = Math.hypot(x + 0.5 - w / 2, y + 0.5 - w / 2) / Rd; if (d <= 1 && bay(x, y) > d * 0.95 - 0.1) put(x, y, d > 0.9 ? NAVY : c1, d > 0.9 ? 90 : 95); }
   });
@@ -238,17 +238,17 @@ export class UltZoneLayer {
     for (const v of [...this.views.values()]) if (!ids.has(v.id)) { v.parts.forEach((p) => p.destroy()); this.views.delete(v.id); }
   }
   _make(z) {
-    const s = this.s, bu = this.bu, fire = z.k === 'fire', Rd = Math.max(8, Math.round((z.r * bu) / DOT));
-    [0, 1, 2, 3].forEach((f) => { flameTex(s, f); rainTex(s, f); });
+    const s = this.s, bu = this.bu, fire = z.k === 'fire', mud = z.k === 'mud', Rd = Math.max(8, Math.round((z.r * bu) / DOT));
+    [0, 1, 2, 3].forEach((f) => { flameTex(s, f); rainTex(s, f); mudBubbleTex(s, f); });
     const base = s.add.image(z.x * bu, z.y * bu, baseTex(s, z.k, Rd)).setScale(DOT).setDepth(-44);
     const parts = [base], n = Math.round(z.r * z.r * 2.2), items = [];
     for (let i = 0; i < n; i++) {
       const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * z.r * bu * 0.92;
       const x = z.x * bu + Math.cos(a) * r, y = z.y * bu + Math.sin(a) * r * 0.9;
-      const sp = s.add.image(x, y, fire ? 'ux-flame-0' : 'ux-rain-0').setScale(DOT * (fire ? 0.9 : 1)).setOrigin(0.5, 1).setDepth(y);
+      const sp = s.add.image(x, y, mud ? 'ux-mud-0' : fire ? 'ux-flame-0' : 'ux-rain-0').setScale(DOT * (fire ? 0.9 : 1)).setOrigin(0.5, 1).setDepth(y);
       items.push({ sp, x, y, ph: Math.random() }); parts.push(sp);
     }
-    const v = { id: z.id, z, base, items, parts, fire };
+    const v = { id: z.id, z, base, items, parts, fire, mud };
     this.views.set(z.id, v);
     return v;
   }
@@ -257,7 +257,8 @@ export class UltZoneLayer {
       const fade = Math.min(1, v.z.l / 0.5);
       v.base.setAlpha(fade * (0.8 + 0.2 * Math.sin(now / 160)));
       for (const it of v.items) {
-        if (v.fire) it.sp.setTexture(`ux-flame-${Math.floor(now / 110 + it.ph * 4) % 4}`).setPosition(it.x, it.y).setAlpha(fade);
+        if (v.mud) it.sp.setTexture(`ux-mud-${Math.floor((now / 260 + it.ph * 4) % 4)}`).setPosition(it.x, it.y).setAlpha(fade * 0.95);
+        else if (v.fire) it.sp.setTexture(`ux-flame-${Math.floor(now / 110 + it.ph * 4) % 4}`).setPosition(it.x, it.y).setAlpha(fade);
         else { // 화살이 위에서 떨어져 꽂히면 사라짐
           const u = (now / 520 + it.ph) % 1;
           it.sp.setTexture(`ux-rain-${Math.floor(now / 120) % 4}`).setPosition(it.x, it.y - (1 - u) * 150).setAlpha(Math.min(1, u * 5) * (u > 0.9 ? 0.3 : 1) * fade);
@@ -301,4 +302,108 @@ export function speedLines(scene, e, BU) {
     const s = scene.add.image(px, py, key).setScale(DOT).setDepth(py + 1).setAlpha(0).setFlipX(e.dx < 0 && !vertical);
     scene.tweens.add({ targets: s, alpha: 0.95, duration: 90, delay: t * 260, yoyo: true, hold: 60, onComplete: () => s.destroy() });
   }
+}
+
+// ---------- 혀 올가미 · 번개 순간이동 ----------
+function drawLoop(scene, ms, draw, depth = 5000) {
+  const g = scene.add.graphics().setDepth(depth);
+  scene.tweens.addCounter({ from: 0, to: 1, duration: ms, onUpdate: (tw) => { g.clear(); draw(g, tw.getValue()); }, onComplete: () => g.destroy() });
+}
+const sq = (g, x, y, s, c, a = 1) => g.fillStyle(c, a).fillRect(Math.round((x - s / 2) / 2) * 2, Math.round((y - s / 2) / 2) * 2, s, s);
+const dotLine = (g, x0, y0, x1, y1, s, c, a = 1, step = 6) => { const n = Math.max(1, Math.floor(Math.hypot(x1 - x0, y1 - y0) / step)); for (let i = 0; i <= n; i++) sq(g, x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n, s, c, a); };
+export function tongues(scene, e, BU) { // 개구리 혀가 뻗어 나가 붙잡고 끌고 옴
+  const ox = e.x * BU, oy = e.y * BU - 0.5 * BU;
+  drawLoop(scene, 520, (g, u) => {
+    const out = u < 0.35 ? u / 0.35 : 1, back = u < 0.35 ? 0 : (u - 0.35) / 0.65;
+    for (const t of e.ts) {
+      const tx = t.x * BU, ty = t.y * BU - 0.5 * BU, ex = ox + (tx - ox) * out * (1 - back * 0.85), ey = oy + (ty - oy) * out * (1 - back * 0.85);
+      dotLine(g, ox, oy, ex, ey, 8, 0x14122b, 1, 6); dotLine(g, ox, oy, ex, ey, 6, 0xff6f91, 1, 6); dotLine(g, ox, oy - 2, ex, ey - 2, 2, 0xffc2d4, 0.9, 6);
+      sq(g, ex, ey, 14, 0x14122b); sq(g, ex, ey, 10, 0xff6f91);
+    }
+  });
+  shockRing(scene, { x: e.x, y: e.y, r: e.r * 0.5 }, BU);
+}
+export function blink(scene, e, BU) { // 번개: 출발 → 도착 지그재그 + 번쩍
+  const x0 = e.fx * BU, y0 = e.fy * BU - 0.5 * BU, x1 = e.tx * BU, y1 = e.ty * BU - 0.5 * BU, pts = [];
+  for (let i = 0; i <= 8; i++) pts.push([x0 + ((x1 - x0) * i) / 8 + (i && i < 8 ? (Math.random() - 0.5) * 30 : 0), y0 + ((y1 - y0) * i) / 8 + (i && i < 8 ? (Math.random() - 0.5) * 30 : 0)]);
+  drawLoop(scene, 320, (g, u) => {
+    for (let i = 0; i < 8; i++) { dotLine(g, ...pts[i], ...pts[i + 1], 10, 0x14122b, 1 - u, 6); dotLine(g, ...pts[i], ...pts[i + 1], 6, 0xffe27a, 1 - u, 6); dotLine(g, ...pts[i], ...pts[i + 1], 2, 0xffffff, 1 - u, 6); }
+    for (let i = 0; i < 6; i++) sq(g, x1 + Math.cos(i * 1.05 + u * 3) * 40 * u, y1 + Math.sin(i * 1.05 + u * 3) * 40 * u, 8 * (1 - u), 0xffe27a, 1 - u);
+  });
+}
+
+// ---------- 파도 (투사체 art 'wave'): 맵을 쓸고 가는 도트 물결 ----------
+export function waveTex(scene, BU) {
+  const H = 2 * Math.round((1.8 * BU) / DOT), W = 16;
+  return tex(scene, `ux-wave-${H}`, W, H, (put, w, h) => {
+    const lit = new Uint8Array(w * h), mark = (x, y, c) => { put(x, y, c); lit[y * w + x] = 1; };
+    for (let y = 0; y < h; y++) {
+      const k = (y - h / 2) / (h / 2), front = Math.round(w - 3 - k * k * 7), back = Math.max(0, front - 11 + Math.round(k * k * 3)); // 가운데가 앞으로 볼록
+      for (let x = back; x <= front; x++) {
+        const f = (x - back) / Math.max(1, front - back), curl = x > front - 3 && bay(x, y) > 0.35;
+        mark(x, y, curl ? [255, 255, 255] : f > 0.7 ? [150, 210, 255] : f > 0.4 ? [70, 150, 235] : [30, 90, 200]);
+      }
+      if (y % 6 === 2) for (let x = back + 1; x < Math.min(front - 2, back + 7); x += 2) put(x, y, [190, 225, 255]);
+    }
+    ink(put, w, h, (x, y) => lit[y * w + x]);
+  });
+}
+
+// ---------- 방패 성벽 ----------
+function blockTex(scene) {
+  return tex(scene, 'ux-wallblock', 12, 14, (put, w, h) => {
+    const lit = new Uint8Array(w * h);
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) { lit[y * w + x] = 1; put(x, y, y < 4 ? [214, 220, 230] : y < 9 ? [160, 170, 188] : [112, 122, 142]); }
+    for (let x = 1; x < w - 1; x++) put(x, 4, [96, 106, 126]);
+    for (let y = 4; y < h - 1; y++) put(6, y, [96, 106, 126]);
+    put(2, 6, [214, 220, 230]); put(8, 10, [214, 220, 230]);
+    ink(put, w, h, (x, y) => lit[y * w + x]);
+  });
+}
+export class WallLayer {
+  constructor(scene, bu) { this.s = scene; this.bu = bu; this.views = new Map(); }
+  apply(walls) {
+    const ids = new Set();
+    for (const w of walls || []) {
+      ids.add(w.id);
+      let v = this.views.get(w.id);
+      if (!v) v = this._make(w);
+      v.w = w;
+    }
+    for (const v of [...this.views.values()]) if (!ids.has(v.id)) { v.parts.forEach((p) => p.destroy()); this.views.delete(v.id); }
+  }
+  _make(w) {
+    const s = this.s, bu = this.bu, key = blockTex(s), horizLong = w.hy > w.hx; // 긴 쪽 방향으로 벽돌을 늘어놓음
+    const len = (horizLong ? w.hy : w.hx) * 2 * bu, n = Math.max(2, Math.round(len / (12 * DOT))), parts = [], rows = [];
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n - 0.5, x = w.x * bu + (horizLong ? 0 : t * len), y = w.y * bu + (horizLong ? t * len : 0) + 7 * DOT;
+      const sp = s.add.image(x, y - 30, key).setScale(DOT).setOrigin(0.5, 1).setDepth(y).setAlpha(0);
+      s.tweens.add({ targets: sp, y, alpha: 1, duration: 220, delay: i * 40, ease: 'Back.easeOut' }); // 땅에서 솟아남
+      parts.push(sp); rows.push(sp);
+    }
+    shockRing(s, { x: w.x, y: w.y, r: 1.6 }, bu);
+    const v = { id: w.id, w, parts };
+    this.views.set(w.id, v);
+    return v;
+  }
+  update() {
+    for (const v of this.views.values()) if (v.w.l < 0.5) v.parts.forEach((p) => p.setAlpha(Math.max(0, v.w.l / 0.5) * (Math.floor(performance.now() / 70) % 2 ? 1 : 0.5)));
+  }
+}
+
+// ---------- 불타는 캐릭터 · 진흙 방울 ----------
+export function burnTick(scene, v, now, BU) {
+  if (now < (v.burnAt || 0)) return;
+  v.burnAt = now + 110;
+  [0, 1, 2, 3].forEach((f) => flameTex(scene, f));
+  const f = scene.add.image(v.x + (Math.random() - 0.5) * 0.7 * BU, v.y - Math.random() * 0.9 * BU, `ux-flame-${Math.floor(Math.random() * 4)}`).setScale(DOT * 0.55).setOrigin(0.5, 1).setDepth(v.y + 4);
+  scene.tweens.add({ targets: f, y: f.y - 0.5 * BU, alpha: 0, duration: 380, onComplete: () => f.destroy() });
+}
+export function mudBubbleTex(scene, f) {
+  return tex(scene, `ux-mud-${f}`, 10, 10, (put, w, h) => {
+    const r = 1.5 + f * 1.1, lit = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if ((x + 0.5 - 5) ** 2 + (y + 0.5 - 5) ** 2 <= r * r) { lit[y * w + x] = 1; put(x, y, f > 2 ? [150, 110, 70] : [110, 78, 48]); }
+    if (f > 1) put(4, 4, [196, 158, 112]);
+    ink(put, w, h, (x, y) => lit[y * w + x]);
+  });
 }

@@ -1,7 +1,7 @@
 // 투사체 렌더링: 서버가 알려준 위치·속도로 사이를 이어서 그리고, 던지기는 포물선과 착탄 경고, 폭발 연출을 보여준다.
 import Phaser from 'phaser';
 import { PROJ_ART } from '../shared/pixelProjectiles.js';
-import { explosion } from './ultFx.js';
+import { explosion, waveTex } from './ultFx.js';
 
 const SCALE = 3;
 
@@ -30,8 +30,9 @@ export class ProjectileLayer {
   }
 
   _make(q) {
-    const sprite = this.s.add.image(0, 0, `pj-${q.a}`).setScale(SCALE);
-    const shadow = this.s.add.image(0, 0, 'coin-shadow').setScale(SCALE).setAlpha(0.3).setDepth(-45);
+    const wave = q.a === 'wave';
+    const sprite = this.s.add.image(0, 0, wave ? waveTex(this.s, this.bu) : `pj-${q.a}`).setScale(wave ? 3 : SCALE);
+    const shadow = this.s.add.image(0, 0, 'coin-shadow').setScale(SCALE).setAlpha(0.3).setDepth(-45).setVisible(!wave);
     const mark = q.k === 'l' ? this.s.add.graphics().setDepth(-40) : null; // 착탄 경고
     const v = { q, t: performance.now(), sprite, shadow, mark, born: performance.now() };
     this.views.set(q.id, v);
@@ -50,7 +51,7 @@ export class ProjectileLayer {
       let x, y, z, ang = 0;
       if (q.k === 'b') {
         x = q.x + q.vx * dt; y = q.y + q.vy * dt; z = 0.7;
-        ang = q.a === 'arrow' ? Math.atan2(q.vy, q.vx) : q.a === 'star' ? now / 60 : 0;
+        ang = q.a === 'arrow' || q.a === 'wave' ? Math.atan2(q.vy, q.vx) : q.a === 'star' ? now / 60 : 0;
         if (q.a === 'orb') v.sprite.setScale(SCALE * (1 + 0.12 * Math.sin(now / 70)));
       } else { // 던지기: 출발점에서 착탄점으로 직선 이동 + 포물선 높이
         const u = Math.min(1, q.u + dt / q.T);

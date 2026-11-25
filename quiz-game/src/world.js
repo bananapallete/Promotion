@@ -6,7 +6,7 @@ import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
 import { burstFx, hitFx, meleeFx, muzzleFx, ultBanner } from './fx.js';
-import { auraOff, auraTick, meteorFall, quake, shockRing, speedLines, UltZoneLayer, warn as warnFx } from './ultFx.js';
+import { auraOff, auraTick, blink, burnTick, meteorFall, quake, shockRing, speedLines, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
@@ -56,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
     this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('dust', { start: 0, end: 4 }), frameRate: 12, repeat: 0 });
     this.coins = new CoinLayer(this, BU);
     this.coins.create();
+    this.wallLayer = new WallLayer(this, BU);
     this.uzl = new UltZoneLayer(this, BU); // 궁극기 바닥 범위(불바다·화살비) 도트
     this.items = new ItemLayer(this, BU);
     this.items.create();
@@ -187,6 +188,7 @@ export class WorldScene extends Phaser.Scene {
     if (!this.zoneGfx) { this.pending = s; return; }
     this.drawZones(s);
     this.uzl.apply(s.uz);
+    this.wallLayer.apply(s.wl);
 
     const seen = new Set();
     for (const p of s.players) {
@@ -229,6 +231,14 @@ export class WorldScene extends Phaser.Scene {
       ultBanner(this, v, e.name, BU);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'pull') {
+      tongues(this, e, BU);
+    } else if (e.e === 'blink') {
+      blink(this, e, BU);
+    } else if (e.e === 'magnet') {
+      shockRing(this, { x: e.x, y: e.y, r: 3 }, BU);
+    } else if (e.e === 'wallHit') {
+      hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
       if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
@@ -294,6 +304,7 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     this._drawTelegraph(now);
     this.uzl.update(now);
+    this.wallLayer.update(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
       const p = v.p;
@@ -302,7 +313,8 @@ export class WorldScene extends Phaser.Scene {
       const hop = v.hopUntil > now ? Math.sin(Math.PI * (1 - (v.hopUntil - now) / 350)) * 1.3 * BU : 0; // 도약: 포물선으로 뜸
       v.sprite.setPosition(v.x, v.y - hop).setDepth(v.y);
       this._dust(v, p, now);
-      if (p.ub > 0) auraTick(this, v, now, BU); else auraOff(v);
+      if (p.ub > 0 && !p.sl) auraTick(this, v, now, BU); else auraOff(v);
+      if (p.bn) burnTick(this, v, now, BU);
       v.sprite.setFlipX(p.f < 0);
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
@@ -319,7 +331,7 @@ export class WorldScene extends Phaser.Scene {
 
       // 기절: 쓰러진 모습 / 무적: 깜빡임
       v.sprite.setAngle(p.st && !dies ? 80 * p.f : 0);
-      v.sprite.setAlpha(p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1);
+      v.sprite.setAlpha(p.sl ? (p.id === this.focusId ? 0.35 : 0.12) : p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1); // 은신 / 무적 깜빡임
 
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;

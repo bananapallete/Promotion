@@ -868,18 +868,19 @@ test('궁극기 충전: 때린 피해만큼, 맞은 피해는 절반만큼 차�
   assert.equal(A.ult, 0, '쓰면 0');
 });
 
-test('궁극기 rush: 일직선으로 달리며 닿는 상대 모두에게 한 번씩 피해', () => {
+test('궁극기 rush: 일직선으로 달리며 닿는 상대 모두에게 한 번씩 피해 (엔진 기능)', () => {
   const { g, A, B } = duo('blue', 'blue');
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  A.cfg = { ...A.cfg, ult: { name: 't', need: 10, type: 'rush', dist: 5, dur: 0.35, dmg: 9, knock: 2 } };
   A.x = 5; A.y = 10; B.x = 7; B.y = 10; C.x = 9; C.y = 10; A.face = 1;
-  A.ult = A.cfg.ult.need; g.setInput('a', { mx: 1, my: 0, run: false });
+  A.ult = 10; g.setInput('a', { mx: 1, my: 0, run: false });
   g.ult('a', { x: 1, y: 0 });
   run(g, 0.6);
   assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp, '둘 다 맞음');
-  assert.equal(B.cfg.hp - B.hp, Math.round(A.cfg.ult.dmg), '한 번만');
+  assert.equal(B.cfg.hp - B.hp, 9, '한 번만');
 });
 
-test('궁극기 burst: 내 주변 범위 안만 맞고 묶임(root)이 걸린다', () => {
+test('궁극기 burst: 내 주변 범위 안만 맞고 묶임(root)이 걸린다 (하마 지진)', () => {
   const { g, A, B } = duo('hippo', 'blue');
   const far = g.join({ token: 'f', name: 'F', charId: 'blue' });
   A.x = 15; A.y = 10; B.x = 17; B.y = 10; far.x = 25; far.y = 10;
@@ -890,18 +891,104 @@ test('궁극기 burst: 내 주변 범위 안만 맞고 묶임(root)이 걸린다
   run(g, 0.7); g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 0.5); assert.ok(Math.abs(B.x - x) < 0.3, `못 움직임 ${B.x - x}`);
 });
 
-test('궁극기 buff: 철벽은 무적, 광란은 공격 속도, 그림자는 크리티컬 확정', () => {
-  const { g, A, B } = duo('knight', 'blue');
+test('혀 올가미(개구리): 범위 안 모두 끌려오고 묶인다', () => {
+  const { g, A, B } = duo('frog', 'blue');
+  const far = g.join({ token: 'f', name: 'F', charId: 'blue' });
+  A.x = 10; A.y = 10; B.x = 14; B.y = 10; far.x = 20; far.y = 10; B.kx = B.ky = 0;
   A.ult = A.cfg.ult.need; g.ult('a', null);
-  assert.ok(A.invUntil > g.t + 3.5);
-  const { g: g2, A: C, B: D } = duo('cat', 'blue');
-  C.x = 10; C.y = 10; D.x = 11; D.y = 10; C.ult = C.cfg.ult.need; g2.ult('a', null);
-  g2.attack('a', null);
-  assert.ok(g2.events.some((e) => e.e === 'hit' && e.crit), '크리티컬 확정');
-  const { g: g3, A: P } = duo('puppy', 'blue');
-  P.ult = P.cfg.ult.need; g3.ult('a', null);
-  g3.attack('a', null);
-  assert.ok(Math.abs(P.nextAttackAt - (g3.t + P.cfg.attack.interval / 2)) < 1e-6, '공격 간격 절반');
+  run(g, 0.6);
+  assert.ok(Math.hypot(B.x - A.x, B.y - A.y) < 2, `가까이 끌려옴 ${B.x - A.x}`);
+  assert.ok(B.rootUntil > g.t, '묶임');
+  assert.equal(far.x, 20, '범위 밖은 그대로');
+});
+
+test('진흙 목욕(돼지): 안의 상대는 느려지고, 돼지는 회복하며 피해가 줄어든다', () => {
+  const { g, A, B } = duo('pig', 'blue');
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.hp = 20;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  run(g, 1.2);
+  assert.ok(A.hp > 20, `회복 ${A.hp}`);
+  assert.ok(B.slowUntil > g.t, '느려짐');
+  g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 0.5);
+  assert.ok(B.x - x < chars.blue.walkSpeed * 0.5 * 0.7, `느린 이동 ${B.x - x}`);
+  assert.ok(A.shield && A.shield.mul === 0.5, '피해 감소');
+});
+
+test('해일(귀상어): 폭이 넓은 파도가 줄 선 상대를 모두 맞히고 묶는다', () => {
+  const { g, A, B } = duo('hammerhead', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  A.x = 5; A.y = 10; B.x = 9; B.y = 10.8; C.x = 14; C.y = 9.3;
+  A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
+  run(g, 2);
+  assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp, '둘 다 맞음 (폭이 넓음)');
+  assert.equal(B.cfg.hp - B.hp, A.cfg.ult.dmg);
+  assert.ok(B.rootUntil > 0);
+});
+
+test('보물 탐지(래브라도): 맵의 동전을 전부 줍는다', () => {
+  const { g, A } = duo('labrador', 'blue');
+  g.coinsSpawned = 0; g.coinClock = -1e9;
+  g.spawnCoin(35, 18); g.spawnCoin(3, 3); g.spawnCoin(20, 10);
+  run(g, 0.5);
+  const before = A.coins;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(A.coins - before, 3);
+  assert.equal(g.coins.size, 0);
+  assert.ok(A.buff && A.buff.spd > 1);
+});
+
+test('불꽃 꼬리(시바견): 범위 피해 뒤 3초 동안 화상 피해', () => {
+  const { g, A, B } = duo('shiba', 'blue');
+  A.x = 10; A.y = 10; B.x = 11.5; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  const hp0 = B.hp; assert.ok(hp0 < B.cfg.hp, '범위 피해');
+  run(g, 3.2);
+  assert.ok(hp0 - B.hp >= 6, `화상 누적 ${hp0 - B.hp}`);
+  const hp1 = B.hp; run(g, 1); assert.equal(B.hp, hp1, '화상 끝남');
+});
+
+test('번개 5연타(파란티): 가까운 상대 뒤로 이동해 연타하고 마지막은 크게', () => {
+  const { g, A, B } = duo('blue', 'blue');
+  A.x = 5; A.y = 10; B.x = 10; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.ok(Math.hypot(B.x - A.x, B.y - A.y) < 1.2, '붙음');
+  run(g, 1.5);
+  const u = A.cfg.ult;
+  assert.equal(B.cfg.hp - B.hp, u.dmg * (u.hits - 1) + u.finish);
+});
+
+test('그림자(고양이): 자동 조준 불가, 첫 일격 3배 크리티컬 뒤 은신 해제', () => {
+  const { g, A, B } = duo('cat', 'blue');
+  A.x = 10; A.y = 10; B.x = 11; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(g.aimPreview('b', null).targetId, null, '상대가 조준 못함');
+  g.attack('a', null);
+  const hit = g.events.find((e) => e.e === 'hit' && e.id === 'b');
+  assert.ok(hit.crit && hit.dmg >= A.cfg.attack.dmgMin * 3, `암살 ${hit.dmg}`);
+  assert.equal(g._stealthed(A), false, '은신 해제');
+});
+
+test('신난 회전(강아지): 도는 동안 무적이고 주변을 계속 때린다', () => {
+  const { g, A, B } = duo('puppy', 'blue');
+  A.x = 10; A.y = 10; B.x = 11; B.y = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.ok(A.invUntil > g.t + 3.9);
+  run(g, 2);
+  assert.ok(B.cfg.hp - B.hp >= 3 * 6, `여러 번 맞음 ${B.cfg.hp - B.hp}`);
+});
+
+test('방패 성벽(기사): 상대의 투사체와 이동을 막고, 주인은 지나갈 수 있다', () => {
+  const { g, A } = duo('knight', 'blue_ranged');
+  const B = g.players.get('b');
+  A.x = 10; A.y = 10; A.face = 1; B.x = 15; B.y = 10; A.kx = A.ky = B.kx = B.ky = 0;
+  A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
+  assert.equal(g.walls.size, 1);
+  const hp = A.hp; g.attack('b', { x: -1, y: 0 }); run(g, 1);
+  assert.equal(A.hp, hp, '투사체가 벽에 막힘');
+  g.setInput('b', { mx: -1, my: 0, run: false }); run(g, 2);
+  assert.ok(B.x > 12.4, `벽을 못 지나감 ${B.x}`);
+  g.setInput('b', { mx: 0, my: 0, run: false }); run(g, 4);
+  assert.equal(g.walls.size, 0, '5초 뒤 사라짐');
 });
 
 test('궁극기 barrage·meteor·zone: 투사체 n발, 예고 후 폭발, 바닥 범위 지속 피해', () => {

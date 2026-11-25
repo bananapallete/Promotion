@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { buffOf, charge, CHARGE_TAKEN, ultReady, updateUlts, useUlt, zonesSnapshot } from './ult.js';
+import { blockWalls, buffOf, charge, CHARGE_TAKEN, ultReady, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
 import { COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
@@ -47,6 +47,8 @@ export class Game {
     this.tasks = []; // 궁극기 예약 실행 [{at, fn}]
     this.zonesU = new Map(); // 궁극기 바닥 범위
     this.zoneSeq = 0;
+    this.walls = new Map(); // 기사 방패 성벽 {id,owner,x,y,hx,hy,until}
+    this.wallSeq = 0;
     this.map = MAP;
     this.botsCanAttack = false; // 더미 봇은 기본적으로 공격하지 않음 (호스트 패널에서 켤 수 있음)
   }
@@ -93,7 +95,7 @@ export class Game {
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
-      ult: 0, buff: null, rootUntil: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
+      ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
@@ -211,6 +213,8 @@ export class Game {
     if (p) this._tryAttack(p, aim);
   }
 
+  _stealthed(o) { return !!(o.buff && this.t < o.buff.until && o.buff.stealth); }
+
   _enemies(p) {
     return [...this.players.values()].filter((o) => o !== p && o.connected);
   }
@@ -233,6 +237,7 @@ export class Game {
     }
     let best = null, bestD = Infinity;
     for (const o of this._enemies(p)) {
+      if (this._stealthed(o)) continue; // 은신 중인 상대는 자동 조준 불가
       const d = Math.hypot(o.x - p.x, o.y - p.y);
       if (d <= range && d < bestD) { best = o; bestD = d; }
     }
@@ -364,6 +369,11 @@ export class Game {
       const px = q.x, py = q.y;
       q.x += q.vx * dt; q.y += q.vy * dt; q.travel += q.speed * dt;
       let gone = q.travel >= q.maxDist || q.x < 0 || q.y < 0 || q.x > MAP.w || q.y > MAP.h;
+      let blocked = false;
+      for (const w of this.walls.values()) { // 방패 성벽은 상대의 투사체를 막는다
+        if (w.owner !== q.owner && Math.abs(q.x - w.x) <= w.hx + (q.radius || 0.2) && Math.abs(q.y - w.y) <= w.hy + (q.radius || 0.2)) { blocked = true; this.events.push({ e: 'wallHit', x: r2(q.x), y: r2(q.y) }); break; }
+      }
+      if (blocked) { this.projectiles.delete(q.id); continue; }
       for (const o of foes) {
         if (q.hit.has(o.id)) continue;
         // 이번 틱에 지나온 선분과 상대 사이 거리 (빠른 투사체가 통과하지 않게)
@@ -372,6 +382,7 @@ export class Game {
         if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
         q.hit.add(o.id);
         this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
+        if (q.root) o.rootUntil = Math.max(o.rootUntil, this.t + q.root);
         if (!q.pierce) { gone = true; break; }
       }
       if (gone) this.projectiles.delete(q.id);
@@ -502,12 +513,15 @@ export class Game {
       return;
     }
     const bf = attacker.cfg ? buffOf(this, attacker) : null; // 궁극기 강화
-    let dmg = target.stunned ? 0 : Math.round(rawDmg * (bf?.dmg ?? 1));
-    const crit = dmg > 0 && (bf?.crit || Math.random() < CRIT.chance + (attacker.cfg?.attack?.critBonus ?? 0));
+    const assassin = bf?.assassin || 0; // 은신 첫 일격
+    let dmg = target.stunned ? 0 : Math.round(rawDmg * (bf?.dmg ?? 1) * (assassin || 1));
+    if (assassin && dmg > 0) { bf.assassin = 0; bf.stealth = false; }
+    const crit = dmg > 0 && (assassin || bf?.crit || Math.random() < CRIT.chance + (attacker.cfg?.attack?.critBonus ?? 0));
     if (crit) dmg = Math.round(dmg * CRIT.mul);
     const gd = target.cfg.guard; // 방패: 바라보는 쪽에서 오는 공격은 피해가 줄어듦
     const guard = !!(gd && dmg > 0 && (attacker.x - target.x) * target.face > 0);
     if (guard) dmg = Math.max(1, Math.round(dmg * (1 - gd)));
+    if (target.shield && this.t < target.shield.until && dmg > 0) dmg = Math.max(1, Math.round(dmg * target.shield.mul)); // 진흙 목욕 피해 감소
     if (dmg > 0) {
       if (attacker.cfg) charge(attacker, dmg);
       charge(target, dmg * CHARGE_TAKEN);
@@ -565,6 +579,7 @@ export class Game {
     this._updateItems(dt, active);
     this._updateProjectiles(dt);
     updateUlts(this);
+    blockWalls(this, active);
 
     if (this.phase === PHASE.MOVING) {
       for (const p of active) {
@@ -606,7 +621,7 @@ export class Game {
       // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
       const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
       const boost = (this.t < p.speedUntil ? ITEM.shoe.mul : 1) * (buffOf(this, p)?.spd ?? 1); // 신발 · 궁극기 강화
-      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost;
+      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
@@ -694,7 +709,7 @@ export class Game {
       }
       return;
     }
-    const humans = this._enemies(p); // 공격형 봇은 봇끼리도 서로 공격
+    const humans = this._enemies(p).filter((o) => !this._stealthed(o)); // 공격형 봇은 봇끼리도 서로 공격 (은신한 상대는 못 찾음)
     if (p.botMode === 'aggro' && this.botsCanAttack && humans.length) {
       let best = null, bd = Infinity;
       for (const o of humans) {
@@ -739,7 +754,7 @@ export class Game {
           : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
         tn: p.cfg.tint || null, zs: p.cfg.scale || 1,
         am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
-        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, rt: this.t < p.rootUntil ? 1 : 0,
+        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, sl: this._stealthed(p) ? 1 : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
         sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
       });
     }
@@ -756,6 +771,7 @@ export class Game {
         ? { id: q.id, k: 'l', a: q.art, x: r2(q.x), y: r2(q.y), sx: r2(q.sx), sy: r2(q.sy), tx: r2(q.tx), ty: r2(q.ty), u: r2((this.t - q.t0) / q.T), T: r2(q.T), r: q.r }
         : { id: q.id, k: 'b', a: q.art, x: r2(q.x), y: r2(q.y), vx: r2(q.vx), vy: r2(q.vy) }),
       uz: zonesSnapshot(this),
+      wl: wallsSnapshot(this),
       items: [...this.items.values()].map((i) => ({ id: i.id, k: i.k, x: r2(i.x), y: r2(i.y) })),
       coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),
       players,

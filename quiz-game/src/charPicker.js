@@ -57,7 +57,7 @@ export function mountPicker(root, chars, opts) {
   <div class="pk-grid">${entries.map(([id, c]) => `<div class="pc ${id === value ? 'sel' : ''}" data-id="${id}" data-role="${c.role}" role="button" tabindex="0">
     <canvas width="104" height="104"></canvas><b>${c.name}</b><em>${ROLE_NAME[c.role] || ''}</em>
     <button type="button" class="more">더보기</button>
-    <div class="detail" hidden><div><i>공격</i>${c.atkInfo || ''}</div><div><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i>${skillText(c)}</div></div></div>`).join('')}</div>`;
+    <div class="detail" hidden><div><i>공격</i>${c.atkInfo || ''}</div><div><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i>${skillText(c)}</div><div><i>궁극기</i>${c.ultName || c.ult?.name || ''}</div></div></div>`).join('')}</div>`;
 
   const imgs = new Map(); // 'sprite/motion' → Image
   const sheet = (sprite, m) => {

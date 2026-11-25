@@ -1,9 +1,10 @@
 // 궁극기: 때리거나 맞으면 충전되고, 가득 차면 쓸 수 있다. 종류(type)는 6가지이고 캐릭터마다 수치만 다르다.
-//   rush 돌진(닿는 상대 모두) · burst 내 주변 범위 · buff 일정 시간 강화 · barrage 투사체 난사 · meteor 예고 후 폭발 · zone 바닥 범위 지속 피해
+//   rush 돌진(닿는 상대 모두) · burst 내 주변 범위(화상·회전 가능) · buff 일정 시간 강화(은신 포함) · barrage 투사체 난사 · meteor 예고 후 폭발 · zone 바닥 범위 지속 피해(진흙은 느려짐+회복)
+//   pull 혀로 끌어당김 · wave 맵을 쓸고 가는 파도 · magnet 동전 끌어당김 · chain 순간이동 연타 · wall 막는 벽
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -34,13 +35,14 @@ function center(g, p, u, dx, dy, near) {
   return { x: Math.min(g.map.w - 0.5, Math.max(0.5, p.x + dx * d)), y: Math.min(g.map.h - 0.5, Math.max(0.5, p.y + dy * d)) };
 }
 
-function hitArea(g, owner, x, y, r, dmg, knock, fx, root) {
+function hitArea(g, owner, x, y, r, dmg, knock, fx, root, after) {
   for (const o of g._enemies(owner)) {
     const d = Math.hypot(o.x - x, o.y - y);
     if (d > r + o.cfg.radius) continue;
     const nx = d > 1e-6 ? (o.x - x) / d : 1, ny = d > 1e-6 ? (o.y - y) / d : 0;
     g._applyHit(o, owner, dmg, knock, nx, ny, fx);
     if (root) o.rootUntil = Math.max(o.rootUntil, g.t + root);
+    after?.(o);
   }
 }
 
@@ -50,18 +52,20 @@ const RUN = {
     p.invUntil = Math.max(p.invUntil, g.t + u.dur + 0.15);
   },
 
-  burst(g, p, u) { // 내 주변 원형 범위. hits번 gap초 간격으로 반복할 수 있음
-    for (let i = 0; i < (u.hits ?? 1); i++) {
-      later(g, i * (u.gap ?? 0.25), () => {
+  burst(g, p, u) { // 내 주변 원형 범위. hits번 gap초 간격으로 반복할 수 있음 (inv: 도는 동안 무적, burn: 맞으면 화상)
+    const n = u.hits ?? 1, gap = u.gap ?? 0.25;
+    if (u.inv) p.invUntil = Math.max(p.invUntil, g.t + n * gap + 0.1);
+    for (let i = 0; i < n; i++) {
+      later(g, i * gap, () => {
         if (p.stunned) return;
         g.events.push({ e: 'burst', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, fx: u.fx });
-        hitArea(g, p, p.x, p.y, u.radius, u.dmg, u.knock ?? 1, u.fx, u.root);
+        hitArea(g, p, p.x, p.y, u.radius, u.dmg, u.knock ?? 0, u.fx, u.root, u.burn ? (o) => { o.burnUntil = g.t + u.burn.sec; o.burnBy = p.id; o.burnNext = g.t + u.burn.tick; o.burnDmg = u.burn.dmg; } : undefined);
       });
     }
   },
 
   buff(g, p, u) { // 일정 시간 강화: 이동(spd) 공격속도(atk) 피해(dmg) 무적(inv) 크리티컬 확정(crit) 줍기 범위(pickup)
-    p.buff = { until: g.t + u.sec, spd: u.spd ?? 1, atk: u.atk ?? 1, dmg: u.dmg ?? 1, crit: !!u.crit, pickup: u.pickup ?? 1 };
+    p.buff = { until: g.t + u.sec, spd: u.spd ?? 1, atk: u.atk ?? 1, dmg: u.dmg ?? 1, crit: !!u.crit, pickup: u.pickup ?? 1, stealth: !!u.stealth, assassin: u.assassin ?? 0 };
     if (u.inv) p.invUntil = Math.max(p.invUntil, g.t + u.sec);
   },
 
@@ -93,9 +97,69 @@ const RUN = {
     }
   },
 
+  pull(g, p, u) { // 범위 안 모든 상대를 내 쪽으로 끌어당기고 잠깐 묶음
+    const ts = [];
+    for (const o of g._enemies(p)) {
+      const d = Math.hypot(o.x - p.x, o.y - p.y);
+      if (d > u.radius || d < 1e-6) continue;
+      ts.push({ x: r2(o.x), y: r2(o.y) });
+      g._applyHit(o, p, u.dmg, Math.max(0, d - 1.3), (p.x - o.x) / d, (p.y - o.y) / d, 'tongue');
+      o.rootUntil = Math.max(o.rootUntil, g.t + u.root);
+    }
+    g.events.push({ e: 'pull', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, ts });
+  },
+
+  wave(g, p, u, dx, dy) { // 맵을 쓸고 가는 거대한 파도: 폭이 넓은 관통 투사체, 맞으면 묶임
+    const id = ++g.projSeq;
+    g.projectiles.set(id, { id, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set() });
+  },
+
+  magnet(g, p, u) { // 맵의 동전을 전부 내가 줍고, 잠깐 빨라짐
+    let n = 0;
+    for (const c of [...g.coins.values()]) {
+      if (g.t < c.readyAt) continue;
+      g.coins.delete(c.id); p.coins += 1; n++;
+      g.events.push({ e: 'coinGet', id: c.id, by: p.id, x: r2(c.x), y: r2(c.y) });
+    }
+    RUN.buff(g, p, { sec: u.sec, spd: u.spd });
+    g.events.push({ e: 'magnet', id: p.id, x: r2(p.x), y: r2(p.y), n });
+  },
+
+  chain(g, p, u, dx, dy, near) { // 가까운 상대 뒤로 순간이동해서 hits연타, 마지막은 큰 일격
+    let t = near;
+    if (!t) t = g._enemies(p).filter((o) => !g._stealthed(o) && Math.hypot(o.x - p.x, o.y - p.y) <= u.range).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+    let ax = dx, ay = dy;
+    if (t) {
+      const d = Math.hypot(t.x - p.x, t.y - p.y) || 1;
+      ax = (t.x - p.x) / d; ay = (t.y - p.y) / d;
+      g.events.push({ e: 'blink', id: p.id, fx: r2(p.x), fy: r2(p.y), tx: r2(t.x - ax * 0.9), ty: r2(t.y - ay * 0.9) });
+      p.x = t.x - ax * 0.9; p.y = t.y - ay * 0.9; g._clamp(p);
+      if (Math.abs(ax) > 0.15) p.face = ax > 0 ? 1 : -1;
+    }
+    p.invUntil = Math.max(p.invUntil, g.t + u.hits * u.gap + 0.3);
+    for (let i = 0; i < u.hits; i++) {
+      later(g, 0.12 + i * u.gap, () => {
+        if (p.stunned) return;
+        const last = i === u.hits - 1;
+        g.events.push({ e: 'atk', id: p.id, dx: r2(ax), dy: r2(ay), kind: 'melee', fx: 'punch', arc: 60, step: last ? 2 : i % 2, range: 1.3, len: 1.3 });
+        const hits = g._enemies(p).filter((o) => Math.hypot(o.x - p.x, o.y - p.y) <= 1.6 && !o.stunned);
+        for (const o of hits) g._applyHit(o, p, last ? u.finish : u.dmg, 0, ax, ay, 'punch');
+      });
+    }
+  },
+
+  wall(g, p, u, dx, dy) { // 앞에 막는 벽 (축 방향으로 맞춤)
+    const horiz = Math.abs(dx) >= Math.abs(dy), sx = horiz ? Math.sign(dx || p.face) : 0, sy = horiz ? 0 : Math.sign(dy);
+    const hx = horiz ? u.thick / 2 : u.len / 2, hy = horiz ? u.len / 2 : u.thick / 2;
+    const x = Math.min(g.map.w - hx, Math.max(hx, p.x + sx * u.dist)), y = Math.min(g.map.h - hy, Math.max(hy, p.y + sy * u.dist));
+    const id = ++g.wallSeq;
+    g.walls.set(id, { id, owner: p.id, x, y, hx, hy, until: g.t + u.sec });
+    g.events.push({ e: 'wall', id: p.id, x: r2(x), y: r2(y), hx: r2(hx), hy: r2(hy) });
+  },
+
   zone(g, p, u, dx, dy, near) { // 바닥에 지속 피해 범위를 남김
     const c = center(g, p, u, dx, dy, near), id = ++g.zoneSeq;
-    g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg, kind: u.kind, art: u.kind === 'fire' ? 'bottle' : 'arrow' });
+    g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg ?? 0, kind: u.kind, art: u.kind === 'fire' ? 'bottle' : 'arrow', slow: u.slow, heal: u.heal, shield: u.shield });
   },
 };
 
@@ -110,8 +174,39 @@ export function updateUlts(g) {
     if (g.t < z.next) continue;
     z.next += z.tick;
     const owner = g.players.get(z.owner);
-    if (owner) hitArea(g, owner, z.x, z.y, z.r, z.dmg, 0.15, z.art);
+    if (!owner) continue;
+    if (z.dmg) hitArea(g, owner, z.x, z.y, z.r, z.dmg, 0, z.art);
+    if (z.kind === 'mud') { // 진흙: 안의 상대는 느려지고, 안의 주인은 회복하며 피해가 줄어듦
+      for (const o of g._enemies(owner)) if (Math.hypot(o.x - z.x, o.y - z.y) <= z.r + o.cfg.radius) { o.slowUntil = g.t + z.tick + 0.3; o.slowMul = z.slow ?? 0.5; }
+      if (!owner.stunned && Math.hypot(owner.x - z.x, owner.y - z.y) <= z.r) {
+        const heal = Math.min(owner.cfg.hp - owner.hp, z.heal ?? 3);
+        if (heal > 0) { owner.hp += heal; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: owner.id, amount: heal, x: r2(owner.x), y: r2(owner.y) }); }
+        owner.shield = { until: g.t + z.tick + 0.3, mul: z.shield ?? 0.5 };
+      }
+    }
+  }
+  for (const p of g.players.values()) { // 화상: 일정 간격으로 지속 피해
+    if (g.t < p.burnUntil && g.t >= p.burnNext && !p.stunned) {
+      p.burnNext += 0.5;
+      const by = g.players.get(p.burnBy);
+      if (by) g._applyHit(p, by, p.burnDmg ?? 2, 0, 0, 0, 'crescent');
+    }
+  }
+  for (const w of [...g.walls.values()]) if (g.t >= w.until) g.walls.delete(w.id);
+}
+
+/** 성벽: 주인 말고는 지나갈 수 없다 (안에 있으면 가까운 쪽 면으로 밀어냄) */
+export function blockWalls(g, list) {
+  for (const w of g.walls.values()) {
+    for (const p of list) {
+      if (p.id === w.owner || p.dashPass) continue;
+      const dx = p.x - w.x, dy = p.y - w.y, ox = w.hx + p.cfg.radius - Math.abs(dx), oy = w.hy + p.cfg.radius - Math.abs(dy);
+      if (ox <= 0 || oy <= 0) continue;
+      if (ox < oy) p.x += Math.sign(dx || 1) * ox; else p.y += Math.sign(dy || 1) * oy;
+      g._clamp(p);
+    }
   }
 }
 
+export const wallsSnapshot = (g) => [...g.walls.values()].map((w) => ({ id: w.id, x: r2(w.x), y: r2(w.y), hx: r2(w.hx), hy: r2(w.hy), l: r2(Math.max(0, w.until - g.t)) }));
 export const zonesSnapshot = (g) => [...g.zonesU.values()].map((z) => ({ id: z.id, x: r2(z.x), y: r2(z.y), r: z.r, k: z.kind, l: r2(Math.max(0, z.until - g.t)) }));
