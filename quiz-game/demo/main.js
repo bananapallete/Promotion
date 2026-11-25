@@ -35,6 +35,11 @@ window.__world = scene; // 테스트용 접근
 scene.focusId = ME; // 크리티컬 화면 흔들림은 내가 때리거나 맞았을 때만
 let follow = true;
 let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
+let ultAt = -1e9; // 내가 궁극기를 쓴 시각 (카메라 줌인용)
+const ultZoom = () => { // 0.15초에 확 들어갔다가 0.75초 유지, 0.5초에 걸쳐 돌아옴 → 0~1
+  const t = (performance.now() - ultAt) / 1000, e = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+  return t < 0 ? 0 : t < 0.15 ? e(t / 0.15) : t < 0.9 ? 1 : t < 1.4 ? e(1 - (t - 0.9) / 0.5) : 0;
+};
 scene.onFrame = (sc, dt) => {
   const cam = sc.cameras.main;
   const v = sc.views.get(ME);
@@ -43,7 +48,7 @@ scene.onFrame = (sc, dt) => {
     // 세로 화면은 폭 16.5칸, 가로 화면은 폭 24칸이 보이도록 (1칸 = 몸 폭 1개)
     runT = Math.max(0, Math.min(1, runT + (v.p.a === 'run' ? dt : -dt) / 400));
     const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
-    cam.setZoom(w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))); // 달리면 1.3배 줌 아웃
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom())); // 달리면 1.3배 줌 아웃, 궁극기를 쓰면 1.22배 줌인
     cam.centerOn(v.x, v.y - 30);
   } else {
     cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));
@@ -55,6 +60,7 @@ const phaseText = { [PHASE.LOBBY]: '', [PHASE.READING]: '읽기', [PHASE.MOVING]
 setInterval(() => {
   const s = { ...game.snapshot(), lb: game.leaderboard() };
   scene.applyState(s);
+  if (s.ev.some((e) => e.e === 'ult' && e.id === ME)) ultAt = performance.now();
   hud(s);
   // 조준 표시: 공격 버튼을 드래그 중이면 그 방향(직접 조준), 아니면 자동 조준 대상
   const dragLen = Math.hypot(atkVec.x, atkVec.y);
