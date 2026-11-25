@@ -80,7 +80,7 @@ test('새총: 투사체가 날아가야 맞고(피할 수 있음), 사거리 5, 
   assert.equal(b.hp, 50, '쏜 순간에는 안 맞음');
   assert.equal(g.projectiles.size, 1);
   run(g, 0.2); assert.equal(b.hp, 50, '아직 날아가는 중 (4.5칸 / 초속 12)');
-  run(g, 0.3); assert.equal(b.hp, 49);
+  run(g, 0.3); assert.equal(b.hp, 48);
   run(g, 1);
   assert.ok(Math.abs(b.x - 14.5 - 0.3) < 0.1, `x=${b.x}`);
   assert.equal(g.projectiles.size, 0, '맞으면 사라짐');
@@ -131,7 +131,7 @@ test('화염병: 포물선으로 날아가 착탄 지점에서 범위 폭발, �
   run(g, 0.4);
   const boom = g.events.find((e) => e.e === 'boom');
   assert.ok(boom && Math.abs(boom.x - 15) < 0.01 && boom.r === 1.8);
-  assert.equal(near.hp, 46); assert.equal(edge.hp, 46, '폭발 가장자리도 맞음');
+  assert.equal(near.hp, 45); assert.equal(edge.hp, 45, '폭발 가장자리도 맞음');
   assert.equal(out.hp, 50); assert.equal(a.hp, 40, '던진 사람은 안 맞음');
   assert.ok(g.projectiles.size === 0);
   run(g, 0.6); assert.ok(edge.y > 11.9 + 0.3 && near.x > 15.1, '중심에서 바깥으로 밀림');
@@ -613,7 +613,7 @@ test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려�
   const { g, A, B } = duo('frog', 'blue');
   B.x = 13; B.y = 10; // 3칸 앞
   g.attack('a', null);
-  assert.equal(B.hp, B.cfg.hp - 1);
+  assert.ok([1, 2].includes(B.cfg.hp - B.hp), '혀 피해 1~2');
   run(g, 0.6);
   assert.ok(B.x < 13 - 0.2, `끌려옴: ${B.x}`);
   B.x = 14; B.y = 10; B.kx = B.ky = 0; const hp = B.hp; run(g, 0.6);
@@ -646,19 +646,22 @@ test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진�
   assert.equal(g._dashing(A), false);
 });
 
-test('밸런스: 캐릭터 전투력 지수가 같은 범위 안 (파란티 원거리와 개구리는 제외)', () => {
-  const index = (c) => {
-    const a = c.attack;
-    let dps = (a.dmgMin + a.dmgMax) / 2 / a.interval;
-    if (a.multi) dps *= 1.15;
-    return Math.sqrt(c.hp * dps) * (1 + 0.1 * (a.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;
-  };
+import { dpsOf, powerIndex } from './balance.js';
+
+test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 끌어당기는 혀가 있어 15 이상)', () => {
   for (const [id, c] of Object.entries(chars)) {
-    if (id === 'blue_ranged' || id === 'frog') continue; // 정해진 값 / 즉발 혀 (대신 끌어당김)
-    const v = index(c);
-    assert.ok(v >= 15 && v <= 21, `${c.name}: ${v.toFixed(1)}`);
+    const v = powerIndex(c);
+    assert.ok(v >= (id === 'frog' ? 15 : 17) && v <= 21.5, `${c.name}: ${v.toFixed(1)}`);
     assert.ok(c.hp >= 35 && c.hp <= 80, `${c.name} 체력`);
   }
+});
+
+test('DPS 계산: 콤보 평균, 명중률, 범위, 돌진 피해를 반영한다', () => {
+  const blue = dpsOf(chars.blue); // 평균 2.5 × (1+1+1.5)/3 ÷ 0.3333
+  assert.ok(Math.abs(blue.basic - 2.5 * (3.5 / 3) / 0.3333) < 0.01);
+  assert.ok(dpsOf(chars.brawler).dps > dpsOf(chars.brawler).basic, '돌진 피해가 더해짐');
+  assert.ok(dpsOf(chars.witch).dps < dpsOf(chars.witch).basic, '느린 투사체는 명중률로 깎임');
+  assert.ok(dpsOf(chars.bomber).dps > dpsOf(chars.bomber).basic * 0.75, '범위 공격은 보정이 붙음');
 });
 
 test('모든 캐릭터가 서버 규칙으로 문제없이 싸운다 (공격 → 스킬 → 이동)', () => {
