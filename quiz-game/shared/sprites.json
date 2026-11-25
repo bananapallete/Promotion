@@ -3,108 +3,136 @@
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "cat": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "elf": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "girl_long": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "girl_short": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "knight": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "orc": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "princess": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "puppy": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "witch": {
   "idle": 4,
   "walk": 6,
   "run": 6,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "chick": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "chicken": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "frog": {
   "idle": 4,
   "walk": 4,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "hammerhead": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "hippo": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "labrador": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "pig": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
  },
  "shiba": {
   "idle": 4,
   "walk": 8,
   "run": 8,
-  "combo": 6
+  "combo": 6,
+  "die": 6
+ },
+ "blue": {
+  "die": 6
+ },
+ "bomber": {
+  "idle": 4,
+  "walk": 7,
+  "run": 7,
+  "combo": 8,
+  "die": 6
  }
 }

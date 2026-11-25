@@ -772,3 +772,23 @@ test('크리티컬: 확률로 피해가 1.5배가 되고, hit 이벤트에 crit�
     assert.ok(c.dmg > base.dmg);
   } finally { CRIT.chance = 0; }
 });
+
+test('오크: 예고 0.4초 뒤에 부채꼴로 타격, 그 전에 쓰러지면 취소, 예고 중 벗어나면 안 맞음', () => {
+  const { g, A, B } = duo('orc', 'blue');
+  const w = chars.orc.attack.windup;
+  assert.ok(w > 0);
+  B.x = A.x + 1.2; B.y = A.y; const hp = B.hp;
+  g.attack('a', null);
+  assert.equal(B.hp, hp, '예고 중엔 피해 없음');
+  assert.ok(g.events.some((e) => e.e === 'windup' && e.sec === w));
+  run(g, w + 0.05);
+  assert.ok(B.hp < hp, '예고 후 타격');
+  // 피하기
+  run(g, 1); B.x = A.x + 1.2; B.hp = B.cfg.hp; B.invUntil = 0;
+  g.attack('a', null); B.x = A.x + 4; run(g, w + 0.05);
+  assert.equal(B.hp, B.cfg.hp, '벗어나면 안 맞음');
+  // 취소
+  run(g, 1); B.x = A.x + 1.2;
+  g.attack('a', null); g.knockOut('a'); run(g, w + 0.05);
+  assert.equal(B.hp, B.cfg.hp, '쓰러지면 취소');
+});

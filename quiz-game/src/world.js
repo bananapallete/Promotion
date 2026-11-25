@@ -26,7 +26,7 @@ export class WorldScene extends Phaser.Scene {
 
   preload() {
     for (const s of SPRITES) {
-      for (const m of Object.keys(SPRITE.motions)) {
+      for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : [])]) {
         this.load.spritesheet(`${s}-${m}`, hooks.spriteUrl(s, m), { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
       }
     }
@@ -38,6 +38,7 @@ export class WorldScene extends Phaser.Scene {
     this.add.image(0, 0, 'floor').setOrigin(0).setScale(BU / TILE).setDepth(-100);
 
     this.zoneGfx = this.add.graphics().setDepth(-80);
+    this.teleGfx = this.add.graphics().setDepth(-45); // 예고 범위 (타격 전 붉은 부채꼴)
     this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
     this.aim = null;
     this.lockId = null;
@@ -48,7 +49,8 @@ export class WorldScene extends Phaser.Scene {
     this.zoneImgs = [];
 
     for (const s of SPRITES) {
-      const n = sprites[s]; // 없으면 blue(constants의 프레임 수)
+      const n = sprites[s]?.idle ? sprites[s] : null; // 없으면 blue(constants의 프레임 수)
+      if (sprites[s]?.die) this.anims.create({ key: `${s}-die`, frames: this.anims.generateFrameNumbers(`${s}-die`, { start: 0, end: sprites[s].die - 1 }), frameRate: 9, repeat: 0 });
       SPRITE.attackSteps.forEach((st, i) => {
         // 새 스프라이트의 공격은 한 동작(0번은 준비 자세)이라 단계마다 1~끝을 그 시간에 맞춰 재생
         const frames = n ? Array.from({ length: n.combo - 1 }, (_, k) => k + 1) : st.frames;
@@ -101,6 +103,20 @@ export class WorldScene extends Phaser.Scene {
       const k = tw.getValue();
       ring.clear().lineStyle(5 - 2 * k, 0xffffff, 1 - 0.5 * k).strokeCircle(v.x, v.y, (2.4 - 1.6 * k) * BU);
     }, onComplete: () => ring.destroy() });
+  }
+
+  _drawTelegraph(now) {
+    const g = this.teleGfx;
+    g.clear();
+    for (const v of this.views.values()) {
+      const w = v.windup;
+      if (!w) continue;
+      if (now >= w.until || v.p.st) { v.windup = null; continue; }
+      const u = (now - w.from) / (w.until - w.from), R = w.range * BU, ang = Math.atan2(w.dy, w.dx), half = (w.arc * Math.PI) / 180;
+      g.fillStyle(0xff3b30, 0.12 + 0.3 * u).slice(v.x, v.y, R, ang - half, ang + half, false).fillPath(); // 시간이 갈수록 진해짐
+      g.fillStyle(0xff3b30, 0.35).slice(v.x, v.y, R * u, ang - half, ang + half, false).fillPath(); // 안쪽부터 차오름
+      g.lineStyle(3, 0xff3b30, 0.9).beginPath().moveTo(v.x, v.y).lineTo(v.x + Math.cos(ang - half) * R, v.y + Math.sin(ang - half) * R).arc(v.x, v.y, R, ang - half, ang + half, false).lineTo(v.x, v.y).strokePath();
+    }
   }
 
   _drawAim(now) {
@@ -182,7 +198,9 @@ export class WorldScene extends Phaser.Scene {
   handleEvent(e) {
     const now = performance.now();
     const v = this.views.get(e.id);
-    if (e.e === 'atk' && v) {
+    if (e.e === 'windup' && v) {
+      v.windup = { from: now, until: now + e.sec * 1000, dx: e.dx, dy: e.dy, range: e.range, arc: e.arc };
+    } else if (e.e === 'atk' && v) {
       const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
       v.sprite.play(`${v.p.s}-atk${step}`, false);
       v.punchUntil = now + SPRITE.attackSteps[step].ms;
@@ -244,6 +262,7 @@ export class WorldScene extends Phaser.Scene {
   // ---------- 매 프레임 ----------
   update(_time, delta) {
     const now = performance.now();
+    this._drawTelegraph(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
       const p = v.p;
@@ -257,14 +276,16 @@ export class WorldScene extends Phaser.Scene {
       v.sprite.setScale(SPR_SCALE * (p.zs || 1));
 
       // 모션: 공격 중이면 유지, 아니면 이동 상태에 맞춰
-      if (now >= v.punchUntil) v.sprite.play(`${p.s}-${p.st ? 'idle' : p.a}`, true);
+      const dies = p.st && sprites[p.s]?.die; // 기절하면 죽음 모션을 한 번 재생하고 누운 채로 둠
+      if (dies) { if (!v.dead) { v.dead = true; v.sprite.play(`${p.s}-die`); } }
+      else { v.dead = false; if (now >= v.punchUntil) v.sprite.play(`${p.s}-${p.st ? 'idle' : p.a}`, true); }
 
       // 맞았을 때 0.1초 하얗게
       if (now < v.flashUntil) { v.sprite.setTintFill(0xffffff); v.flashing = true; }
       else if (v.flashing) { v.sprite.clearTint(); if (v.tint) v.sprite.setTint(v.tint); v.flashing = false; }
 
       // 기절: 쓰러진 모습 / 무적: 깜빡임
-      v.sprite.setAngle(p.st ? 80 * p.f : 0);
+      v.sprite.setAngle(p.st && !dies ? 80 * p.f : 0);
       v.sprite.setAlpha(p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1);
 
       // 체력바 + 이름

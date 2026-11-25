@@ -16,7 +16,7 @@ from scipy import ndimage
 import build_sheets as bs
 
 REF_SIZE = 158  # 기본(blue) 캐릭터 idle의 덩치(면적 제곱근)
-MOTIONS = {"idle": 4, "walk": 6, "run": 6, "attack": 6}  # 모션 → 프레임 수 (attack은 2줄 x 3칸)
+MOTIONS = {"idle": 4, "walk": 6, "run": 6, "attack": 6, "die": 6}  # 모션 → 프레임 수 (attack·die는 2줄 x 3칸)
 
 
 def clean(a: np.ndarray) -> np.ndarray:
@@ -84,17 +84,19 @@ def split(a, n, grid):
 def main(src: Path, out: Path):
     jp = Path(__file__).parent.parent / "shared" / "sprites.json"
     sprites = json.loads(jp.read_text())  # 일부 캐릭터만 다시 만들어도 나머지는 유지
+    only = os.environ.get("ONLY", ",".join(MOTIONS)).split(",")  # ONLY=die 처럼 일부 모션만 다시 만들기
     for cid in sorted({p.name.rsplit("_", 1)[0] for p in src.glob("*.png")}):
         d = out / cid
         d.mkdir(parents=True, exist_ok=True)
-        counts = {}
+        counts = dict(sprites.get(cid, {}))
+        motions = []  # (이름, 프레임, 발 위치 정보, 배율)
         for mo, n in MOTIONS.items():
+            if mo not in only:
+                continue
             n = int(os.environ.get(f"FRAMES_{cid}_{mo}", n))  # 모션별 프레임 수 지정
-            grid = mo == "attack"
             a = strip_bg(src / f"{cid}_{mo}.png")
-            boxes = split(a, n, grid)
             frames = []
-            for y0, y1, x0, x1 in boxes:
+            for y0, y1, x0, x1 in split(a, n, mo in ("attack", "die")):
                 sub = a[y0:y1 + 1, x0:x1 + 1]
                 ys = np.where((sub[..., 3] > 128).any(axis=1))[0]
                 frames.append(sub[ys.min():ys.max() + 1])
@@ -107,19 +109,27 @@ def main(src: Path, out: Path):
                     ys = np.where(al.any(axis=1))[0]
                     xs = np.where(al[ys.max() - 8:].any(axis=0))[0]
                     infos.append(((xs.min() + xs.max()) / 2, ys.max(), xs.max() - xs.min() + 1))
-            name = "combo" if mo == "attack" else mo
             # 원본은 모션마다 그려진 크기가 달라서, 모션별로 몸통(가장 큰 덩어리) 크기를 REF_SIZE에 맞춘다
             sc = REF_SIZE / float(np.median([body(f) for f in frames]))
+            motions.append(("combo" if mo == "attack" else mo, frames, infos, sc))
+        # 셀보다 넓은 캐릭터(귀상어 등)는 모든 모션을 같은 비율로 줄여 안 잘리게 한다
+        fit = min([1.0] + [(bs.CELL - 4) / (f.shape[1] * sc) for _, fs, _, sc in motions for f in fs])
+        if fit < 1:
+            print(f"{cid}: 너무 넓어서 {fit:.3f}배로 줄임 → characters.json scale을 {1 / fit:.3f}배 키울 것")
+        for name, frames, infos, sc in motions:
+            sc *= fit
             sheet = Image.new("RGBA", (bs.CELL * len(frames), bs.CELL), (0, 0, 0, 0))
             for i, (f, (cx, by, _)) in enumerate(zip(frames, infos)):
                 im = Image.fromarray(f)
                 im = im.resize((max(1, round(im.width * sc)), max(1, round(im.height * sc))), Image.NEAREST)
                 px, py = bs.ANCHOR[0] - round(cx * sc), bs.ANCHOR[1] - round(by * sc)
+                px = min(max(px, 0), bs.CELL - im.width)  # 살짝 벗어난 건 옆으로 밀어 넣음 (쓰러진 자세 등)
+                py = max(py, 0)
                 cell = Image.new("RGBA", (bs.CELL, bs.CELL), (0, 0, 0, 0))
                 cell.paste(im, (px, py), im)
                 sheet.paste(cell, (i * bs.CELL, 0))
-                if px < 0 or px + im.width > bs.CELL or py < 0:
-                    print(f"참고: {cid} {name} {i} 셀 밖으로 나감")
+                if im.height > bs.CELL:
+                    print(f"참고: {cid} {name} {i} 세로가 셀보다 큼")
             sheet.save(d / f"{name}.png")
             counts[name] = len(frames)
         sprites[cid] = counts

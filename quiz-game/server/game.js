@@ -295,6 +295,17 @@ export class Game {
       this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: 'proj', step, len: range });
       return;
     }
+    if (a.windup) { // 예고 후 타격: 범위를 보여 주는 동안 피할 수 있다
+      p.windup = { at: this.t + a.windup, range, dx, dy, m, step };
+      p.attackUntil += a.windup;
+      this.events.push({ e: 'windup', id: p.id, dx: r2(dx), dy: r2(dy), range: r2(range), arc: a.arcDeg ?? 60, sec: a.windup });
+      return;
+    }
+    this._strike(p, range, dx, dy, m, step);
+  }
+
+  _strike(p, range, dx, dy, m, step) {
+    const a = p.cfg.attack;
     const hits = this._pickTargets(p, range, dx, dy);
     this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc: a.arcDeg, step, len: r2(hits[0] && !(a.multi && a.type === 'ranged') ? hits[0].dist : range) });
     for (const h of a.multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
@@ -504,6 +515,10 @@ export class Game {
 
   _step(p, dt) {
     const c = p.cfg;
+    if (p.windup && (p.stunned || this.t >= p.windup.at)) { // 예고가 끝나면 타격 (그 전에 쓰러지면 취소)
+      const w = p.windup; p.windup = null;
+      if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step);
+    }
     if (p.stunned && this.t >= p.stunUntil) { // 기절 해제 → 체력 회복 + 무적
       p.stunned = false;
       p.hp = c.hp;
