@@ -5,6 +5,7 @@
 - 프레임 수는 자동 감지, shared/sprites.json에 기록
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -81,12 +82,14 @@ def split(a, n, grid):
 
 
 def main(src: Path, out: Path):
-    sprites = {}
+    jp = Path(__file__).parent.parent / "shared" / "sprites.json"
+    sprites = json.loads(jp.read_text())  # 일부 캐릭터만 다시 만들어도 나머지는 유지
     for cid in sorted({p.name.rsplit("_", 1)[0] for p in src.glob("*.png")}):
         d = out / cid
         d.mkdir(parents=True, exist_ok=True)
         counts = {}
         for mo, n in MOTIONS.items():
+            n = int(os.environ.get(f"FRAMES_{cid}_{mo}", n))  # 모션별 프레임 수 지정
             grid = mo == "attack"
             a = strip_bg(src / f"{cid}_{mo}.png")
             boxes = split(a, n, grid)
@@ -121,7 +124,7 @@ def main(src: Path, out: Path):
             counts[name] = len(frames)
         sprites[cid] = counts
         print(cid, counts)
-    (Path(__file__).parent.parent / "shared" / "sprites.json").write_text(json.dumps(sprites, indent=1) + "\n")
+    jp.write_text(json.dumps(sprites, indent=1) + "\n")
 
 
 if __name__ == "__main__":

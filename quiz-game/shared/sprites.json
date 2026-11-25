@@ -43,8 +43,8 @@
  },
  "princess": {
   "idle": 4,
-  "walk": 6,
-  "run": 6,
+  "walk": 8,
+  "run": 8,
   "combo": 6
  },
  "puppy": {
