@@ -339,7 +339,7 @@ test('조준 미리보기: 3타 차례에는 늘어난 사거리를 보여준다
 });
 
 // ---------- 동전 ----------
-import { COIN, MAP } from '../shared/constants.js';
+import { COIN, MAP, zoneAt } from '../shared/constants.js';
 
 test('동전: 참가자가 있으면 3초마다 1개 생성, 없으면 생성 안 됨', () => {
   const g = new Game(chars, quizzes);
@@ -468,4 +468,28 @@ test('순위표: 호스트가 켜면 스냅샷에 담기고, 다음 문제를 �
   assert.equal(g.snapshot().rank, true);
   g.ask(1);
   assert.equal(g.snapshot().rank, false);
+});
+
+test('봇: 문제가 나오면 무작위 구역으로 걸어가고, 틀린 구역의 봇만 동전을 떨어뜨린다', () => {
+  const g = new Game(chars, quizzes);
+  g.coinsSpawned = COIN.maxTotal;
+  g.join({ token: 'h', name: 'H', charId: 'blue' }); // 사람 한 명 (참가자 없으면 의미가 없어서)
+  const bots = Array.from({ length: 6 }, () => g.addBot('wander', 'blue'));
+  bots.forEach((b) => { g.giveCoins(b.id, 2); });
+  g.ask(1); run(g, 3.1); run(g, 12);
+  assert.ok(bots.every((b) => zoneAt('ox', b.x, b.y) !== null), '모든 봇이 어느 구역엔가 도착');
+  g.endQuestion();
+  const right = bots.filter((b) => zoneAt('ox', b.x, b.y) === 'O');
+  assert.ok(right.every((b) => b.coins === 2), '맞힌 봇은 동전 유지');
+  assert.ok(bots.filter((b) => !right.includes(b)).every((b) => b.coins === 0), '틀린 봇은 동전을 떨어뜨림');
+  assert.equal(g.coins.size, (bots.length - right.length) * 2);
+  assert.ok(g.reveal.results.every((r) => !r.id.startsWith('bot')), '봇은 결과 점수에 안 들어감');
+});
+
+test('봇: 정지·공격형 테스트 봇은 문제를 풀지 않는다', () => {
+  const g = new Game(chars, quizzes);
+  g.join({ token: 'h', name: 'H', charId: 'blue' });
+  const idle = g.addBot('idle', 'blue'); idle.x = 20; idle.y = 20;
+  g.ask(1); run(g, 3.1); run(g, 10);
+  assert.ok(Math.abs(idle.x - 20) < 0.01 && Math.abs(idle.y - 20) < 0.01);
 });
