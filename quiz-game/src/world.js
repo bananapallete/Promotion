@@ -232,11 +232,10 @@ export class WorldScene extends Phaser.Scene {
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
     const shoe = this.add.image(0, 0, 'item-shoe').setScale(1.5).setVisible(false);
-    const star = this.add.text(0, 0, '★', { fontFamily: 'sans-serif', fontSize: '22px', color: '#ffd54a', stroke: '#14122b', strokeThickness: 5 }).setOrigin(0.5).setVisible(false);
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
     const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
-    const v = { sprite, name, bar, shoe, star, status, coinIcon, coinTxt, root: [sprite, name, bar, shoe, star, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
+    const v = { sprite, name, bar, shoe, status, coinIcon, coinTxt, root: [sprite, name, bar, shoe, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -343,7 +342,7 @@ export class WorldScene extends Phaser.Scene {
       const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2;
       // 머리 위 UI는 캐릭터의 실제 머리 꼭대기 위에 쌓는다 (내 게이지가 아래로 늘어나도 캐릭터를 가리지 않게 전체를 위로 올림)
       const headPx = (SPRITE.anchor[1] - (BOUNDS[p.s] ?? 20)) * SPR_SCALE * (p.zs || 1);
-      const gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) + 1 : 0, below = gauges ? 7 + gauges * 5 + (gauges - 1) * 7 + 2 : 0;
+      const gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) : 0, below = gauges ? 7 + gauges * 5 + (gauges - 1) * 7 + 2 : 0;
       const by = v.y - headPx - 10 - below - bh - bd;
       const bx0 = v.x - bw / 2; // 바 왼쪽 끝
       const bx = v.x;
@@ -354,7 +353,6 @@ export class WorldScene extends Phaser.Scene {
       v.bar.fillStyle(low ? THEME.hpLow : THEME.hpFill, 1).fillRect(bx0, by, bw * f, bh);
       v.bar.fillStyle(THEME.hpShine, 0.55).fillRect(bx0, by, bw * f, Math.max(2, bh * 0.28)); // 윗면 하이라이트
       for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
-      v.star.setVisible(!!p.ur).setPosition(bx0 - 12, by + bh / 2).setDepth(v.y + 2).setScale(1 + 0.18 * Math.sin(now / 140)); // 궁극기 준비됨
       v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
       if (me) { // 탄창 · 대쉬 게이지는 내 것만 (빔프로젝터엔 내 캐릭터가 없어서 안 나옴)
         const h = 5, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 2, y0 - 2, w + 4, h + 4).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
@@ -365,7 +363,6 @@ export class WorldScene extends Phaser.Scene {
           y0 += h + 7;
         }
         if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + 7; } // 대쉬 쿨타임 / 달리기 게이지
-        bar2(bx0, y0, bw, p.ur ? 1 : p.ul, p.ur ? THEME.ultReady : THEME.ult); // 궁극기 충전
       }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : p.rt ? '스턴' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
