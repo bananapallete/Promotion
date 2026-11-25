@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { mountPicker } from './charPicker.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
@@ -10,29 +11,12 @@ const save = (v) => { try { localStorage.setItem(LS, JSON.stringify(v)); } catch
 let me = null; // { token, name, charId }
 
 // ---------- 입장 ----------
-// 선택 카드의 미리보기: 대기 모션 첫 프레임에 임시 색(tint)을 곱해서 그린다
-function drawPreview(canvas, c, img) {
-  const g = canvas.getContext('2d'), n = canvas.width, size = Math.round(n * 0.9 * (c.scale || 1));
-  const t = document.createElement('canvas'); t.width = t.height = n;
-  const x = t.getContext('2d');
-  const ox = Math.round((n - size) / 2 + size * 0.1), oy = n - size + Math.round(size * 0.06); // 발(그림자)이 아래쪽에 오게
-  x.drawImage(img, 0, 0, 256, 256, ox, oy, size, size);
-  if (c.tint) { x.globalCompositeOperation = 'multiply'; x.fillStyle = c.tint; x.fillRect(0, 0, n, n); x.globalCompositeOperation = 'destination-in'; x.drawImage(img, 0, 0, 256, 256, ox, oy, size, size); }
-  g.clearRect(0, 0, n, n); g.drawImage(t, 0, 0);
-}
+let picker = null;
 async function buildJoin() {
   const chars = await (await fetch('/api/characters')).json();
-  const entries = Object.entries(chars);
-  $('#chars').innerHTML = entries.map(([id, c], i) =>
-    `<label><input type="radio" name="char" value="${id}" ${i === 0 ? 'checked' : ''}/><canvas width="104" height="104" data-id="${id}"></canvas><b>${c.name}</b><small>${c.type === 'melee' ? '근접' : '원거리'} · ${c.skill === 'dash' ? '대쉬' : '달리기'}</small></label>`).join('');
+  picker?.destroy();
+  picker = mountPicker($('#chars'), chars, { spriteUrl: (sprite, m) => `/characters/${sprite}/${m}.png`, selected: (me || load())?.charId });
   $('#join-ui').hidden = false;
-  const bySprite = {};
-  for (const e of entries) (bySprite[e[1].sprite] ||= []).push(e);
-  for (const [sprite, ids] of Object.entries(bySprite)) {
-    const img = new Image();
-    img.onload = () => ids.forEach(([id, c]) => drawPreview(document.querySelector(`canvas[data-id="${id}"]`), c, img));
-    img.src = `/characters/${sprite}/idle.png`;
-  }
 }
 function join(data) {
   socket.emit('join', data, (res) => {
@@ -50,7 +34,7 @@ function showJoin() { $('#game-ui').hidden = true; buildJoin(); }
 $('#go').addEventListener('click', () => {
   const name = $('#name').value.trim();
   if (!name) { $('#err').textContent = '닉네임을 입력하세요'; return; }
-  const charId = document.querySelector('input[name=char]:checked')?.value;
+  const charId = picker?.value();
   join({ name, charId });
 });
 $('#menu').addEventListener('click', () => { save(null); location.reload(); });

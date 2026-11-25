@@ -44,7 +44,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.0
-    }
+    },
+    "role": "melee",
+    "atkInfo": "3연타, 마지막 강타"
   },
   "blue_ranged": {
     "name": "파란티 원거리",
@@ -78,7 +80,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.5
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "돌 연사"
   },
   "elf": {
     "name": "엘프",
@@ -113,7 +117,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "멀리 쏘는 화살"
   },
   "witch": {
     "name": "마녀",
@@ -147,7 +153,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "느린 마법구, 큰 피해"
   },
   "bomber": {
     "name": "화염병",
@@ -183,7 +191,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "화염병, 범위 폭발"
   },
   "girl_long": {
     "name": "흑발 소녀",
@@ -238,7 +248,9 @@
     "ammo": {
       "max": 3,
       "reload": 0.9
-    }
+    },
+    "role": "melee",
+    "atkInfo": "3연타, 회전 베기"
   },
   "orc": {
     "name": "오크",
@@ -272,7 +284,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "tank",
+    "atkInfo": "예고 후 넓은 강타"
   },
   "princess": {
     "name": "공주",
@@ -307,7 +321,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.5
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "반짝 연사"
   },
   "brawler": {
     "name": "격투가",
@@ -361,7 +377,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.65
-    }
+    },
+    "role": "tank",
+    "atkInfo": "3연타, 충격파"
   },
   "puppy": {
     "name": "강아지",
@@ -393,7 +411,9 @@
     "ammo": {
       "max": 3,
       "reload": 0.9
-    }
+    },
+    "role": "melee",
+    "atkInfo": "초고속 물기"
   },
   "girl_short": {
     "name": "단발 소녀",
@@ -430,7 +450,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.95
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "별 던지기, 관통"
   },
   "knight": {
     "name": "기사",
@@ -469,7 +491,9 @@
       "max": 3,
       "reload": 1.65
     },
-    "guard": 0.4
+    "guard": 0.4,
+    "role": "tank",
+    "atkInfo": "긴 찌르기, 방패로 40% 막음"
   },
   "cat": {
     "name": "고양이",
@@ -501,7 +525,9 @@
     "ammo": {
       "max": 3,
       "reload": 0.9
-    }
+    },
+    "role": "speed",
+    "atkInfo": "고속 할퀴기, 크리티컬 잘 터짐"
   },
   "hammerhead": {
     "name": "귀상어",
@@ -539,7 +565,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.8
-    }
+    },
+    "role": "tank",
+    "atkInfo": "넓게 휘두르기"
   },
   "labrador": {
     "name": "래브라도",
@@ -587,7 +615,9 @@
     "ammo": {
       "max": 3,
       "reload": 0.9
-    }
+    },
+    "role": "speed",
+    "atkInfo": "빠른 3연타"
   },
   "frog": {
     "name": "개구리",
@@ -616,7 +646,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.5
-    }
+    },
+    "role": "speed",
+    "atkInfo": "혀로 끌어당김"
   },
   "shiba": {
     "name": "시바견",
@@ -668,7 +700,9 @@
     "ammo": {
       "max": 3,
       "reload": 1.05
-    }
+    },
+    "role": "melee",
+    "atkInfo": "3연타 베기"
   },
   "hippo": {
     "name": "하마",
@@ -700,7 +734,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "tank",
+    "atkInfo": "주변 전체 쾅"
   },
   "pig": {
     "name": "돼지",
@@ -735,7 +771,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.1
-    }
+    },
+    "role": "tank",
+    "atkInfo": "묵직한 박치기"
   },
   "chicken": {
     "name": "닭",
@@ -771,7 +809,9 @@
     "ammo": {
       "max": 3,
       "reload": 2.2
-    }
+    },
+    "role": "ranged",
+    "atkInfo": "알 폭탄, 범위 폭발"
   },
   "chick": {
     "name": "병아리",
@@ -806,6 +846,8 @@
     "ammo": {
       "max": 3,
       "reload": 1.05
-    }
+    },
+    "role": "speed",
+    "atkInfo": "관통 화살 연사"
   }
 }

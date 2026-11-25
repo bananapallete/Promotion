@@ -1,6 +1,7 @@
 // 서버 없는 솔로 데모: 서버와 같은 game.js 규칙을 브라우저에서 직접 돌린다.
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
+import { mountPicker } from '../src/charPicker.js';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
@@ -201,6 +202,9 @@ function pickChar(id) {
   document.querySelector(`#charbar button[data-id="${id}"]`).scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 $('#charbar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pickChar(b.dataset.id); });
+// 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
+const picker = mountPicker($('#pickroot'), Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill }])), { spriteUrl: hooks.spriteUrl, selected: charIds[0] });
+$('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });

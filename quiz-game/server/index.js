@@ -30,7 +30,7 @@ function lanOrigin() {
 }
 
 app.get('/api/characters', (_req, res) => {
-  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', tint: c.tint || null, scale: c.scale || 1 }])));
+  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', role: c.role, atkInfo: c.atkInfo, sk: c.skill, runGauge: c.runGauge, tint: c.tint || null, scale: c.scale || 1 }])));
 });
 app.get('/api/info', (_req, res) => res.json({ lanOrigin: lanOrigin(), publicUrl: process.env.PUBLIC_URL || null, hostKeyRequired: !!HOST_KEY }));
 
