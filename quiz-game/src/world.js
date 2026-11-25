@@ -206,8 +206,8 @@ export class WorldScene extends Phaser.Scene {
     for (const z of ZONES[type]) {
       const correct = s.phase === PHASE.REVEAL && z.id === ans;
       const alpha = { [PHASE.LOBBY]: 0.35, [PHASE.READING]: 0.6, [PHASE.MOVING]: 0.85 }[s.phase] ?? (correct ? 1 : 0.2);
-      this.zoneImgs.push(this.add.image(z.x * BU, z.y * BU, matTexture(this, type, z)).setOrigin(0).setScale(BU / TILE).setDepth(-80).setAlpha(alpha));
-      if (correct) this.zoneGfx.lineStyle(6, 0xffffff, 1).strokeRect(z.x * BU + 3, z.y * BU + 3, z.w * BU - 6, z.h * BU - 6); // 정답 구역 강조
+      this.zoneImgs.push(this.add.image((z.cx - z.r) * BU, (z.cy - z.r) * BU, matTexture(this, type, z)).setOrigin(0).setScale(BU / TILE).setDepth(-80).setAlpha(alpha));
+      if (correct) this.zoneGfx.lineStyle(6, 0xffffff, 1).strokeCircle(z.cx * BU, z.cy * BU, z.r * BU - 3); // 정답 구역 강조
     }
   }
 

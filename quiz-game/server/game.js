@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { COIN, COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, WAIT, zoneAt, ZONES } from '../shared/constants.js';
+import { COIN, COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -11,6 +11,15 @@ const MAX_PLAYERS = 40;
 
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
+
+// 어떤 구역도 아닌 맵 안쪽 지점 (입장·모이기 위치)
+function spawnPos() {
+  for (let i = 0; i < 20; i++) {
+    const x = rand(2, MAP.w - 2), y = rand(2, MAP.h - 2);
+    if (!zoneAt('ox', x, y) && !zoneAt('choice', x, y)) return [x, y];
+  }
+  return [2, 2];
+}
 
 export class Game {
   constructor(characters, quizzes) {
@@ -63,10 +72,11 @@ export class Game {
 
   _spawn({ id, name, charId, isBot, botMode }) {
     const cfg = this.characters[charId];
+    const spawn = spawnPos();
     const p = {
       id, name, charId, cfg, isBot, botMode: botMode || null,
       connected: true,
-      x: WAIT.x + rand(2, WAIT.w - 2), y: rand(2, MAP.h - 2),
+      x: spawn[0], y: spawn[1],
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
@@ -129,8 +139,7 @@ export class Game {
 
   gather() {
     for (const p of this.players.values()) {
-      p.x = WAIT.x + rand(2, WAIT.w - 2);
-      p.y = rand(2, MAP.h - 2);
+      [p.x, p.y] = spawnPos();
       p.kx = p.ky = 0;
     }
   }

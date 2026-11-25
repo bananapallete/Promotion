@@ -140,13 +140,13 @@ test('점수: 정답 1점 + 먼저 도착한 1~3등 +3/+2/+1, 오답·무응답 
   assert.equal(g.phase, PHASE.MOVING);
   const put = (p, x, y) => { p.x = x; p.y = y; p.kx = p.ky = 0; };
   // 서로 겹치지 않게 O 구역(왼쪽)에 차례로 도착
-  put(ps[0], 15, 3);          // 아직 대기 공간
-  run(g, 0.2); put(ps[1], 3, 3);   // 먼저 도착
-  run(g, 0.2); put(ps[2], 3, 6);
-  run(g, 0.2); put(ps[0], 3, 9);   // 가장 늦게 도착
-  put(ps[3], 3, 12); // 이 사람은 곧 반대편으로 갈 것
-  run(g, 0.2); put(ps[3], 35, 3);  // X 구역 (오답)
-  put(ps[4], 20, 20);              // 대기 공간 (무응답)
+  put(ps[0], 20, 3);          // 아직 구역 밖
+  run(g, 0.2); put(ps[1], 11, 9);   // 먼저 도착
+  run(g, 0.2); put(ps[2], 13, 13);
+  run(g, 0.2); put(ps[0], 15, 9);   // 가장 늦게 도착
+  put(ps[3], 12, 11); // 이 사람은 곧 반대편으로 갈 것
+  run(g, 0.2); put(ps[3], 28, 9);  // X 구역 (오답)
+  put(ps[4], 20, 20);              // 구역 밖 (무응답)
   g.endQuestion();
   assert.equal(g.phase, PHASE.REVEAL);
   const byId = Object.fromEntries(g.reveal.results.map((r) => [r.id, r]));
@@ -164,10 +164,10 @@ test('구역을 옮기거나 밀려 나갔다 오면 도착 시각이 초기화�
   const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
   g.ask(1); run(g, 3.1);
   const put = (p, x, y) => { p.x = x; p.y = y; p.kx = p.ky = 0; };
-  put(a, 3, 3); put(b, 15, 15);
-  run(g, 0.3); put(b, 3, 8);  // b는 나중에 들어옴
-  run(g, 0.3); put(a, 15, 3); // a가 밀려서 나갔다가
-  run(g, 0.1); put(a, 3, 3);  // 다시 들어옴 → 초기화되어 b보다 늦다
+  put(a, 12, 9); put(b, 20, 3);
+  run(g, 0.3); put(b, 13, 13);  // b는 나중에 들어옴
+  run(g, 0.3); put(a, 20, 3); // a가 밀려서 나갔다가
+  run(g, 0.1); put(a, 12, 9);  // 다시 들어옴 → 초기화되어 b보다 늦다
   g.endQuestion();
   const byId = Object.fromEntries(g.reveal.results.map((r) => [r.id, r]));
   assert.equal(byId.b.rank, 1);
@@ -437,7 +437,7 @@ test('동전: 문제를 틀리거나 무응답이면 전부 떨어뜨리고, 맞
   [ok, wrong, none].forEach((p) => g.giveCoins(p.id, 3));
   g.ask(1); run(g, 3.1); // 정답 O (왼쪽)
   const put = (p, x, y) => { p.x = x; p.y = y; p.kx = p.ky = 0; };
-  put(ok, 3, 5); put(wrong, 36, 5); put(none, 20, 15);
+  put(ok, 12, 9); put(wrong, 28, 9); put(none, 20, 20);
   g.endQuestion();
   const by = Object.fromEntries(g.reveal.results.map((r) => [r.id, r]));
   assert.equal(by.o.dropped, 0); assert.equal(ok.coins, 3);
@@ -453,4 +453,14 @@ test('동전: 최대 개수 제한, 점수 초기화 시 동전도 초기화', (
   assert.equal(g.coins.size, COIN.maxOnMap);
   g.giveCoins('a', 2); g.resetScores();
   assert.equal(a.coins, 0); assert.equal(g.coins.size, 0);
+});
+
+test('원형 구역: 중심이 원 안이면 그 구역, 밖이면 null', async () => {
+  const { zoneAt } = await import('../shared/constants.js');
+  assert.equal(zoneAt('ox', 14, 11), 'O');
+  assert.equal(zoneAt('ox', 26, 15.9), 'X');
+  assert.equal(zoneAt('ox', 14, 16.1), null); // 반지름 5를 막 벗어남
+  assert.equal(zoneAt('ox', 20, 11), null); // 두 원 사이
+  assert.equal(zoneAt('choice', 26, 16.5), 4);
+  assert.equal(zoneAt('choice', 20, 11), null); // 네 원 사이
 });

@@ -24,29 +24,23 @@ export const fmtScore = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 export const READ_SEC = 3; // 문제를 읽는 시간 (구역이 아직 잠겨 있음)
 
-// 가운데 대기 공간 + 양옆 구역 (객관식은 2x2)
-const ZW = 9;
-export const WAIT = { x: ZW, y: 0, w: MAP.w - ZW * 2, h: MAP.h };
+// 맵 한가운데 원형 구역. 원 안에 중심이 들어가 있으면 그 구역을 고른 것 (cx, cy, r 단위는 칸)
 export const ZONES = {
   ox: [
-    { id: 'O', x: 0, y: 0, w: ZW, h: MAP.h, label: 'O' },
-    { id: 'X', x: MAP.w - ZW, y: 0, w: ZW, h: MAP.h, label: 'X' },
+    { id: 'O', cx: 14, cy: 11, r: 5, label: 'O' },
+    { id: 'X', cx: 26, cy: 11, r: 5, label: 'X' },
   ],
   choice: [
-    { id: 1, x: 0, y: 0, w: ZW, h: MAP.h / 2, label: '1' },
-    { id: 2, x: MAP.w - ZW, y: 0, w: ZW, h: MAP.h / 2, label: '2' },
-    { id: 3, x: 0, y: MAP.h / 2, w: ZW, h: MAP.h / 2, label: '3' },
-    { id: 4, x: MAP.w - ZW, y: MAP.h / 2, w: ZW, h: MAP.h / 2, label: '4' },
+    { id: 1, cx: 14, cy: 7.5, r: 4.25, label: '1' },
+    { id: 2, cx: 26, cy: 7.5, r: 4.25, label: '2' },
+    { id: 3, cx: 14, cy: 16.5, r: 4.25, label: '3' },
+    { id: 4, cx: 26, cy: 16.5, r: 4.25, label: '4' },
   ],
 };
 
-/** 캐릭터 중심이 들어있는 구역 id (없으면 null = 대기 공간/무응답) */
+/** 캐릭터 중심이 들어있는 구역 id (없으면 null = 무응답) */
 export function zoneAt(type, x, y) {
-  const list = ZONES[type];
-  if (!list) return null;
-  for (const z of list) {
-    if (x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h) return z.id;
-  }
+  for (const z of ZONES[type] || []) if ((x - z.cx) ** 2 + (y - z.cy) ** 2 <= z.r * z.r) return z.id;
   return null;
 }
 
