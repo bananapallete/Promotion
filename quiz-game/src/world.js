@@ -209,12 +209,11 @@ export class WorldScene extends Phaser.Scene {
     sprite.play(`${p.s}-idle`);
     const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const bar = this.add.graphics();
-    const heart = this.add.image(0, 0, 'item-heart');
     const shoe = this.add.image(0, 0, 'item-shoe').setScale(1.5).setVisible(false);
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
     const coinIcon = this.add.image(0, 0, 'coin-f0').setScale(1.5).setVisible(false);
     const coinTxt = this.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffe27a', stroke: '#14122b', strokeThickness: 4 }).setOrigin(0, 0.5).setVisible(false);
-    const v = { sprite, name, bar, heart, shoe, status, coinIcon, coinTxt, root: [sprite, name, bar, heart, shoe, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
+    const v = { sprite, name, bar, shoe, status, coinIcon, coinTxt, root: [sprite, name, bar, shoe, status, coinIcon, coinTxt], flashUntil: 0, punchUntil: 0, flashing: false, pending: 0, bump: 0, shown: 0, tint, hopUntil: 0, p };
     this.views.set(p.id, v);
     return v;
   }
@@ -309,9 +308,9 @@ export class WorldScene extends Phaser.Scene {
 
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;
-      const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2, ds = me ? 2.6 : 1.8;
-      const hw = 14 * ds, by = v.y - 2.05 * BU * (p.zs || 1) + (me ? 0 : 4);
-      const bx0 = v.x - (hw + bw) / 2 + hw - 4; // 바 왼쪽 끝 (하트가 살짝 겹침)
+      const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2;
+      const by = v.y - 2.05 * BU * (p.zs || 1) + (me ? 0 : 4);
+      const bx0 = v.x - bw / 2; // 바 왼쪽 끝
       const bx = v.x;
       const f = Math.max(0, p.hp / p.mhp), low = f <= 0.3;
       v.bar.clear().setDepth(v.y + 1);
@@ -320,15 +319,16 @@ export class WorldScene extends Phaser.Scene {
       v.bar.fillStyle(low ? THEME.hpLow : THEME.hpFill, 1).fillRect(bx0, by, bw * f, bh);
       v.bar.fillStyle(THEME.hpShine, 0.55).fillRect(bx0, by, bw * f, Math.max(2, bh * 0.28)); // 윗면 하이라이트
       for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
-      v.heart.setPosition(bx0 - 4 + hw / 2 - bd, by + bh / 2).setScale(ds).setDepth(v.y + 2);
-      if (p.hp <= 0) v.heart.setTintFill(0x8a9ba5); else v.heart.clearTint();
       v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
-      if (p.mam && me) { // 탄창은 내 것만 (가득 = 주황, 장전 중인 칸은 차오름). 빔프로젝터엔 내 캐릭터가 없어서 안 나옴
-        const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 7, h = 10;
-        for (let i = 0; i < p.mam; i++) {
-          const x0 = bx0 + i * (sw + gap), f2 = i < p.am ? 1 : i === p.am ? p.amf : 0;
-          v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 3, y0 - 3, sw + 6, h + 6).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, sw, h).fillStyle(THEME.ammo, 1).fillRect(x0, y0, sw * f2, h);
+      if (me) { // 탄창 · 대쉬 게이지는 내 것만 (빔프로젝터엔 내 캐릭터가 없어서 안 나옴)
+        const h = 5, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 2, y0 - 2, w + 4, h + 4).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
+        let y0 = by + bh + 7;
+        if (p.mam) { // 탄창: 가득 = 주황, 장전 중인 칸은 차오름
+          const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam;
+          for (let i = 0; i < p.mam; i++) bar2(bx0 + i * (sw + gap), y0, sw, i < p.am ? 1 : i === p.am ? p.amf : 0, THEME.ammo);
+          y0 += h + 7;
         }
+        if (p.mrg) bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); // 대쉬 쿨타임 / 달리기 게이지
       }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
