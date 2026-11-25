@@ -80,6 +80,5 @@ export class ProjectileLayer {
     }
     const scorch = s.add.circle(x, y, R * 0.8, 0x1b1410, 0.3).setDepth(-46);
     s.tweens.add({ targets: scorch, alpha: 0, delay: 600, duration: 1200, onComplete: () => scorch.destroy() });
-    s.cameras.main.shake(110, 0.004);
   }
 }

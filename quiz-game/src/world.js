@@ -198,8 +198,11 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
     } else if (e.e === 'hit' && v) {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
-      const t = this.add.text(e.x * BU, e.y * BU - 1.9 * BU, e.dmg > 0 ? `-${e.dmg}` : '…', { fontFamily: 'sans-serif', fontSize: '26px', color: '#e74c3c', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5).setDepth(6000);
-      this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: 650, onComplete: () => t.destroy() });
+      const crit = !!e.crit;
+      const t = this.add.text(e.x * BU, e.y * BU - 2.9 * BU, e.dmg > 0 ? `${crit ? '' : '-'}${e.dmg}${crit ? '!' : ''}` : '…', { fontFamily: 'sans-serif', fontSize: crit ? '44px' : '26px', color: crit ? '#ffb020' : '#e74c3c', fontStyle: 'bold', stroke: crit ? '#14122b' : '#ffffff', strokeThickness: crit ? 8 : 5 }).setOrigin(0.5).setDepth(6000);
+      this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: crit ? 900 : 650, onComplete: () => t.destroy() });
+      // 화면 흔들림은 크리티컬이 터졌을 때만, 그리고 내가 때리거나 맞은 것만 (봇끼리의 크리티컬마다 흔들리면 정신없어서)
+      if (crit && this.focusId && (e.id === this.focusId || e.by === this.focusId)) this.cameras.main.shake(130, 0.006);
       const ring = this.add.circle(e.x * BU, e.y * BU - 0.6 * BU, 8, 0xffffff, 0.9).setDepth(5500);
       this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
     } else if (e.e === 'dash' && v) {
@@ -260,23 +263,25 @@ export class WorldScene extends Phaser.Scene {
       v.sprite.setAlpha(p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1);
 
       // 체력바 + 이름
-      const bx = v.x, by = v.y - 1.7 * BU * (p.zs || 1), bw = 0.95 * BU, bh = 7;
+      const bx = v.x, by = v.y - 2.05 * BU * (p.zs || 1), bw = 1.9 * BU, bh = 14; // 지난번의 2배 크기 (머리 위로 올림)
       v.bar.clear().setDepth(v.y + 1);
-      v.bar.fillStyle(0x000000, 0.35).fillRect(bx - bw / 2 - 1, by - 1, bw + 2, bh + 2);
+      v.bar.fillStyle(0x14122b, 1).fillRect(bx - bw / 2 - 3, by - 3, bw + 6, bh + 6); // 남색 테두리
+      v.bar.fillStyle(0x3a3f4d, 1).fillRect(bx - bw / 2, by, bw, bh);
       v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);
+      v.bar.fillStyle(0xffffff, 0.3).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), 4); // 윗면 하이라이트
       if (p.mam) { // 탄창: 체력바 아래 칸 (가득 = 주황, 장전 중인 칸은 차오름)
-        const gap = 2, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 3;
+        const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 7, h = 10;
         for (let i = 0; i < p.mam; i++) {
           const x0 = bx - bw / 2 + i * (sw + gap), f = i < p.am ? 1 : i === p.am ? p.amf : 0;
-          v.bar.fillStyle(0x000000, 0.4).fillRect(x0 - 1, y0 - 1, sw + 2, 7).fillStyle(0xffb020, 1).fillRect(x0, y0, sw * f, 5);
+          v.bar.fillStyle(0x14122b, 1).fillRect(x0 - 3, y0 - 3, sw + 6, h + 6).fillStyle(0x3a3f4d, 1).fillRect(x0, y0, sw, h).fillStyle(0xffb020, 1).fillRect(x0, y0, sw * f, h);
         }
       }
-      v.name.setPosition(bx, by - 3).setDepth(v.y + 1);
-      v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 24).setDepth(v.y + 1);
+      v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
+      v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
       const bk = Math.max(0, 1 - (now - v.bump) / 250);
-      v.coinIcon.setVisible(shown > 0).setPosition(bx + bw / 2 + 12, by + 4).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
-      v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx + bw / 2 + 24, by + 4).setDepth(v.y + 1);
+      v.coinIcon.setVisible(shown > 0).setPosition(bx + bw / 2 + 18, by + 7).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
+      v.coinTxt.setVisible(shown > 0).setText(`×${shown}`).setPosition(bx + bw / 2 + 30, by + 7).setDepth(v.y + 1);
     }
     this.coins.update(now);
     this.proj.update(now);

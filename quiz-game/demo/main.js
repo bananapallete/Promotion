@@ -33,6 +33,7 @@ setInterval(() => {
 // ---------- 화면 ----------
 const { scene } = startWorld('game', { fill: true });
 window.__world = scene; // 테스트용 접근
+scene.focusId = ME; // 크리티컬 화면 흔들림은 내가 때리거나 맞았을 때만
 let follow = true;
 let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
 scene.onFrame = (sc, dt) => {

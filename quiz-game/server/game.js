@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { COIN, COMBO_RESET_SEC, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
+import { COIN, COMBO_RESET_SEC, CRIT, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -445,7 +445,9 @@ export class Game {
       this.events.push({ e: 'block', id: target.id, x: r2(target.x), y: r2(target.y) });
       return;
     }
-    const dmg = target.stunned ? 0 : rawDmg;
+    let dmg = target.stunned ? 0 : rawDmg;
+    const crit = dmg > 0 && Math.random() < CRIT.chance;
+    if (crit) dmg = Math.round(dmg * CRIT.mul);
     if (dmg > 0) {
       target.hp = Math.max(0, target.hp - dmg);
       if (target.hp === 0) this._ko(target);
@@ -455,7 +457,7 @@ export class Game {
       target.kx += dx * knock * KNOCK_DECAY;
       target.ky += dy * knock * KNOCK_DECAY;
     }
-    this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, x: r2(target.x), y: r2(target.y) });
+    this.events.push({ e: 'hit', id: target.id, by: attacker.id, dmg, crit, x: r2(target.x), y: r2(target.y) });
   }
 
   // ---------- 스킬: 돌진/도약 (달리기 캐릭터는 달리기 버튼을 누르고 있는 방식) ----------

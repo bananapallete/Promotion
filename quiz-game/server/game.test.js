@@ -3,7 +3,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Game } from './game.js';
-import { PHASE } from '../shared/constants.js';
+import { CRIT, PHASE } from '../shared/constants.js';
+
+CRIT.chance = 0; // 테스트는 정확한 피해 숫자를 확인하므로 크리티컬은 꺼둔다 (크리티컬 테스트에서만 켬)
 
 const chars = JSON.parse(readFileSync(new URL('./characters.json', import.meta.url), 'utf8'));
 const quizzes = JSON.parse(readFileSync(new URL('./quizzes.test.json', import.meta.url), 'utf8'));
@@ -748,4 +750,24 @@ test('공격형 봇도 문제를 풀고(구역으로 이동), 정지 봇은 풀�
   const fighters = Array.from({ length: 5 }, () => g.addBot('aggro', 'blue'));
   g.ask(1); run(g, 3.1); run(g, 12);
   assert.ok(fighters.every((b) => zoneAt('ox', b.x, b.y) !== null), '공격형도 어느 구역엔가 도착');
+});
+
+test('크리티컬: 확률로 피해가 1.5배가 되고, hit 이벤트에 crit가 담긴다', () => {
+  const hit = () => {
+    const g = new Game(chars, quizzes);
+    const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' }); // 피해 고정(4)이라 비교가 쉬움
+    const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+    a.x = 10; a.y = 10; b.x = 12; b.y = 10; a.kx = a.ky = b.kx = b.ky = 0;
+    g.attack('a', null); run(g, 0.5);
+    return { dmg: b.cfg.hp - b.hp, ev: g.events.find((e) => e.e === 'hit') };
+  };
+  const base = hit(); // 이 파일에서는 CRIT.chance가 0
+  assert.equal(base.ev.crit, false);
+  CRIT.chance = 1;
+  try {
+    const c = hit();
+    assert.equal(c.ev.crit, true);
+    assert.equal(c.dmg, Math.round(base.dmg * CRIT.mul));
+    assert.ok(c.dmg > base.dmg);
+  } finally { CRIT.chance = 0; }
 });

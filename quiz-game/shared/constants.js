@@ -20,6 +20,8 @@ export const COIN = {
   dropLockSec: 3.5, // 떨어진 동전은 이 시간 동안 아무도 못 줍는다 (그동안 깜빡임)
   dropOnNoAnswer: true, // 무응답도 틀린 것으로 보고 떨어뜨림
 };
+// 크리티컬: 맞을 때마다 이 확률로 피해가 배수로 커지고, 크리티컬일 때만 화면이 흔들린다
+export const CRIT = { chance: 0.1, mul: 1.5 };
 export const fmtScore = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 export const READ_SEC = 3; // 문제를 읽는 시간 (구역이 아직 잠겨 있음)
