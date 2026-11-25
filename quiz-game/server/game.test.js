@@ -739,3 +739,13 @@ test('공격봇: 봇끼리도 서로 공격한다. random으로 무작위 캐릭
   const hurt = [...g.players.values()].filter((p) => p.hp < p.cfg.hp || p.stunned || g.t < p.invUntil);
   assert.ok(hurt.length >= 3, `서로 싸운 봇 ${hurt.length}`);
 });
+
+test('공격형 봇도 문제를 풀고(구역으로 이동), 정지 봇은 풀지 않는다', () => {
+  const g = new Game(chars, quizzes);
+  g.coinsSpawned = COIN.maxTotal;
+  g.botsCanAttack = true;
+  g.join({ token: 'h', name: 'H', charId: 'blue' });
+  const fighters = Array.from({ length: 5 }, () => g.addBot('aggro', 'blue'));
+  g.ask(1); run(g, 3.1); run(g, 12);
+  assert.ok(fighters.every((b) => zoneAt('ox', b.x, b.y) !== null), '공격형도 어느 구역엔가 도착');
+});

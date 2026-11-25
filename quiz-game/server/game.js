@@ -190,7 +190,7 @@ export class Game {
       return { id: r.p.id, name: r.p.name, zone: r.zone, correct: r.correct, rank: r.correct ? r.rank : null, gain, dropped };
     });
     for (const p of this.players.values()) { // 문제를 푸는 봇: 틀린 구역에 있으면 동전을 떨어뜨림
-      if (p.isBot && p.botMode === 'wander' && p.connected && zoneAt(q.type, p.x, p.y) !== q.answer) this._dropCoins(p);
+      if (p.isBot && p.botMode !== 'idle' && p.connected && zoneAt(q.type, p.x, p.y) !== q.answer) this._dropCoins(p);
     }
     this.reveal = { answer: q.answer, results };
     this.phase = PHASE.REVEAL;
@@ -588,6 +588,24 @@ export class Game {
   // ---------- 더미 봇 ----------
   _botThink(p) {
     if (p.stunned || p.botMode === 'idle') { p.input = { mx: 0, my: 0, run: false }; return; }
+    // 문제를 푸는 중: 무작위로 구역을 하나 골라 그 안의 한 지점으로 걸어감
+    if (this.phase === PHASE.MOVING && this.question) { // 정지 봇만 빼고 모두 문제를 풂 (공격형은 가는 길에 사거리 안의 상대를 때림)
+      const q = this.question;
+      if (p.ai.q !== q.id) {
+        const z = ZONES[q.type][Math.floor(Math.random() * ZONES[q.type].length)];
+        const ang = rand(0, Math.PI * 2), d = Math.sqrt(Math.random()) * z.r * 0.65; // 가장자리에서 밀려도 원 안에 남도록
+        p.ai.q = q.id;
+        p.ai.tx = z.cx + Math.cos(ang) * d; p.ai.ty = z.cy + Math.sin(ang) * d;
+        p.ai.startAt = this.t + rand(0.5, 5); // 사람처럼 제각각 출발
+      }
+      const dx = p.ai.tx - p.x, dy = p.ai.ty - p.y, dist = Math.hypot(dx, dy);
+      p.input = this.t < p.ai.startAt || dist < 0.3 ? { mx: 0, my: 0, run: false } : { mx: dx / dist, my: dy / dist, run: false };
+      if (p.botMode === 'aggro' && this.botsCanAttack) {
+        const near = this._enemies(p).some((o) => Math.hypot(o.x - p.x, o.y - p.y) <= p.cfg.attack.range);
+        if (near) this._tryAttack(p, null);
+      }
+      return;
+    }
     const humans = this._enemies(p); // 공격형 봇은 봇끼리도 서로 공격
     if (p.botMode === 'aggro' && this.botsCanAttack && humans.length) {
       let best = null, bd = Infinity;
@@ -603,20 +621,6 @@ export class Game {
         p.input = { mx: 0, my: 0, run: false };
       }
       if (bd <= a.range) this._tryAttack(p, null);
-      return;
-    }
-    // 문제를 푸는 중: 무작위로 구역을 하나 골라 그 안의 한 지점으로 걸어감
-    if (p.botMode === 'wander' && this.phase === PHASE.MOVING && this.question) {
-      const q = this.question;
-      if (p.ai.q !== q.id) {
-        const z = ZONES[q.type][Math.floor(Math.random() * ZONES[q.type].length)];
-        const ang = rand(0, Math.PI * 2), d = Math.sqrt(Math.random()) * z.r * 0.65; // 가장자리에서 밀려도 원 안에 남도록
-        p.ai.q = q.id;
-        p.ai.tx = z.cx + Math.cos(ang) * d; p.ai.ty = z.cy + Math.sin(ang) * d;
-        p.ai.startAt = this.t + rand(0.5, 5); // 사람처럼 제각각 출발
-      }
-      const dx = p.ai.tx - p.x, dy = p.ai.ty - p.y, dist = Math.hypot(dx, dy);
-      p.input = this.t < p.ai.startAt || dist < 0.3 ? { mx: 0, my: 0, run: false } : { mx: dx / dist, my: dy / dist, run: false };
       return;
     }
     // 배회

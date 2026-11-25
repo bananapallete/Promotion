@@ -20,7 +20,8 @@ const game = new Game(characters, quizzes);
 window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
 const charIds = Object.keys(characters);
-for (let i = 0; i < 15; i++) game.addBot('wander', charIds[Math.floor(Math.random() * charIds.length)]); // 돌아다니기만 하고 공격하지 않는 봇
+game.botsCanAttack = true; // 기본 봇은 서로 싸우고, 문제 시간에는 구역으로 이동
+for (let i = 0; i < 15; i++) game.addBot('aggro', charIds[Math.floor(Math.random() * charIds.length)]);
 
 let last = performance.now();
 setInterval(() => {
@@ -199,6 +200,7 @@ function pickChar(id) {
 }
 $('#charbar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pickChar(b.dataset.id); });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
+$('#b-attack').checked = true;
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });
 $('#gear').addEventListener('click', () => { $('#panel').hidden = !$('#panel').hidden; });
 $('#panel').addEventListener('click', (e) => {

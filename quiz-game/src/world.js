@@ -264,6 +264,13 @@ export class WorldScene extends Phaser.Scene {
       v.bar.clear().setDepth(v.y + 1);
       v.bar.fillStyle(0x000000, 0.35).fillRect(bx - bw / 2 - 1, by - 1, bw + 2, bh + 2);
       v.bar.fillStyle(p.hp / p.mhp > 0.3 ? 0x2ecc71 : 0xe74c3c, 1).fillRect(bx - bw / 2, by, bw * (p.hp / p.mhp), bh);
+      if (p.mam) { // 탄창: 체력바 아래 칸 (가득 = 주황, 장전 중인 칸은 차오름)
+        const gap = 2, sw = (bw - gap * (p.mam - 1)) / p.mam, y0 = by + bh + 3;
+        for (let i = 0; i < p.mam; i++) {
+          const x0 = bx - bw / 2 + i * (sw + gap), f = i < p.am ? 1 : i === p.am ? p.amf : 0;
+          v.bar.fillStyle(0x000000, 0.4).fillRect(x0 - 1, y0 - 1, sw + 2, 7).fillStyle(0xffb020, 1).fillRect(x0, y0, sw * f, 5);
+        }
+      }
       v.name.setPosition(bx, by - 3).setDepth(v.y + 1);
       v.status.setText(p.st ? '기절!' : '').setPosition(bx, by - 24).setDepth(v.y + 1);
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
