@@ -56,7 +56,8 @@
       "dmg": 4,
       "finish": 10,
       "range": 6
-    }
+    },
+    "rec": "기본"
   },
   "blue_ranged": {
     "name": "파란티 원거리",
@@ -531,7 +532,8 @@
       "inv": true,
       "fx": "flurry",
       "range": 1.5
-    }
+    },
+    "rec": "쉬움"
   },
   "girl_short": {
     "name": "단발 소녀",
@@ -635,7 +637,8 @@
       "thick": 0.8,
       "sec": 5,
       "range": 3
-    }
+    },
+    "rec": "튼튼"
   },
   "cat": {
     "name": "고양이",

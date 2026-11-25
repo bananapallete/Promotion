@@ -19,6 +19,17 @@ export function dpsOf(c) {
   return { basic, dps: basic * hit * (a.multi ? AREA : 1) + skill };
 }
 
+/** 선택 화면의 별 1~5: 공격(DPS)·체력·걷기 속도를 21종 안에서의 순위로 환산 */
+export function starsOf(chars) {
+  const rows = Object.entries(chars).map(([id, c]) => ({ id, atk: dpsOf(c).dps, hp: c.hp, spd: c.walkSpeed }));
+  const out = Object.fromEntries(rows.map((r) => [r.id, {}]));
+  for (const k of ['atk', 'hp', 'spd']) {
+    const sorted = [...rows].sort((a, b) => a[k] - b[k]);
+    sorted.forEach((r, i) => { out[r.id][k] = 1 + Math.min(4, Math.floor((i / rows.length) * 5)); });
+  }
+  return out;
+}
+
 /** 전투력 지수: sqrt(체력 × DPS) × 사거리 보정 × 이동 속도 보정 */
 export function powerIndex(c) {
   return Math.sqrt(c.hp * (1 + (c.guard ?? 0) * 0.5) * dpsOf(c).dps) * (1 + 0.1 * (c.attack.range - 1.2)) * (c.walkSpeed / 6) ** 0.3;

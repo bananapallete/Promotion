@@ -2,6 +2,7 @@
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
+import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
@@ -216,7 +217,7 @@ function pickChar(id) {
 }
 $('#charbar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pickChar(b.dataset.id); });
 // 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
-const picker = mountPicker($('#pickroot'), Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill }])), { spriteUrl: hooks.spriteUrl, selected: charIds[0] });
+const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, selected: charIds[0] });
 $('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;

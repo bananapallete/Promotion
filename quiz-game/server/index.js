@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server } from 'socket.io';
 import { Game } from './game.js';
+import { starsOf } from './balance.js';
 import { BROADCAST_HZ, TICK_HZ } from '../shared/constants.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,8 +30,9 @@ function lanOrigin() {
   return null;
 }
 
+const stars = starsOf(characters);
 app.get('/api/characters', (_req, res) => {
-  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', role: c.role, atkInfo: c.atkInfo, ultName: c.ult?.name, sk: c.skill, runGauge: c.runGauge, tint: c.tint || null, scale: c.scale || 1 }])));
+  res.json(Object.fromEntries(Object.entries(characters).map(([id, c]) => [id, { name: c.name, sprite: c.sprite, type: c.attack.type, skill: c.skill?.type || 'run', role: c.role, atkInfo: c.atkInfo, ultName: c.ult?.name, rec: c.rec, stars: stars[id], sk: c.skill, runGauge: c.runGauge, tint: c.tint || null, scale: c.scale || 1 }])));
 });
 app.get('/api/info', (_req, res) => res.json({ lanOrigin: lanOrigin(), publicUrl: process.env.PUBLIC_URL || null, hostKeyRequired: !!HOST_KEY }));
 
