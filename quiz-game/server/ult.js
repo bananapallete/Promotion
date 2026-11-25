@@ -1,11 +1,11 @@
 // 궁극기: 때리거나 맞으면 충전되고, 가득 차면 쓸 수 있다. 종류(type)는 6가지이고 캐릭터마다 수치만 다르다.
 //   rush 돌진(닿는 상대 모두) · burst 내 주변 범위(화상·회전 가능) · buff 일정 시간 강화(은신 포함) · barrage 투사체 난사 · meteor 예고 후 폭발 · zone 바닥 범위 지속 피해(진흙은 느려짐+회복)
-//   channel 서서 시전(채널링: 느려지고 맞으면 끊김) · charm 매혹 · orbit 몸 주위를 도는 별 · snipe 조준 뒤 관통 빔
+//   slam 제자리에서 원뿔 내려찍기를 연달아(오크) · channel 서서 시전(채널링: 느려지고 맞으면 끊김) · charm 매혹 · orbit 몸 주위를 도는 별 · snipe 조준 뒤 관통 빔
 //   pull 혀로 끌어당김 · wave 맵을 쓸고 가는 파도 · magnet 동전 끌어당김 · chain 순간이동 연타 · wall 막는 벽
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -81,6 +81,24 @@ const RUN = {
         if (p.channel !== ch || p.stunned) return;
         g.events.push({ e: 'burst', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, fx: u.fx });
         hitArea(g, p, p.x, p.y, u.radius, u.dmg, 0, u.fx, 0, u.burn ? (o) => { o.burnUntil = g.t + u.burn.sec; o.burnBy = p.id; o.burnNext = g.t + u.burn.tick; o.burnDmg = u.burn.dmg; } : undefined);
+      });
+    }
+  },
+
+  slam(g, p, u, dx, dy) { // 제자리(못 움직임)에서 원뿔 내려찍기를 hits 목록대로 연달아. 기절하면 끊김
+    const ch = p.channel = { until: g.t + u.sec, move: 0 }, cos = Math.cos((u.arc * Math.PI) / 180);
+    for (const h of u.hits) {
+      later(g, h.at, () => {
+        if (p.channel !== ch || p.stunned) return;
+        let ax = dx, ay = dy; // 가까운 상대가 있으면 그쪽으로, 없으면 처음 방향
+        const t = g._enemies(p).filter((o) => !g._stealthed(o) && Math.hypot(o.x - p.x, o.y - p.y) <= h.range).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
+        if (t) { const d = Math.hypot(t.x - p.x, t.y - p.y) || 1; ax = (t.x - p.x) / d; ay = (t.y - p.y) / d; }
+        if (Math.abs(ax) > 0.15) p.face = ax > 0 ? 1 : -1;
+        g.events.push({ e: 'atk', id: p.id, dx: r2(ax), dy: r2(ay), kind: 'melee', fx: 'smash', arc: u.arc, step: 2, range: h.range, len: h.range });
+        for (const o of g._enemies(p)) {
+          const vx = o.x - p.x, vy = o.y - p.y, d = Math.hypot(vx, vy);
+          if (d <= h.range && d > 0 && (vx * ax + vy * ay) / d >= cos) g._applyHit(o, p, h.dmg, 0, ax, ay, 'smash');
+        }
       });
     }
   },

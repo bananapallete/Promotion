@@ -359,13 +359,29 @@
     "role": "tank",
     "atkInfo": "예고 후 넓은 강타",
     "ult": {
-      "name": "분노",
-      "need": 80,
-      "type": "buff",
-      "sec": 7,
-      "dmg": 1.7,
-      "spd": 1.15,
-      "range": 3
+      "name": "대지 분쇄",
+      "need": 90,
+      "type": "slam",
+      "sec": 1.8,
+      "arc": 28,
+      "hits": [
+        {
+          "at": 0.35,
+          "range": 4,
+          "dmg": 6
+        },
+        {
+          "at": 0.85,
+          "range": 5,
+          "dmg": 6
+        },
+        {
+          "at": 1.35,
+          "range": 6.5,
+          "dmg": 14
+        }
+      ],
+      "range": 6
     }
   },
   "princess": {

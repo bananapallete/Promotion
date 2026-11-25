@@ -1073,3 +1073,19 @@ test('오크: 길고 좁은 원뿔(사거리 4, ±28°) — 정면 멀리는 맞
   assert.ok(B.hp < B.cfg.hp, '정면 3.6칸 맞음');
   assert.equal(C.hp, C.cfg.hp, '옆은 안 맞음');
 });
+
+test('대지 분쇄(오크): 제자리에서 세 번 내려찍고 사거리가 4 → 5 → 6.5칸으로 늘어난다', () => {
+  const { g, A, B } = duo('orc', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' }), D = g.join({ token: 'd', name: 'D', charId: 'blue' });
+  A.x = 6; A.y = 10; B.x = 9; B.y = 10; C.x = 12.2; C.y = 10; D.x = 6; D.y = 13; // B 3칸, C 6.2칸, D 바로 옆(90°)
+  for (const o of [B, C, D]) o.invUntil = 0;
+  A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
+  assert.ok(A.channel && A.channel.move === 0, '시전 중 못 움직임');
+  g.setInput('a', { mx: 0, my: 1, run: false }); const y0 = A.y;
+  run(g, 1.7);
+  assert.ok(Math.abs(A.y - y0) < 0.1, '못 움직임');
+  g.setInput('a', { mx: 0, my: 0, run: false }); run(g, 0.5);
+  assert.equal(B.cfg.hp - B.hp, 26, '가까운 적은 6+6+14'); assert.equal(C.cfg.hp - C.hp, 14, '멀리 있는 적은 마지막 일격만');
+  assert.equal(D.hp, D.cfg.hp, '옆은 안 맞음');
+  assert.equal(A.channel, null);
+});
