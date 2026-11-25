@@ -533,18 +533,14 @@
     "scale": 0.85,
     "radius": 0.42,
     "hp": 50,
-    "walkSpeed": 6,
-    "runSpeed": 9,
+    "walkSpeed": 7,
+    "runSpeed": 10.5,
     "runGauge": 5,
     "runRecharge": 10,
     "stunSec": 2,
     "invincibleSec": 3,
     "skill": {
-      "type": "dash",
-      "distance": 4,
-      "duration": 0.35,
-      "cooldown": 5,
-      "pass": true
+      "type": "run"
     },
     "attack": {
       "type": "ranged",

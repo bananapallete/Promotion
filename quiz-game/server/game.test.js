@@ -597,17 +597,16 @@ test('귀상어 박치기: 부채꼴 ±90° 안의 상대를 모두 때린다', 
   assert.equal(C.hp, C.cfg.hp - 3);
 });
 
-test('개구리 도약: 4칸을 다른 캐릭터를 뛰어넘어 이동한다 (충돌 없음)', () => {
-  const { g, A, B } = duo('frog', 'blue');
-  B.x = 12; B.y = 10;
+test('개구리: 도약은 없고 달리기(부스트) 스킬, 자동차라 기본 속도가 빠르다', () => {
+  const { g, A } = duo('frog', 'blue');
+  assert.equal(chars.frog.skill.type, 'run');
+  assert.ok(chars.frog.walkSpeed > chars.blue.walkSpeed);
   g.setInput('a', { mx: 1, my: 0, run: false });
-  g.skill('a');
-  run(g, 0.2);
-  assert.ok(A.x > 11.5 && A.x < 13, `도약 도중 상대와 겹침 허용: ${A.x}`);
-  run(g, 0.4);
-  assert.ok(A.x > 14, `상대 너머까지: ${A.x}`);
-  assert.equal(B.hp, B.cfg.hp, '도약은 피해 없음');
-  assert.ok(Math.hypot(A.x - B.x, A.y - B.y) >= A.cfg.radius + B.cfg.radius - 0.01, '착지 후엔 겹치지 않음');
+  g.skill('a'); // 대쉬 입력은 아무 일도 안 함
+  assert.equal(g._dashing(A), false);
+  g.setInput('a', { mx: 1, my: 0, run: true });
+  const x0 = A.x; g.update(DT);
+  assert.ok(Math.abs(A.x - x0 - chars.frog.runSpeed * DT) < 1e-6, '달리면 runSpeed');
 });
 
 test('개구리 혀: 사거리 3.5의 직선, 맞으면 밀리지 않고 끌려온다', () => {
