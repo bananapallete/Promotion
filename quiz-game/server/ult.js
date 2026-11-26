@@ -101,13 +101,14 @@ const RUN = {
   },
 
   stage(g, p, u, dx, dy) { // 무대 펼치기: 제자리에서 sec초 춤추며, 무대(반경) 안 적에게 tick마다 피해 (소수 피해는 모아서 1 이상이 될 때 적용)
-    const ch = p.channel = { until: g.t + u.sec, move: 0 }, x = p.x, y = p.y;
-    g.events.push({ e: 'stageOpen', id: p.id, x: r2(x), y: r2(y), r: u.radius, sec: u.sec });
+    const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: 0, armor: true }, x = p.x, y = p.y, ry = u.radiusY ?? u.radius; // armor: 춤추는 동안 밀리지 않음
+    p.shield = { until: g.t + intro + u.sec, mul: u.shield ?? 0.5 }; // 받는 피해 감소
+    g.events.push({ e: 'stageOpen', id: p.id, x: r2(x), y: r2(y), r: u.radius, ry, sec: u.sec, intro });
     for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {
-      later(g, i * u.tick, () => {
+      later(g, intro + i * u.tick, () => { // 무대가 완성된 뒤(intro) 피해 시작
         if (p.channel !== ch || p.stunned) return;
         for (const o of g._enemies(p)) {
-          if (o.stunned || Math.hypot(o.x - x, o.y - y) > u.radius + o.cfg.radius) continue;
+          if (o.stunned || ((o.x - x) / (u.radius + o.cfg.radius)) ** 2 + ((o.y - y) / (ry + o.cfg.radius)) ** 2 > 1) continue; // 가로 radius × 세로 radiusY 타원
           o.stageAcc = (o.stageAcc || 0) + u.dmg;
           if (o.stageAcc >= 1) { const n = Math.floor(o.stageAcc); o.stageAcc -= n; hit(g, o, p, n, 0, dx, dy, u.fx); }
         }
@@ -327,7 +328,7 @@ const RUN = {
     const hx = horiz ? u.thick / 2 : u.len / 2, hy = horiz ? u.len / 2 : u.thick / 2;
     const x = Math.min(g.map.w - hx, Math.max(hx, p.x + sx * u.dist)), y = Math.min(g.map.h - hy, Math.max(hy, p.y + sy * u.dist));
     const id = ++g.wallSeq;
-    g.walls.set(id, { id, owner: p.id, x, y, hx, hy, until: g.t + u.sec });
+    g.walls.set(id, { id, owner: p.id, x, y, hx, hy, until: g.t + u.sec, vx: sx * (u.speed ?? 0), vy: sy * (u.speed ?? 0), moveAt: g.t + 0.5, blast: u.blast }); // 0.5초 뒤부터 천천히 전진
     g.events.push({ e: 'wall', id: p.id, x: r2(x), y: r2(y), hx: r2(hx), hy: r2(hy) });
   },
 
@@ -411,7 +412,12 @@ export function updateUlts(g) {
       if (by) hit(g, p, by, p.burnDmg ?? 2, 0, 0, 0, 'crescent');
     }
   }
-  for (const w of [...g.walls.values()]) if (g.t >= w.until) g.walls.delete(w.id);
+  advanceWalls(g);
+  for (const w of [...g.walls.values()]) if (g.t >= w.until) { // 지속시간이 끝나면 폭파
+    g.walls.delete(w.id);
+    const ow = g.players.get(w.owner);
+    if (w.blast && ow) { g.events.push({ e: 'wallBlast', x: r2(w.x), y: r2(w.y), r: w.blast.r }); hitArea(g, ow, w.x, w.y, w.blast.r, w.blast.dmg, w.blast.knock ?? 0, 'shock'); }
+  }
   for (const p of g.players.values()) {
     if (p.baseCfg && (!p.buff || g.t >= p.buff.until)) { p.cfg = p.baseCfg; p.baseCfg = null; } // 진화 끝: 원래 크기
     const o = p.orbit;
@@ -425,6 +431,28 @@ export function updateUlts(g) {
         hit(g, e, p, o.dmg, 0, (e.x - sx) || 1, e.y - sy, 'star');
       }
     }
+  }
+}
+
+/** 성벽 전진: 벽 앞의 사람들을 같은 방향으로 밀어낸다. 밀려난 자리가 맵 끝이라 더 못 가는 사람이 있으면 벽도 그 자리에서 멈춘다(자리가 나면 다시 전진) */
+function advanceWalls(g) {
+  const dt = Math.min(0.1, g.t - (g._wlT ?? g.t)); g._wlT = g.t;
+  for (const w of g.walls.values()) {
+    if ((!w.vx && !w.vy) || g.t < w.moveAt) continue;
+    const nx = w.x + w.vx * dt, ny = w.y + w.vy * dt;
+    if (nx - w.hx < 0 || nx + w.hx > g.map.w || ny - w.hy < 0 || ny + w.hy > g.map.h) continue; // 벽이 맵 끝에 닿음
+    const pushed = []; let stuck = false;
+    for (const o of g.players.values()) {
+      if (o.id === w.owner || !o.connected) continue;
+      const r = o.cfg.radius;
+      if (w.hx + r - Math.abs(o.x - nx) <= 0 || w.hy + r - Math.abs(o.y - ny) <= 0) continue;
+      pushed.push([o, o.x, o.y]);
+      if (Math.abs(w.vx) > Math.abs(w.vy)) o.x = w.vx > 0 ? nx + w.hx + r : nx - w.hx - r; else o.y = w.vy > 0 ? ny + w.hy + r : ny - w.hy - r;
+      g._clamp(o);
+      if (w.hx + r - Math.abs(o.x - nx) > 1e-6 && w.hy + r - Math.abs(o.y - ny) > 1e-6) stuck = true; // 맵 끝에 막혀 더 못 밀림
+    }
+    if (stuck) { for (const [o, x, y] of pushed) { o.x = x; o.y = y; } continue; }
+    w.x = nx; w.y = ny;
   }
 }
 

@@ -28,6 +28,7 @@ for (const id of ids.filter((i) => !only.length || only.includes(i))) {
       const b = g.addBot('idle', 'blue'), o = b.id ? b : g.players.get(b);
       o.x = m.x + dx; o.y = m.y + dy; o.name = ''; o.isBot = false; o.cfg = { ...o.cfg, hp: 9999 }; o.hp = 9999;
     });
+    if (id === 'labrador') { g.coinsSpawned = 0; [[-3, 2], [4, -2], [5, 3], [-5, -2], [2, 5], [6, 0], [-6, 3]].forEach(([dx, dy]) => { const c = g.spawnCoin(m.x + dx, m.y + dy); if (c) c.readyAt = 0; }); } // 보물 탐지: 주변 동전이 날아와 흡수되는 모습
     const cam = w.cameras.main; cam.setZoom = function () { return this; }; cam.zoom = 1.25;
   }, id);
   const setup = (Date.now() - t0) / 1000;
@@ -37,10 +38,10 @@ for (const id of ids.filter((i) => !only.length || only.includes(i))) {
     const g = window.__game; let k = 1; g.setInput('me', { mx: dx, my: dy, run: false });
     setInterval(() => { k = -k; g.setInput('me', { mx: dx * k, my: dy * k, run: false }); }, 1600);
   }, MOVE[id]);
-  await page.waitForTimeout(id === 'chick' ? 5200 : id === 'chicken' ? 6200 : id === 'gaga' ? 6200 : 4200);
+  await page.waitForTimeout(id === 'chick' ? 5200 : id === 'chicken' ? 6200 : id === 'gaga' ? 8200 : 4200);
   await ctx.close();
   const src = path.join(tmp, readdirSync(tmp)[0]);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(setup + 0.25), '-i', src, '-t', id === 'chick' ? '5' : id === 'chicken' || id === 'gaga' ? '6' : '4', '-vf', 'scale=480:-2,fps=24', '-c:v', 'libx264', '-crf', '30', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', path.join(out, `${id}.mp4`)]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(setup + 0.25), '-i', src, '-t', id === 'chick' ? '5' : id === 'gaga' ? '8' : id === 'chicken' ? '6' : '4', '-vf', 'scale=480:-2,fps=24', '-c:v', 'libx264', '-crf', '30', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', path.join(out, `${id}.mp4`)]);
   console.log(id, 'ok', readFileSync(path.join(out, `${id}.mp4`)).length >> 10, 'KB');
 }
 rmSync(tmp, { recursive: true, force: true });

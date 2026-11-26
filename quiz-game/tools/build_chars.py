@@ -17,7 +17,7 @@ import build_sheets as bs
 
 REF_SIZE = 158  # 기본(blue) 캐릭터 idle의 덩치(면적 제곱근)
 # 실제 크기 비율: 기준(1.0) 대비 화면에 보이는 크기. 줄여도 도트 크기(DOT)는 그대로라서 그림 자체를 더 성긴 도트로 다시 찍는다
-SIZE = {"chick": 0.38, "chicken": 0.5, "frog": 0.7, "shiba": 0.8, "labrador": 0.9, "pig": 0.9, "hippo": 0.8}
+SIZE = {"diva": 0.8, "dv2": 0.8, "chick": 0.38, "chicken": 0.5, "frog": 0.7, "shiba": 0.8, "labrador": 0.9, "pig": 0.9, "hippo": 0.8}
 DOT = 7  # 셀 안에서 도트 한 개의 크기(px). 파란티 등 기본 캐릭터의 도트 크기와 같다
 MOTIONS = {"idle": 4, "walk": 6, "run": 6, "attack": 6, "die": 6}  # 모션 → 프레임 수 (attack·die는 2줄 x 3칸)
 

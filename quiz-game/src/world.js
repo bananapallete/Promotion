@@ -34,6 +34,7 @@ export class WorldScene extends Phaser.Scene {
 
   preload() {
     this.load.image('diva-stage', hooks.fxUrl('diva_stage')); // 크림슨 디바 무대 장비
+    this.load.spritesheet('diva-intro', hooks.fxUrl('diva_intro'), { frameWidth: 48, frameHeight: 66 });
     this.load.spritesheet('diva-spot', hooks.fxUrl('diva_spot'), { frameWidth: 24, frameHeight: 22 });
     this.load.spritesheet('diva-amp', hooks.fxUrl('diva_amp'), { frameWidth: 26, frameHeight: 29 });
     this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
@@ -74,7 +75,7 @@ export class WorldScene extends Phaser.Scene {
 
     for (const s of SPRITES) {
       const n = sprites[s]?.idle ? sprites[s] : null; // 없으면 blue(constants의 프레임 수)
-      if (sprites[s]?.ult) this.anims.create({ key: `${s}-ult`, frames: this.anims.generateFrameNumbers(`${s}-ult`, { start: 0, end: sprites[s].ult - 1 }), frameRate: s === 'shiba' ? 9 : 16, repeat: -1 }); // 채널링 궁극기 모션
+      if (sprites[s]?.ult) this.anims.create({ key: `${s}-ult`, frames: this.anims.generateFrameNumbers(`${s}-ult`, { start: 0, end: sprites[s].ult - 1 }), frameRate: s === 'shiba' ? 9 : s === 'diva' ? 8 : 16, repeat: -1 }); // 채널링 궁극기 모션
       if (sprites[s]?.morph) this.anims.create({ key: `${s}-morph`, frames: this.anims.generateFrameNumbers(`${s}-morph`, { start: 0, end: sprites[s].morph - 1 }), frameRate: 12, repeat: 0 }); // 병아리 → 불꽃 → 피닉스 변신
       if (sprites[s]?.die) this.anims.create({ key: `${s}-die`, frames: this.anims.generateFrameNumbers(`${s}-die`, { start: 0, end: sprites[s].die - 1 }), frameRate: 9, repeat: 0 });
       SPRITE.attackSteps.forEach((st, i) => {
@@ -269,6 +270,8 @@ export class WorldScene extends Phaser.Scene {
       if (['channel', 'charm', 'magnet', 'tether', 'stage', 'brood', 'rally'].includes(e.t)) auraPulse(this, { ...e, r: e.r || 2.25 }, BU, e.t === 'charm' ? [0xffe6f2, 0xffb3d9, 0xff7ab8, 0xc94c8a] : undefined);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'wallBlast') {
+      shockRing(this, e, BU); rangeDisc(this, e.x, e.y, e.r, BU);
     } else if (e.e === 'chain') {
       chainFx(this, e, BU);
     } else if (e.e === 'stageOpen') {

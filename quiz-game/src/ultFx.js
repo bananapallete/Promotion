@@ -389,7 +389,10 @@ export class WallLayer {
       if (!v) v = this._make(w);
       v.w = w;
     }
-    for (const v of [...this.views.values()]) if (!ids.has(v.id)) { v.parts.forEach((p) => p.destroy()); this.views.delete(v.id); }
+    for (const v of [...this.views.values()]) if (!ids.has(v.id)) { // 사라질 땐 벽돌이 튀어 흩어짐
+      v.parts.forEach((p) => this.s.tweens.add({ targets: p, x: p.x + (Math.random() - 0.5) * 120, y: p.y - 30 - Math.random() * 60, alpha: 0, duration: 380, ease: 'Quad.easeOut', onComplete: () => p.destroy() }));
+      this.views.delete(v.id);
+    }
   }
   _make(w) {
     const s = this.s, bu = this.bu, key = blockTex(s), horizLong = w.hy > w.hx; // 긴 쪽 방향으로 벽돌을 늘어놓음
@@ -397,7 +400,8 @@ export class WallLayer {
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n - 0.5, x = w.x * bu + (horizLong ? 0 : t * len), y = w.y * bu + (horizLong ? t * len : 0) + 7 * DOT;
       const sp = s.add.image(x, y - 30, key).setScale(DOT).setOrigin(0.5, 1).setDepth(FXD).setAlpha(0);
-      s.tweens.add({ targets: sp, y, alpha: 1, duration: 220, delay: i * 40, ease: 'Back.easeOut' }); // 땅에서 솟아남
+      sp.relX = x - w.x * bu; sp.relY = y - w.y * bu; sp.ready = false;
+      s.tweens.add({ targets: sp, y, alpha: 1, duration: 220, delay: i * 40, ease: 'Back.easeOut', onComplete: () => { sp.ready = true; } }); // 땅에서 솟아남
       parts.push(sp); rows.push(sp);
     }
     shockRing(s, { x: w.x, y: w.y, r: 1.6 }, bu);
@@ -406,6 +410,7 @@ export class WallLayer {
     return v;
   }
   update() {
+    for (const v of this.views.values()) for (const p of v.parts) if (p.ready) p.setPosition(v.w.x * this.bu + p.relX, v.w.y * this.bu + p.relY); // 전진하는 벽을 따라감
     for (const v of this.views.values()) if (v.w.l < 0.5) v.parts.forEach((p) => p.setAlpha(Math.max(0, v.w.l / 0.5) * (Math.floor(performance.now() / 70) % 2 ? 1 : 0.5)));
   }
 }
@@ -645,36 +650,45 @@ export function bhBlast(scene, e, BU) {
 }
 
 // ---------- 무대 펼치기: 체크무늬 무대 + 도는 조명 + 반짝임 ----------
-function stageTex(scene, Rd) {
-  return tex(scene, `ux-stage-${Rd}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => {
-    for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
-      const d = Math.hypot(x + 0.5 - w / 2, y + 0.5 - w / 2) / Rd; if (d > 1) continue;
+function stageTex(scene, Rx, Ry) { // 가로 Rx × 세로 Ry(도트) 타원 무대 바닥
+  return tex(scene, `ux-stage-${Rx}x${Ry}`, 2 * Rx + 2, 2 * Ry + 2, (put, w, h) => {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const d = Math.hypot((x + 0.5 - w / 2) / Rx, (y + 0.5 - h / 2) / Ry); if (d > 1) continue;
       put(x, y, d > 0.9 ? [255, 190, 190] : ((x >> 2) + (y >> 2)) % 2 ? [90, 14, 34] : [158, 30, 56], d > 0.9 ? 235 : 170);
     }
   });
 }
 export function stageFx(scene, e, BU) {
-  const x = e.x * BU, y = e.y * BU, R = e.r * BU, Rd = Math.max(6, Math.round(R / DOT)), floor = scene.add.image(x, y, stageTex(scene, Rd)).setScale(DOT).setDepth(-43);
-  scene.tweens.add({ targets: floor, alpha: 0, delay: e.sec * 1000 - 400, duration: 400, onComplete: () => floor.destroy() });
-  // 무대 장비(받은 도트): 뒤쪽에 무대 배경이 솟아오르고, 양옆 앰프와 위쪽 조명이 움직임 (도트 크기 = PX)
-  const back = scene.add.image(x, y - R * 0.78, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD - 1);
-  scene.tweens.add({ targets: back, scaleY: DOT, duration: 350, ease: 'Back.easeOut' });
-  const parts = [back, floor];
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU, RY = (e.ry ?? e.r) * BU, intro = (e.intro || 0) * 1000, total = intro + e.sec * 1000;
+  const floor = scene.add.image(x, y, stageTex(scene, Math.max(6, Math.round(R / DOT)), Math.max(4, Math.round(RY / DOT)))).setScale(DOT).setDepth(-43).setAlpha(0);
+  scene.tweens.add({ targets: floor, alpha: 1, duration: Math.max(200, intro * 0.5) });
+  scene.tweens.add({ targets: floor, alpha: 0, delay: total - 400, duration: 400, onComplete: () => floor.destroy() });
+  // 무대 장비(받은 도트): 등장 모션(intro) 동안 무대가 한 단계씩 지어지고, 완성되면 배경·앰프·조명이 움직임 (도트 크기 = PX)
+  const by = y + RY * 0.4, parts = [floor]; // 무대 배경의 아랫단을 범위 중앙(디바 발밑) 바로 뒤에 둬서, 디바가 무대 위에서 춤추는 것처럼 보임
+  const build = scene.add.sprite(x, by, 'diva-intro', 0).setOrigin(0.5, 1).setScale(DOT).setDepth(FXD - 1); parts.push(build);
+  const back = scene.add.image(x, by, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD - 1).setVisible(false); parts.push(back);
+  if (intro) {
+    const n = 6, step = (intro * 0.85) / n;
+    for (let i = 1; i < n; i++) scene.time.delayedCall(step * i, () => build.active && build.setFrame(i));
+    scene.time.delayedCall(intro * 0.85, () => { if (!back.active) return; build.setVisible(false); back.setVisible(true); scene.tweens.add({ targets: back, scaleY: DOT, duration: intro * 0.15, ease: 'Back.easeOut' }); });
+  } else { build.setVisible(false); back.setVisible(true).setScale(DOT); }
   for (const sx of [-1, 1]) {
-    const amp = scene.add.sprite(x + sx * R * 0.88, y - R * 0.2, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD - 1).play('diva-amp'); parts.push(amp);
-    const spot = scene.add.sprite(x + sx * R * 0.5, y - R * 1.05, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, DOT).setDepth(FXD + 1).setAlpha(0.9).play('diva-spot'); parts.push(spot);
+    const amp = scene.add.sprite(x + sx * R * 0.8, y + RY * 0.35, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD - 1).setAlpha(0).play('diva-amp'); parts.push(amp);
+    const spot = scene.add.sprite(x + sx * R * 0.5, by - 40 * DOT * 0.5, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, DOT).setDepth(FXD + 1).setAlpha(0).play('diva-spot'); parts.push(spot);
+    scene.tweens.add({ targets: [amp, spot], alpha: { from: 0, to: 0.95 }, delay: intro, duration: 250 });
   }
-  scene.tweens.add({ targets: parts.filter((o) => o !== floor), alpha: 0, delay: e.sec * 1000 - 400, duration: 400, onComplete: () => parts.forEach((o) => o.destroy()) });
+  scene.tweens.add({ targets: parts.filter((o) => o !== floor), alpha: 0, delay: total - 400, duration: 400, onComplete: () => parts.forEach((o) => o.destroy()) });
   const BEAM = [0xff7ad9, 0x7ad9ff, 0xffe27a];
-  drawLoop(scene, e.sec * 1000, (g, u) => {
-    const t = u * e.sec, fade = Math.min(1, (1 - u) * e.sec / 0.4), open = Math.min(1, u * e.sec / 0.25);
+  drawLoop(scene, total, (g, u) => {
+    const tt = u * total / 1000, t = Math.max(0, tt - intro / 1000), fade = Math.min(1, (total / 1000 - tt) / 0.4), open = Math.min(1, t / 0.25) * (tt >= intro / 1000 ? 1 : 0);
+    if (!open) return;
     for (let k = 0; k < 3; k++) { // 도는 조명
-      const a = t * 2.2 + k * 2.094;
-      for (let r = 12; r < R * open; r += 9) sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82, 6 + r / 40, BEAM[k], 0.55 * fade);
+      const a = t * 1.1 + k * 2.094; // 춤 속도에 맞춰 절반 속도
+      for (let r = 12; r < R * open; r += 9) { const px = x + Math.cos(a) * r * 1, py = y + Math.sin(a) * r * (RY / R); sq(g, px, py, 6 + r / 40, BEAM[k], 0.55 * fade); }
     }
     for (let i = 0; i < 16; i++) { // 반짝임·떠오르는 음표 점
-      const ph = (i * 0.37 + t * 0.9) % 1, a = i * 2.4 + 0.5, r = R * (0.25 + 0.7 * ((i * 53) % 10) / 10);
-      sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82 - ph * 50, 6, BEAM[i % 3], (1 - ph) * fade);
+      const ph = (i * 0.37 + t * 0.45) % 1, a = i * 2.4 + 0.5, r = 0.25 + 0.7 * ((i * 53) % 10) / 10;
+      sq(g, x + Math.cos(a) * R * r, y + Math.sin(a) * RY * r - ph * 50, 6, BEAM[i % 3], (1 - ph) * fade);
     }
   }, FXD);
 }

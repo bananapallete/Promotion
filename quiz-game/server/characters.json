@@ -429,7 +429,7 @@
       "reload": 1.5
     },
     "role": "ranged",
-    "atkInfo": "반짝 연사, 3번 맞으면 매혹",
+    "atkInfo": "반짝 연사, 3타 매혹",
     "ult": {
       "name": "매혹",
       "need": 90,
@@ -656,7 +656,7 @@
     },
     "guard": 0.4,
     "role": "tank",
-    "atkInfo": "긴 찌르기, 방패로 40% 막음",
+    "atkInfo": "긴 찌르기, 방패 40% 방어",
     "ult": {
       "name": "방패 성벽",
       "need": 90,
@@ -664,8 +664,14 @@
       "dist": 2,
       "len": 4,
       "thick": 0.8,
-      "sec": 5,
-      "range": 3
+      "sec": 6,
+      "range": 3,
+      "speed": 1.1,
+      "blast": {
+        "r": 2.6,
+        "dmg": 10,
+        "knock": 3
+      }
     },
     "rec": "튼튼"
   },
@@ -701,7 +707,7 @@
       "reload": 0.9
     },
     "role": "speed",
-    "atkInfo": "고속 할퀴기, 크리티컬 잘 터짐",
+    "atkInfo": "빠른 할퀴기, 크리 확률↑",
     "ult": {
       "name": "그림자",
       "need": 80,
@@ -861,7 +867,7 @@
       "reload": 1.5
     },
     "role": "speed",
-    "atkInfo": "혀 공격, 3번 맞으면 혀로 묶임",
+    "atkInfo": "혀 공격, 3번 맞으면 묶임",
     "ult": {
       "name": "혀 올가미",
       "need": 90,
@@ -1187,11 +1193,13 @@
       "type": "stage",
       "sec": 5,
       "tick": 0.05,
-      "radius": 3.2,
+      "radius": 3.4,
       "dmg": 0.35,
-      "fx": "note"
-    },
-    "scale": 1.67
+      "fx": "note",
+      "radiusY": 1.9,
+      "intro": 2,
+      "shield": 0.5
+    }
   },
   "nurse": {
     "name": "간호사",
@@ -1231,7 +1239,7 @@
       "reload": 1.8
     },
     "role": "support",
-    "atkInfo": "범위 폭발, 아군 회복 · 적 피해",
+    "atkInfo": "범위 폭발, 아군 회복",
     "ult": {
       "name": "응원과 침묵",
       "need": 100,

@@ -1109,12 +1109,15 @@ test('무대 펼치기(크림슨 디바): 제자리에서 5초 춤추며 무대 
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 20; C.y = 10; B.invUntil = 0; C.invUntil = 0; A.ult = A.cfg.ult.need;
   g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null); const hp = B.hp, x0 = A.x;
-  run(g, 2.6); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
+  run(g, 1.8); assert.equal(B.hp, hp, '무대 등장(2초) 동안은 피해 없음');
+  run(g, 2.8); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
   assert.ok(Math.abs(A.x - x0) < 0.3, '춤추는 동안 제자리');
   run(g, 3);
   const total = hp - B.hp; assert.ok(total >= 28 && total <= 40, `5초 합계 ${total}`);
   assert.equal(C.hp, C.cfg.hp, '무대 밖은 안 맞음');
   const after = B.hp; run(g, 1); assert.equal(B.hp, after, '끝나면 피해 멈춤');
+  const { g: g2, A: D, B: E } = duo('gaga', 'blue'); D.x = 10; D.y = 10; E.x = 12; E.y = 10; E.invUntil = 0; D.ult = D.cfg.ult.need; g2.ult('a', null); run(g2, 0.5); g2._applyHit(D, E, 10, 5, -1, 0, 'punch');
+  assert.ok(Math.abs(D.kx) < 1e-6 && D.hp >= D.cfg.hp - 5, '춤추는 동안 밀리지 않고 받는 피해 50%');
 });
 
 test('진행: 시간이 끝나도 정답은 바로 공개되지 않고(대기), 진행자가 공개하면 그때 점수가 반영된다', () => {
@@ -1164,6 +1167,16 @@ test('간호사: 평타 폭발이 같은 팀은 회복·적은 피해, 궁극기
   assert.ok(g.snapshot().players.find((p) => p.id === 'c').si, '침묵 표시'); assert.equal(C.channel, null, '채널링 끊김');
   assert.ok(B.buff && B.buff.atk > 1, '아군 강화'); assert.equal(g.ult('c', null), false, '침묵 중 궁극기 불가');
   const cc = C.nextAttackAt = 0; g.attack('c', null); assert.ok(g.events.filter((e) => e.e === 'atk' && e.id === 'c').length === 0, '침묵 중 공격 불가');
+});
+
+test('방패 성벽(기사): 천천히 전진하며 적을 밀어내고, 막다른 곳이면 멈추고, 끝나면 폭파한다', () => {
+  const { g, A, B } = duo('knight', 'blue'); A.x = 10; A.y = 10; B.x = 13; B.y = 10; B.invUntil = 0; A.face = 1; A.ult = A.cfg.ult.need; g.events = [];
+  g.ult('a', { x: 1, y: 0 }); const w = [...g.walls.values()][0], x0 = w.x; run(g, 2);
+  assert.ok(w.x > x0 + 0.8, '벽 전진'); assert.ok(B.x > 13.5, '적이 밀려남');
+  const { g: g2, A: A2, B: B2 } = duo('knight', 'blue'); A2.x = g2.map.w - 8; A2.y = 10; B2.x = g2.map.w - 3; B2.y = 10; A2.face = 1; A2.ult = A2.cfg.ult.need;
+  g2.ult('a', { x: 1, y: 0 }); const w2 = [...g2.walls.values()][0]; run(g2, 5.3); const xs = w2.x; run(g2, 0.5);
+  assert.ok(w2.x - xs < 0.2, '맵 끝에 막혀 더 못 밀리면 벽도 멈춤'); assert.ok(B2.x <= g2.map.w - B2.cfg.radius + 1e-6, '맵 안에 있음');
+  run(g2, 1); assert.equal(g2.walls.size, 0, '지속시간 끝나면 사라짐'); assert.ok(g2.events.some((e) => e.e === 'wallBlast'), '폭파');
 });
 
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {

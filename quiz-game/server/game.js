@@ -661,7 +661,7 @@ export class Game {
       if (target.hp === 0) this._ko(target);
     }
     // 기절(쓰러진) 상태에서는 밀리지 않음. 그 외에는 총 거리 = knock (BU, 음수면 끌어당김)
-    if (!target.stunned) {
+    if (!target.stunned && !target.channel?.armor) { // armor(무대 위 춤 등)는 밀리지 않음
       target.kx += dx * knock * KNOCK_DECAY;
       target.ky += dy * knock * KNOCK_DECAY;
     }

@@ -22,10 +22,10 @@ const CSS = `
 .pk .pk-stat div{display:flex;align-items:center;gap:3px}
 .pk canvas.pk-ic{width:14px;height:14px;image-rendering:pixelated;flex:none}
 .pk .pk-pips{display:inline-flex;gap:2px;flex:none}
-.pk .pk-pips i{width:8px;height:8px;flex:none;background:var(--empty);border:1.5px solid var(--navy)}
+.pk .pk-pips i{width:8px;height:8px;flex:none;background:color-mix(in srgb,var(--empty) 20%,transparent);border:1.5px solid rgba(20,18,43,.2)}.pk .pk-pips i.on{border-color:var(--navy)}
 .pk .pk-pips.hp i.on{background:var(--rose);box-shadow:inset 0 2px 0 #e9a0ab88}.pk .pk-pips.atk i.on{background:#e0902a;box-shadow:inset 0 2px 0 #ffd98a88}.pk .pk-pips.spd i.on{background:#3b82f6;box-shadow:inset 0 2px 0 #a5d0ff88}
 .pk .pk-abil{grid-area:a;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.pk .pk-abil div{display:grid;grid-template-columns:1fr;gap:2px;justify-items:center;text-align:center;background:#fff8e4;border:2px solid #e0c98a;border-radius:6px;padding:3px;font-size:10.5px;line-height:1.2}
+.pk .pk-abil div{display:grid;grid-template-rows:auto 1fr;gap:4px;justify-items:center;align-items:center;text-align:center;background:#fff8e4;border:2px solid #e0c98a;border-radius:6px;padding:6px 4px;min-height:62px;font-size:11px;font-weight:700;line-height:1.3;white-space:pre-line}
 .pk .pk-abil i{font-style:normal;font-size:10px;font-weight:900;color:#fff;text-align:center;border-radius:4px;border:2px solid var(--navy);padding:0 6px}
 .pk .pk-abil .k1 i{background:#e0702a}.pk .pk-abil .k2 i{background:#4a86d9}.pk .pk-abil .k3 i{background:#9a62d6}
 .pk .pk-bar{display:flex;gap:5px;align-items:center}
@@ -46,11 +46,12 @@ const CSS = `
 `;
 
 const num = (n) => (Number.isInteger(n) ? n : +n.toFixed(2));
-export function skillText(c) {
+export function skillText(c) { // 줄바꿈(\n)으로 한눈에
   const s = c.sk || {};
-  if (s.type === 'dash') return `${num(s.distance)}칸 돌진 · 쿨 ${num(s.cooldown)}초${s.hitDmg ? ` · 피해 ${s.hitDmg}` : ''}`;
-  return `${num(c.runGauge / RUN_DRAIN)}초 달리기`;
+  if (s.type === 'dash') return `${num(s.distance)}칸 돌진\n쿨 ${num(s.cooldown)}초${s.hitDmg ? `\n피해 ${s.hitDmg}` : ''}`;
+  return `${num(c.runGauge / RUN_DRAIN)}초\n달리기`;
 }
+const lines = (t) => String(t || '').split(/\s*[,·]\s*/).filter(Boolean).slice(0, 3).join('\n'); // 공격 설명: 쉼표 단위로 줄을 나눔
 
 /** 도트 아이콘 캔버스 */
 const ICONS = {
@@ -106,8 +107,8 @@ export function mountPicker(root, chars, opts) {
     const c = chars[value], s = c.stars || { atk: 3, hp: 3, spd: 3 };
     const u = opts.ultUrl?.(value); stage.hidden = !u;
     if (u && vid.getAttribute('src') !== u) { vid.src = u; vid.play?.().catch(() => {}); }
-    info.innerHTML = `<div class="pk-nm">${c.name}</div><div><span class="pk-pill ${c.role}">${ROLE_NAME[c.role] || ''}</span>${c.rec ? '<span class="pk-pill pk-rec">처음이라면</span>' : ''}</div><div class="pk-bars">${statRow('atk', '공격', s.atk)}${statRow('hp', '체력', s.hp)}${statRow('spd', '속도', s.spd)}</div>`;
-    abil.innerHTML = `<div class="k1"><i>공격</i><span>${c.atkInfo || ''}</span></div><div class="k2"><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i><span>${skillText(c)}</span></div><div class="k3"><i>궁극기</i><span>${c.ultName || c.ult?.name || ''}</span></div>`;
+    info.innerHTML = `<div class="pk-nm">${c.name}</div><div><span class="pk-pill ${c.role}">${ROLE_NAME[c.role] || ''}</span></div><div class="pk-bars">${statRow('atk', '공격', s.atk)}${statRow('hp', '체력', s.hp)}${statRow('spd', '속도', s.spd)}</div>`;
+    abil.innerHTML = `<div class="k1"><i>공격</i><span>${lines(c.atkInfo)}</span></div><div class="k2"><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i><span>${skillText(c)}</span></div><div class="k3"><i>궁극기</i><span>${c.ultName || c.ult?.name || ''}</span></div>`;
     fillIcons(info);
   }
   function renderTiles() {
