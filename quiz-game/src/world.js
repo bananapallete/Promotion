@@ -394,10 +394,17 @@ export class WorldScene extends Phaser.Scene {
       const f = Math.max(0, p.hp / p.mhp), low = f <= 0.3;
       v.bar.clear().setDepth(v.y + 1);
       v.bar.fillStyle(THEME.ink, 1).fillRect(bx0 - bd, by - bd, bw + bd * 2, bh + bd * 2); // 남색 테두리
+      // 지연 칩: 체력은 바로 깎이고, 깎인 만큼 연한 조각이 0.25초 남았다가 0.3초에 걸쳐 줄어듦
+      if (v.hpLast === undefined) { v.hpLast = f; v.chip = f; v.chipHold = 0; v.chipRate = 0; }
+      if (f < v.hpLast) { v.chipHold = now + 250; v.chipRate = Math.max(0.05, v.chip - f) / 0.3; }
+      if (f > v.chip) v.chip = f;
+      if (now >= v.chipHold && v.chip > f) v.chip = Math.max(f, v.chip - (v.chipRate * delta) / 1000);
+      v.hpLast = f;
+      const hpCol = f > 0.6 ? 0x4fd16a : f > 0.3 ? 0xf2c230 : 0xe5483c; // 색 이동: 초록 → 노랑 → 빨강
       v.bar.fillStyle(THEME.hpEmpty, 1).fillRect(bx0, by, bw, bh);
-      v.bar.fillStyle(low ? THEME.hpLow : THEME.hpFill, 1).fillRect(bx0, by, bw * f, bh);
+      v.bar.fillStyle(0xfff1d6, 0.85).fillRect(bx0, by, bw * v.chip, bh);
+      v.bar.fillStyle(hpCol, low ? 0.65 + 0.35 * Math.sin((now / 1000) * Math.PI * 6) : 1).fillRect(bx0, by, bw * f, bh); // 30% 아래는 초당 3번 깜빡임
       v.bar.fillStyle(THEME.hpShine, 0.55).fillRect(bx0, by, bw * f, Math.max(2, bh * 0.28)); // 윗면 하이라이트
-      for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
       v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
       if (me) { // 탄창 · 대쉬 게이지는 내 것만 (빔프로젝터엔 내 캐릭터가 없어서 안 나옴)
         const h = GH, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 1.5, y0 - 1.5, w + 3, h + 3).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
