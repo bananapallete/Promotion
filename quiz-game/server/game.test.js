@@ -1104,7 +1104,7 @@ test('궁극기로 채우는 게이지는 한 번에 5%까지: 여러 명을 맞
   assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp && D.hp < D.cfg.hp, '셋 다 맞음');
 });
 
-test('무대 펼치기(레이디 가가): 제자리에서 5초 춤추며 무대 안 적에게만 계속 피해를 준다', () => {
+test('무대 펼치기(크림슨 디바): 제자리에서 5초 춤추며 무대 안 적에게만 계속 피해를 준다', () => {
   const { g, A, B } = duo('gaga', 'blue');
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 20; C.y = 10; B.invUntil = 0; C.invUntil = 0; A.ult = A.cfg.ult.need;

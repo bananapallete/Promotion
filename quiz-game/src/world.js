@@ -33,6 +33,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('diva-stage', hooks.fxUrl('diva_stage')); // 크림슨 디바 무대 장비
+    this.load.spritesheet('diva-spot', hooks.fxUrl('diva_spot'), { frameWidth: 24, frameHeight: 22 });
+    this.load.spritesheet('diva-amp', hooks.fxUrl('diva_amp'), { frameWidth: 26, frameHeight: 29 });
     this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
     for (const s of SPRITES) {
       for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : []), ...(sprites[s]?.ult ? ['ult'] : []), ...(sprites[s]?.morph ? ['morph'] : [])]) {
@@ -55,6 +58,8 @@ export class WorldScene extends Phaser.Scene {
     this.aimGfx = this.add.graphics().setDepth(-50); // 사거리 링 · 조준선 · 조준 대상 링 (캐릭터 아래, 바닥 위)
     this.aim = null;
     this.lockId = null;
+    this.anims.create({ key: 'diva-spot', frames: this.anims.generateFrameNumbers('diva-spot', { start: 0, end: 7 }), frameRate: 10, repeat: -1 });
+    this.anims.create({ key: 'diva-amp', frames: this.anims.generateFrameNumbers('diva-amp', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
     this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('dust', { start: 0, end: 4 }), frameRate: 12, repeat: 0 });
     this.coins = new CoinLayer(this, BU);
     this.coins.create();

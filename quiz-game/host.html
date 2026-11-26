@@ -3,64 +3,77 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>퀴즈 게임 · 호스트</title>
-    <link rel="stylesheet" href="/src/style.css" />
+    <title>퀴즈 게임 · 진행자</title>
+    <link rel="stylesheet" href="/design/design.css" />
+    <style>
+      body{width:100%;min-height:100vh;background:#243d2b;display:grid;grid-template-rows:56px minmax(0,1fr) 44px;gap:10px;padding:10px;font-size:15px;height:100vh}
+      .bar{display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--cream);border-radius:14px}.logo{font-weight:900;font-size:19px}
+      .pill{padding:4px 12px;border-radius:99px;font-weight:900;border:2px solid var(--navy);background:var(--cream-hi)}
+      .g{display:grid;grid-template-columns:300px minmax(0,1fr) 400px;gap:10px;min-height:0}
+      .col{background:var(--cream);border-radius:14px;padding:12px;display:grid;gap:8px;align-content:start;min-height:0;overflow:auto}
+      h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}h3 em{margin-left:auto;font-style:normal;font-size:12px;opacity:.7}
+      .q{display:grid;grid-template-columns:20px 1fr auto auto;gap:6px;align-items:center;padding:6px 8px;border-radius:10px;background:var(--cream-hi);border:2px solid #d9bd8a;font-weight:800;font-size:14px}
+      .q.cur{border-color:var(--navy);background:#fff3c4;box-shadow:0 3px 0 #14122b55}.q i{font-style:normal;width:16px;height:16px;border-radius:50%;border:2px solid var(--navy);background:#fff;display:inline-block}.q.done i{background:var(--leaf)}.q.cur i{background:var(--gold)}
+      .q span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+      button,select,input{font:inherit}
+      .btn{padding:10px 14px;border-radius:12px;border:3px solid var(--navy);font-weight:900;font-size:15px;box-shadow:0 4px 0 #14122b66;background:var(--cream-hi);color:var(--text);text-align:center;cursor:pointer}
+      .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #14122b66}.btn[disabled]{opacity:.4;pointer-events:none}
+      .btn.go{background:var(--leaf)}.btn.red{background:#ff8f84}.btn.gold{background:#ffd54a}.btn.sky{background:#9cc4ff}.btn.ghost{box-shadow:none;background:transparent;border-style:dashed}.btn.sm{padding:3px 9px;font-size:13px;border-width:2px;box-shadow:none;border-radius:8px}.btn.on{background:var(--violet);color:#fff}
+      .ctl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+      .card{background:var(--cream-hi);border:3px solid var(--navy);border-radius:14px;padding:12px;display:grid;gap:8px}
+      .qt{font-weight:900;font-size:21px;line-height:1.3}.row2{display:grid;grid-template-columns:1fr 130px;gap:12px;align-items:start}.th{height:86px;border-radius:10px;border:3px solid var(--navy);background:#e9f7ff center/cover}
+      .dist{display:grid;grid-template-columns:30px 1fr 36px;gap:8px;align-items:center;font-weight:900}.dist .t{height:18px;border:2px solid var(--navy);border-radius:6px;background:#14122b22;overflow:hidden}.dist .t i{display:block;height:100%}
+      .t2{display:flex;align-items:center;gap:8px}.tbar{flex:1;height:16px;border:3px solid var(--navy);border-radius:99px;background:#14122b22;overflow:hidden}.tbar i{display:block;height:100%;background:linear-gradient(#ffe27a,#f2c230);width:0}
+      .pl{display:grid;grid-template-columns:24px 1fr 62px 56px 80px;gap:5px;align-items:center;padding:4px 7px;border-radius:10px;background:var(--cream-hi);font-weight:800;font-size:14px}.pl.h{background:transparent;font-size:12px;opacity:.7;padding-top:0}
+      .pl select{padding:2px;border:2px solid var(--navy);border-radius:6px;background:#fff;font-weight:800}.tm{width:12px;height:12px;border-radius:4px;border:2px solid var(--navy);display:inline-block;margin-right:3px}
+      .stp{display:flex;gap:3px;justify-content:flex-end}.stp b{min-width:24px;height:24px;border-radius:7px;border:2px solid var(--navy);display:grid;place-items:center;background:#fff;font-size:13px;cursor:pointer;padding:0 4px}.stp .p{background:var(--leaf)}.stp .m{background:#ff8f84}
+      .inp{padding:7px 10px;border:3px solid var(--navy);border-radius:10px;background:#fff;font-weight:800;color:var(--text);min-width:0}
+      .log{display:flex;gap:16px;align-items:center;padding:0 14px;background:#14122bcc;color:#fff;border-radius:12px;font-size:13px;overflow:hidden;white-space:nowrap}
+      .real{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.real div{display:grid;grid-template-columns:1fr 64px;gap:6px;align-items:center;padding:4px 8px;border-radius:8px;background:#fff;border:2px solid #d9bd8a;font-weight:800;font-size:14px}
+      #auth{margin:auto;width:320px;display:grid;gap:10px;background:var(--cream);padding:20px;border-radius:14px}
+      details summary{cursor:pointer;font-weight:900}
+      [hidden]{display:none!important}
+    </style>
   </head>
-  <body class="host">
-    <div id="auth" class="panel" hidden>
-      <h1>호스트</h1>
-      <input id="key" type="text" placeholder="키" />
-      <button id="login" class="primary" style="margin-top:12px">입장</button>
-      <p id="aerr" style="color:var(--bad)"></p>
-    </div>
-    <div id="app" class="hostgrid" hidden>
-      <div class="card">
-        <h2>진행</h2>
-        <div class="stat"><span id="s-phase">-</span><span id="s-left">-</span><span id="s-players">-</span></div>
-        <div class="row-inline" style="margin-top:12px">
-          <button class="go" id="end">정답</button>
-          <button id="gather">모이기</button>
-          <button id="coin">동전</button>
-          <button id="abots">공격봇 15</button>
-          <button id="rank">순위</button>
-          <button class="warn" id="reset">초기화</button>
-        </div>
-        <div id="revealbox" style="margin-top:10px;color:var(--mute);font-size:14px"></div>
+  <body>
+    <div id="auth" hidden><h3>진행자 키</h3><input id="key" class="inp" type="text" placeholder="키" /><button id="login" class="btn go">입장</button><p id="aerr" style="color:#c0392b;margin:0"></p></div>
+    <div class="bar" id="topbar" hidden><span class="logo">🎮 진행자</span><span class="pill" id="s-players">-</span><span class="pill" id="s-phase" style="background:var(--leaf)">-</span><span class="pill" id="s-left">-</span><a class="pill" href="/screen" target="_blank" style="margin-left:auto;text-decoration:none;color:inherit">화면 열기 ↗</a></div>
+    <div class="g" id="app" hidden>
+      <div class="col">
+        <h3>문제 <em>방식은 눌러서 바꿈</em></h3>
+        <div id="qlist" style="display:grid;gap:6px"></div>
+        <details><summary>＋ 문제 추가</summary>
+          <div style="display:grid;gap:6px;margin-top:8px">
+            <div style="display:flex;gap:6px"><select id="q-type" class="inp" style="flex:1"><option value="ox">O/X</option><option value="choice">객관식</option><option value="real">현실</option></select><select id="q-mode" class="inp"><option>개인</option><option>팀</option></select></div>
+            <input id="q-text" class="inp" placeholder="문제" /><input id="q-opts" class="inp" placeholder="객관식 보기 (쉼표로 구분)" />
+            <div style="display:flex;gap:6px"><input id="q-ans" class="inp" placeholder="정답 (O/X · 1~4)" style="flex:1" /><input id="q-time" class="inp" type="number" value="15" style="width:70px" /></div>
+            <input id="q-img" class="inp" placeholder="이미지 주소 (선택)" /><button class="btn go" id="q-add">추가</button>
+          </div>
+        </details>
+        <details><summary>도구 (봇·동전·초기화)</summary>
+          <div style="display:grid;gap:6px;margin-top:8px"><div style="display:flex;gap:6px"><button class="btn sm" id="gather">모이기</button><button class="btn sm" id="coin">동전</button><button class="btn sm" id="abots">공격봇 15</button><button class="btn sm" id="b-clear">봇 제거</button></div>
+          <button class="btn sm red" id="reset">점수 초기화</button></div>
+        </details>
       </div>
-
-      <div class="card">
-        <h2>문제</h2>
-        <div id="qlist"></div>
-        <h2 style="margin-top:16px">추가</h2>
-        <div class="row-inline">
-          <select id="q-type"><option value="ox">O/X</option><option value="choice">객관식</option></select>
-          <input id="q-ans" type="text" placeholder="정답" size="14" />
-          <input id="q-time" type="number" value="15" min="5" max="60" style="width:70px" />초
-        </div>
-        <div class="row-inline"><input id="q-text" type="text" placeholder="문제" style="flex:1" /><button class="go" id="q-add">추가</button></div>
+      <div class="col" style="background:transparent;padding:0;gap:10px">
+        <div class="card"><div class="row2"><div><div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="pill" id="c-no">-</span><span class="pill" id="c-mode">-</span></div><div class="qt" id="c-text">문제를 출제하세요</div></div><div class="th" id="c-img" hidden></div></div>
+          <div class="t2"><span style="font-weight:900">제한시간</span><div class="tbar"><i id="c-bar"></i></div></div></div>
+        <div class="ctl"><button class="btn go" id="ask">▶ 출제</button><button class="btn sky" id="gather2">⇆ 맵으로 이동</button><button class="btn gold" id="end">✓ 정답 공개</button><button class="btn" id="rank">🏆 등수 공개</button></div>
+        <div class="card" id="distbox"><h3>실시간 응답 <em id="d-n"></em></h3><div id="dist" style="display:grid;gap:6px"></div></div>
+        <div class="card" id="realbox" hidden><h3>현실 퀴즈 점수 <em>입력 → 확인 → 공개하기</em></h3><div class="real" id="real"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="realteams"></div>
+          <div class="ctl" style="grid-template-columns:1fr 1fr"><button class="btn gold" id="realok">확인</button><button class="btn go" id="realrev" disabled>공개하기</button></div></div>
+        <div class="card"><h3>점수 부여 <em>보너스·현실 게임 결과</em></h3><div style="display:grid;grid-template-columns:1fr 90px auto;gap:8px"><select class="inp" id="aw-who"></select><input class="inp" id="aw-n" type="number" step="0.5" value="1" /><button class="btn gold" id="aw-go">지급</button></div></div>
       </div>
-
-      <div class="card">
-        <h2>봇</h2>
-        <div class="row-inline">
-          <select id="b-mode">
-            <option value="idle">정지</option>
-            <option value="wander">배회</option>
-            <option value="aggro">공격형</option>
-          </select>
-          <select id="b-char"></select>
-          <input id="b-count" type="number" value="1" min="1" max="10" style="width:64px" />
-          <button class="go" id="b-add">추가</button>
-          <button class="warn" id="b-clear">제거</button>
-        </div>
-        <label class="row-inline" style="margin-top:8px"><input type="checkbox" id="b-attack" /> 공격 허용</label>
-      </div>
-
-      <div class="card">
-        <h2>참가자</h2>
-        <table><thead><tr><th>이름</th><th>캐릭터</th><th>체력</th><th>점수</th><th></th></tr></thead><tbody id="plist"></tbody></table>
+      <div class="col">
+        <h3>참가자 <em id="p-teams"></em></h3>
+        <div style="display:grid;grid-template-columns:70px 1fr;gap:8px"><input class="inp" id="t-n" type="number" min="0" max="8" value="3" /><button class="btn go sm" id="t-auto" style="font-size:15px">팀 자동 구성 (0 = 해제)</button></div>
+        <div class="pl h"><span>#</span><span>이름</span><span>팀</span><span>점수</span><span style="text-align:right">수정</span></div>
+        <div id="plist" style="display:grid;gap:5px"></div>
+        <div id="tt" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
     </div>
+    <div class="log" id="log" hidden></div>
     <script type="module" src="/src/host.js"></script>
   </body>
 </html>

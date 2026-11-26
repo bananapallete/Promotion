@@ -1144,8 +1144,8 @@
     }
   },
   "gaga": {
-    "name": "레이디 가가",
-    "sprite": "gaga",
+    "name": "크림슨 디바",
+    "sprite": "diva",
     "radius": 0.5,
     "hp": 42,
     "walkSpeed": 6,
@@ -1187,6 +1187,7 @@
       "radius": 3.2,
       "dmg": 0.35,
       "fx": "note"
-    }
+    },
+    "scale": 1.67
   }
 }

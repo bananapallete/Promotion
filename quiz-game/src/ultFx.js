@@ -649,13 +649,22 @@ function stageTex(scene, Rd) {
   return tex(scene, `ux-stage-${Rd}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => {
     for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
       const d = Math.hypot(x + 0.5 - w / 2, y + 0.5 - w / 2) / Rd; if (d > 1) continue;
-      put(x, y, d > 0.9 ? [255, 190, 250] : ((x >> 2) + (y >> 2)) % 2 ? [96, 40, 150] : [150, 70, 200], d > 0.9 ? 235 : 170);
+      put(x, y, d > 0.9 ? [255, 190, 190] : ((x >> 2) + (y >> 2)) % 2 ? [90, 14, 34] : [158, 30, 56], d > 0.9 ? 235 : 170);
     }
   });
 }
 export function stageFx(scene, e, BU) {
   const x = e.x * BU, y = e.y * BU, R = e.r * BU, Rd = Math.max(6, Math.round(R / DOT)), floor = scene.add.image(x, y, stageTex(scene, Rd)).setScale(DOT).setDepth(-43);
   scene.tweens.add({ targets: floor, alpha: 0, delay: e.sec * 1000 - 400, duration: 400, onComplete: () => floor.destroy() });
+  // 무대 장비(받은 도트): 뒤쪽에 무대 배경이 솟아오르고, 양옆 앰프와 위쪽 조명이 움직임 (도트 크기 = PX)
+  const back = scene.add.image(x, y - R * 0.78, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD - 1);
+  scene.tweens.add({ targets: back, scaleY: DOT, duration: 350, ease: 'Back.easeOut' });
+  const parts = [back, floor];
+  for (const sx of [-1, 1]) {
+    const amp = scene.add.sprite(x + sx * R * 0.88, y - R * 0.2, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD - 1).play('diva-amp'); parts.push(amp);
+    const spot = scene.add.sprite(x + sx * R * 0.5, y - R * 1.05, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, DOT).setDepth(FXD + 1).setAlpha(0.9).play('diva-spot'); parts.push(spot);
+  }
+  scene.tweens.add({ targets: parts.filter((o) => o !== floor), alpha: 0, delay: e.sec * 1000 - 400, duration: 400, onComplete: () => parts.forEach((o) => o.destroy()) });
   const BEAM = [0xff7ad9, 0x7ad9ff, 0xffe27a];
   drawLoop(scene, e.sec * 1000, (g, u) => {
     const t = u * e.sec, fade = Math.min(1, (1 - u) * e.sec / 0.4), open = Math.min(1, u * e.sec / 0.25);
