@@ -1,7 +1,7 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { blockWalls, buffOf, charge, CHARGE_TAKEN, hit as ultHit, ultReady, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
+import { blockWalls, buffOf, charge, CHARGE_TAKEN, hit as ultHit, ultReady, minionsSnapshot, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
 import { ULT_CHARGE, RUN_DRAIN, COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
@@ -46,6 +46,8 @@ export class Game {
     this.projSeq = 0;
     this.ultDepth = 0; // 궁극기에서 나온 피해를 처리하는 동안 1 이상
     this.tasks = []; // 궁극기 예약 실행 [{at, fn}]
+    this.minions = new Map(); // 궁극기로 부화한 병아리 부하 {id,owner,x,y,st,...}
+    this.minionSeq = 0;
     this.zonesU = new Map(); // 궁극기 바닥 범위
     this.zoneSeq = 0;
     this.walls = new Map(); // 기사 방패 성벽 {id,owner,x,y,hx,hy,until}
@@ -151,7 +153,7 @@ export class Game {
 
   resetScores() {
     for (const p of this.players.values()) { p.score = 0; p.coins = 0; }
-    this.coins.clear();
+    this.coins.clear(); this.minions.clear();
     this.items.clear();
     this.coinsSpawned = 0;
     this.showRank = false;
@@ -863,6 +865,7 @@ export class Game {
         ? { id: q.id, k: 'l', a: q.art, x: r2(q.x), y: r2(q.y), sx: r2(q.sx), sy: r2(q.sy), tx: r2(q.tx), ty: r2(q.ty), u: r2((this.t - q.t0) / q.T), T: r2(q.T), r: q.r }
         : { id: q.id, k: 'b', a: q.art, x: r2(q.x), y: r2(q.y), vx: r2(q.vx), vy: r2(q.vy) }),
       uz: zonesSnapshot(this),
+      mn: minionsSnapshot(this),
       wl: wallsSnapshot(this),
       items: [...this.items.values()].map((i) => ({ id: i.id, k: i.k, x: r2(i.x), y: r2(i.y) })),
       coins: [...this.coins.values()].map((c) => ({ id: c.id, x: r2(c.x), y: r2(c.y), lk: r2(Math.max(0, c.lockUntil - this.t)) })),

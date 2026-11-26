@@ -1051,6 +1051,24 @@ test('격투가 평타: 탄창 1개로 3연타(잽·잽·강타)가 빠르게 �
   assert.equal(hp - B.hp, 4 + 4 + 8, '4+4+8');
 });
 
+test('부화(닭): 알 7개를 뿌리고 1초 뒤 병아리가 되어 가까운 적을 쪼거나 동전을 줍고, 닭에게서 멀어지면 돌아오며, 10초 뒤 사라진다', () => {
+  const { g, A, B } = duo('chicken', 'blue');
+  A.x = 20; A.y = 10; B.x = 40; B.y = 30; A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(g.minions.size, 7, '알 7개');
+  assert.ok(g.snapshot().mn.every((m) => m.e === 1), '처음엔 알');
+  run(g, 1.8); assert.ok(g.snapshot().mn.every((m) => m.e === 0), '부화');
+  // 가까운 동전을 줍는다
+  g.coinsSpawned = 0; const coin = g.spawnCoin(21.5, 10); coin.readyAt = 0; const c0 = A.coins; run(g, 2);
+  assert.ok(A.coins > c0, '동전 습득');
+  // 가까운 적을 쪼는다 (닭 곁 안에 있을 때)
+  B.x = 22; B.y = 10; B.invUntil = 0; const hp = B.hp; run(g, 3);
+  assert.ok(B.hp < hp - 4, `쪼기 피해 ${hp - B.hp}`);
+  // 닭이 멀어지면 하던 일을 접고 닭 곁으로
+  B.x = 40; B.y = 30; A.x = 30; run(g, 3);
+  assert.ok([...g.minions.values()].every((m) => Math.hypot(m.x - A.x, m.y - A.y) <= A.cfg.ult.leash + 0.5), '닭 범위 안으로');
+  run(g, 6); assert.equal(g.minions.size, 0, '10초 뒤 사라짐');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
@@ -1152,7 +1170,8 @@ test('궁극기 barrage·meteor·zone: 투사체 n발, 예고 후 폭발, 바닥
   A.ult = A.cfg.ult.need; g.ult('a', null);
   run(g, 1);
   assert.ok(g.projectiles.size + g.events.length >= 1);
-  const { g: g2, A: W, B: T } = duo('chicken', 'blue');
+  const { g: g2, A: W, B: T } = duo('witch', 'blue');
+  W.cfg = { ...W.cfg, ult: { name: 't', need: 100, type: 'meteor', center: 'target', range: 5, spread: 3, n: 6, over: 1.8, warn: 0.7, blast: 1.3, dmg: 10, art: 'orb', knock: 1 } }; // 메테오 종류는 지금 쓰는 캐릭터가 없어서 직접 지정
   W.x = 10; W.y = 10; T.x = 13; T.y = 10; W.ult = W.cfg.ult.need; g2.ult('a', null);
   const ev = []; for (let i = 0; i < 400; i++) { g2.update(0.016); ev.push(...g2.events); }
   assert.ok(ev.some((e) => e.e === 'warn'), '예고');

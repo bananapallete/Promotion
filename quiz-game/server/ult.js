@@ -5,7 +5,7 @@
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -75,6 +75,16 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  brood(g, p, u) { // 알 n개를 동전처럼 뿌림 → hatch초 뒤 병아리로 부화 → sec초 동안 닭 곁에서 쪼아 공격하거나 동전을 주움
+    for (let i = 0; i < u.n; i++) {
+      const a = rand(0, Math.PI * 2), d = Math.max(0.8, u.radius * Math.sqrt(Math.random())), flight = (u.flight ?? 0.5) * rand(0.85, 1.15);
+      const x = Math.min(g.map.w - 0.5, Math.max(0.5, p.x + Math.cos(a) * d)), y = Math.min(g.map.h - 0.5, Math.max(0.5, p.y + Math.sin(a) * d));
+      const m = { id: ++g.minionSeq, owner: p.id, x, y, face: 1, st: 'egg', hatchAt: g.t + flight + u.hatch, until: g.t + u.sec, peckAt: 0, act: 0, u };
+      g.minions.set(m.id, m);
+      g.events.push({ e: 'eggDrop', id: m.id, fx: r2(p.x), fy: r2(p.y), x: r2(x), y: r2(y), flight: r2(flight) });
+    }
   },
 
   blackhole(g, p, u, dx, dy, near) { // 지정한 곳에 검은 공을 던짐 → 땅에 닿으면 블랙홀: sec초 동안 반경 안 적을 끌어당기다가 터진다
@@ -292,8 +302,48 @@ const RUN = {
   },
 };
 
+/** 병아리 부하: 닭 곁을 맴돌며 가까운 적을 쪼거나 가까운 동전을 줍는다. 닭에게서 leash보다 멀어지면 하던 일을 접고 돌아온다 */
+function updateMinions(g) {
+  const dt = Math.min(0.1, g.t - (g._mnT ?? g.t)); g._mnT = g.t;
+  for (const m of [...g.minions.values()]) {
+    const o = g.players.get(m.owner), u = m.u;
+    if (!o || o.stunned || g.t >= m.until) { g.minions.delete(m.id); g.events.push({ e: 'mnEnd', id: m.id }); continue; }
+    if (m.st === 'egg') { if (g.t >= m.hatchAt) { m.st = 'chick'; g.events.push({ e: 'hatch', id: m.id, x: r2(m.x), y: r2(m.y) }); } continue; }
+    m.act = 0; // 0 가만히 1 걷기 2 쪼기
+    const dOwner = Math.hypot(o.x - m.x, o.y - m.y);
+    let tx = null, ty = null, kind = null, tgt = null;
+    if (dOwner > u.leash) { tx = o.x; ty = o.y; kind = 'back'; m.back = true; } // 멀어지면 우선 돌아온다
+    else if (m.back && dOwner > u.leash * 0.6) { tx = o.x; ty = o.y; kind = 'back'; } // 범위 안쪽까지 충분히 들어올 때까지
+    else {
+      m.back = false;
+      let bd = u.sense;
+      for (const e of g._enemies(o)) { // 가까운 적 (닭 곁 leash 안에 있는 것만)
+        if (e.stunned || g._stealthed(e) || Math.hypot(e.x - o.x, e.y - o.y) > u.leash + 1) continue;
+        const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd) { bd = d; tgt = e; }
+      }
+      if (tgt) { tx = tgt.x; ty = tgt.y; kind = 'enemy'; }
+      else {
+        let cb = u.sense, coin = null;
+        for (const c of g.coins.values()) { if (g.t < c.readyAt || Math.hypot(c.x - o.x, c.y - o.y) > u.leash + 1) continue; const d = Math.hypot(c.x - m.x, c.y - m.y); if (d < cb) { cb = d; coin = c; } }
+        if (coin) { tx = coin.x; ty = coin.y; kind = 'coin'; m.coin = coin; }
+        else if (dOwner > 2) { tx = o.x; ty = o.y; kind = 'follow'; } // 할 일이 없으면 닭 곁에 머문다
+      }
+    }
+    if (tx != null) {
+      const d = Math.hypot(tx - m.x, ty - m.y), reach = kind === 'enemy' ? 0.55 : kind === 'coin' ? 0.3 : 1.2;
+      if (d > reach) { const s = Math.min(d - reach, u.speed * dt); m.x += ((tx - m.x) / d) * s; m.y += ((ty - m.y) / d) * s; m.act = 1; if (Math.abs(tx - m.x) > 0.05) m.face = tx > m.x ? 1 : -1; }
+      else if (kind === 'enemy' && g.t >= m.peckAt) { m.peckAt = g.t + u.gap; m.act = 2; const dx = (tgt.x - m.x) / (d || 1), dy = (tgt.y - m.y) / (d || 1); hit(g, tgt, o, u.dmg, 0, dx, dy, 'peck'); g.events.push({ e: 'peck', id: m.id, x: r2(m.x), y: r2(m.y) }); }
+      else if (kind === 'enemy') m.act = 2;
+      else if (kind === 'coin' && m.coin && g.coins.has(m.coin.id)) { g.coins.delete(m.coin.id); o.coins += 1; g.events.push({ e: 'coinGet', id: m.coin.id, by: o.id, x: r2(m.coin.x), y: r2(m.coin.y) }); }
+    }
+    m.x = Math.min(g.map.w - 0.3, Math.max(0.3, m.x)); m.y = Math.min(g.map.h - 0.3, Math.max(0.3, m.y));
+  }
+}
+export const minionsSnapshot = (g) => [...g.minions.values()].map((m) => ({ id: m.id, x: r2(m.x), y: r2(m.y), f: m.face, e: m.st === 'egg' ? 1 : 0, a: m.act }));
+
 /** 매 틱: 예약된 일 실행 + 바닥 범위 피해 */
 export function updateUlts(g) {
+  updateMinions(g);
   if (g.tasks.length) {
     const due = g.tasks.filter((k) => g.t >= k.at);
     if (due.length) { g.tasks = g.tasks.filter((k) => g.t < k.at); due.forEach((k) => k.fn()); }

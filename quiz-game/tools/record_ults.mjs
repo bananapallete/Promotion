@@ -36,10 +36,10 @@ for (const id of ids.filter((i) => !only.length || only.includes(i))) {
     const g = window.__game; let k = 1; g.setInput('me', { mx: dx, my: dy, run: false });
     setInterval(() => { k = -k; g.setInput('me', { mx: dx * k, my: dy * k, run: false }); }, 1600);
   }, MOVE[id]);
-  await page.waitForTimeout(id === 'chick' ? 5200 : 4200);
+  await page.waitForTimeout(id === 'chick' ? 5200 : id === 'chicken' ? 6200 : 4200);
   await ctx.close();
   const src = path.join(tmp, readdirSync(tmp)[0]);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(setup + 0.25), '-i', src, '-t', id === 'chick' ? '5' : '4', '-vf', 'scale=480:-2,fps=24', '-c:v', 'libx264', '-crf', '30', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', path.join(out, `${id}.mp4`)]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(setup + 0.25), '-i', src, '-t', id === 'chick' ? '5' : id === 'chicken' ? '6' : '4', '-vf', 'scale=480:-2,fps=24', '-c:v', 'libx264', '-crf', '30', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', path.join(out, `${id}.mp4`)]);
   console.log(id, 'ok', readFileSync(path.join(out, `${id}.mp4`)).length >> 10, 'KB');
 }
 rmSync(tmp, { recursive: true, force: true });

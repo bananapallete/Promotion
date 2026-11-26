@@ -6,6 +6,7 @@ import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
 import { FXD } from './pixel.js';
+import { MinionLayer } from './minions.js';
 import { burstFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
 import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
@@ -61,6 +62,7 @@ export class WorldScene extends Phaser.Scene {
     this.uzl = new UltZoneLayer(this, BU); // 궁극기 바닥 범위(불바다·화살비) 도트
     this.items = new ItemLayer(this, BU);
     this.items.create();
+    this.minions = new MinionLayer(this, BU, SPR_SCALE);
     this.proj = new ProjectileLayer(this, BU);
     this.proj.create();
     this.zoneImgs = [];
@@ -224,6 +226,7 @@ export class WorldScene extends Phaser.Scene {
     this.coins.apply(s);
     this.items.apply(s);
     this.proj.apply(s);
+    this.minions.apply(s);
   }
 
   makeView(p) {
@@ -248,6 +251,10 @@ export class WorldScene extends Phaser.Scene {
     if (e.e === 'ult' && v) {
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'eggDrop') {
+      this.minions.drop(e);
+    } else if (e.e === 'hatch') {
+      this.minions.hatch(e);
     } else if (e.e === 'bhThrow') {
       bhThrow(this, e, BU);
     } else if (e.e === 'bhOpen') {
@@ -334,6 +341,7 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     this._drawTelegraph(now);
     this.uzl.update(now);
+    this.minions.update(now, delta);
     tetherLines(this, now);
     this.wallLayer.update(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)

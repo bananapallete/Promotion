@@ -1074,19 +1074,19 @@
     "role": "ranged",
     "atkInfo": "알 폭탄, 범위 폭발",
     "ult": {
-      "name": "알 폭탄",
+      "name": "부화",
       "need": 100,
-      "type": "meteor",
-      "center": "self",
-      "range": 5,
-      "spread": 4,
+      "type": "brood",
       "n": 7,
-      "over": 2,
-      "warn": 0.6,
-      "blast": 1.2,
-      "dmg": 8,
-      "art": "egg",
-      "knock": 0.8
+      "radius": 3,
+      "flight": 0.5,
+      "hatch": 1,
+      "sec": 10,
+      "speed": 5.5,
+      "leash": 4.5,
+      "sense": 3.2,
+      "dmg": 1,
+      "gap": 0.5
     }
   },
   "chick": {
