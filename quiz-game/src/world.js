@@ -60,7 +60,7 @@ export class WorldScene extends Phaser.Scene {
     this.aim = null;
     this.lockId = null;
     this.anims.create({ key: 'diva-spot', frames: this.anims.generateFrameNumbers('diva-spot', { start: 0, end: 7 }), frameRate: 10, repeat: -1 });
-    this.anims.create({ key: 'diva-amp', frames: this.anims.generateFrameNumbers('diva-amp', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+    this.anims.create({ key: 'diva-amp', frames: this.anims.generateFrameNumbers('diva-amp', { start: 0, end: 3 }), frameRate: 12, repeat: -1 });
     this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('dust', { start: 0, end: 4 }), frameRate: 12, repeat: 0 });
     this.coins = new CoinLayer(this, BU);
     this.coins.create();

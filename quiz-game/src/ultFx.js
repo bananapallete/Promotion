@@ -654,7 +654,7 @@ function stageTex(scene, Rx, Ry) { // 가로 Rx × 세로 Ry(도트) 타원 무�
   return tex(scene, `ux-stage-${Rx}x${Ry}`, 2 * Rx + 2, 2 * Ry + 2, (put, w, h) => {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const d = Math.hypot((x + 0.5 - w / 2) / Rx, (y + 0.5 - h / 2) / Ry); if (d > 1) continue;
-      put(x, y, d > 0.9 ? [255, 190, 190] : ((x >> 2) + (y >> 2)) % 2 ? [90, 14, 34] : [158, 30, 56], d > 0.9 ? 235 : 170);
+      put(x, y, d > 0.9 ? [255, 190, 190] : ((x >> 2) + (y >> 2)) % 2 ? [90, 14, 34] : [158, 30, 56], d > 0.9 ? 120 : 62); // 범위 바닥은 연하게
     }
   });
 }
@@ -662,6 +662,14 @@ export function stageFx(scene, e, BU) {
   const x = e.x * BU, y = e.y * BU, R = e.r * BU, RY = (e.ry ?? e.r) * BU, intro = (e.intro || 0) * 1000, total = intro + e.sec * 1000;
   const floor = scene.add.image(x, y, stageTex(scene, Math.max(6, Math.round(R / DOT)), Math.max(4, Math.round(RY / DOT)))).setScale(DOT).setDepth(-43).setAlpha(0);
   scene.tweens.add({ targets: floor, alpha: 1, duration: Math.max(200, intro * 0.5) });
+  // 앰프 음파: 공격 주기(0.33초)마다 앰프에서 범위 안쪽으로 퍼지는 호
+  const waveEvt = scene.time.addEvent({ delay: 333, startAt: -intro, loop: true, callback: () => {
+    for (const sx of [-1, 1]) {
+      const g = scene.add.graphics().setDepth(FXD), ax = x + sx * R * 0.8, ay = y + RY * 0.1;
+      scene.tweens.addCounter({ from: 0, to: 1, duration: 330, onUpdate: (tw) => { const u = tw.getValue(); g.clear(); for (let k = 0; k < 2; k++) { const r = (0.25 + u * 0.9 + k * 0.28) * R * 0.5; for (let a = -1.0; a <= 1.0; a += 0.16) { const ang = (sx > 0 ? Math.PI : 0) + a; sq(g, ax + Math.cos(ang) * r, ay + Math.sin(ang) * r * 0.8, 6, k ? 0xff7a8a : 0xffffff, (1 - u) * 0.85); } } }, onComplete: () => g.destroy() });
+    }
+  } });
+  scene.time.delayedCall(total, () => waveEvt.remove());
   scene.tweens.add({ targets: floor, alpha: 0, delay: total - 400, duration: 400, onComplete: () => floor.destroy() });
   // 무대 장비(받은 도트): 등장 모션(intro) 동안 무대가 한 단계씩 지어지고, 완성되면 배경·앰프·조명이 움직임 (도트 크기 = PX)
   const by = y + RY * 0.4, parts = [floor]; // 무대 배경의 아랫단을 범위 중앙(디바 발밑) 바로 뒤에 둬서, 디바가 무대 위에서 춤추는 것처럼 보임
