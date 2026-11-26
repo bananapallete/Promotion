@@ -1022,6 +1022,29 @@ test('피닉스(병아리): 3초간 받는 피해 60% 감소, 뒤에 자폭해 �
   assert.equal(g.snapshot().players.find((p) => p.id === 'a').s, 'chick');
 });
 
+test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
+  const { g, A, B } = duo('brawler', 'blue');
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
+  g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null);
+  const x0 = A.x, hp = B.hp; run(g, 1);
+  assert.ok(A.x > x0 + 3, '앞으로 전진');
+  assert.ok(B.hp < hp, '앞의 적을 연타');
+  g.setInput('a', { mx: 0, my: 0, run: false }); run(g, 1.5);
+  assert.ok(A.x > x0 + 6, '입력이 없어도 계속 전진');
+  run(g, 3.2);
+  const xe = A.x; run(g, 0.5);
+  assert.equal(A.x, xe, '5초 뒤엔 멈춤');
+});
+
+test('걷는 동안 자동 조준 대상이 뒤에 있으면 그쪽을 바라본다 (달리면 가는 방향)', () => {
+  const { g, A, B } = duo('blue', 'blue');
+  A.x = 20; A.y = 10; B.x = 19; B.y = 10; // 대상은 왼쪽 1칸
+  g.setInput('a', { mx: 1, my: 0, run: false }); run(g, 0.05);
+  assert.equal(A.face, -1, '앞(오른쪽)으로 걸어도 뒤의 대상을 봄');
+  A.x = 20; B.x = 19; g.setInput('a', { mx: 1, my: 0, run: true }); run(g, 0.05);
+  assert.equal(A.face, 1, '달릴 땐 가는 방향');
+});
+
 test('궁극기 직접 조준: 드래그 방향·거리대로 중심이 정해진다', () => {
   const { g, A } = duo('chick', 'blue');
   A.x = 10; A.y = 10; A.ult = A.cfg.ult.need; g.events = [];

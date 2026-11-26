@@ -9,6 +9,7 @@ import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 const urls = import.meta.glob('../public/characters/*/*.png', { eager: true, query: '?url', import: 'default' });
 hooks.spriteUrl = (s, m) => urls[`../public/characters/${s}/${m}.png`];
+const ultUrls = import.meta.glob('../public/ult/*.mp4', { eager: true, query: '?url', import: 'default' }); // 선택창 궁극기 시연 영상
 const fxUrls = import.meta.glob('../public/fx/*.png', { eager: true, query: '?url', import: 'default' });
 hooks.fxUrl = (n) => fxUrls[`../public/fx/${n}.png`];
 
@@ -223,7 +224,7 @@ function pickChar(id) {
 }
 $('#charbtn').addEventListener('click', () => { picker.setValue(game.players.get(ME).charId); $('#pick').hidden = false; });
 // 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
-const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, selected: charIds[0] });
+const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, ultUrl: (id) => ultUrls[`../public/ult/${id}.mp4`], selected: charIds[0] });
 $('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; $('#pickgo').textContent = '선택'; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;

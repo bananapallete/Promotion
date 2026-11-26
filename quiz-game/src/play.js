@@ -16,7 +16,7 @@ let picker = null;
 async function buildJoin() {
   const chars = await (await fetch('/api/characters')).json();
   picker?.destroy();
-  picker = mountPicker($('#chars'), chars, { spriteUrl: (sprite, m) => `/characters/${sprite}/${m}.png`, selected: (me || load())?.charId });
+  picker = mountPicker($('#chars'), chars, { spriteUrl: (sprite, m) => `/characters/${sprite}/${m}.png`, ultUrl: (id) => `/ult/${id}.mp4`, selected: (me || load())?.charId });
   $('#join-ui').hidden = false;
 }
 function join(data) {

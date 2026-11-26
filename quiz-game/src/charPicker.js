@@ -1,4 +1,4 @@
-// 캐릭터 선택(시안 B): 위에 고른 캐릭터를 크게(대기 2초 → 공격 3번 → 달리기 3초 → 쓰러짐 반복) + 능력 3줄, 아래에 역할 탭과 작은 카드 모음.
+// 캐릭터 선택: 위에 고른 캐릭터의 궁극기 시연 영상 + 능력 3줄, 아래에 역할 탭과 카드 모음(카드마다 대기 → 걷기 → 공격 → 쓰러짐 반복).
 import sprites from '../shared/sprites.json';
 import { RUN_DRAIN, SPRITE } from '../shared/constants.js';
 import { HEART_PALETTE, heartRows, SHOE_PALETTE, SHOE_ROWS, SWORD_ROWS } from '../shared/itemPixels.js';
@@ -6,13 +6,13 @@ import { HEART_PALETTE, heartRows, SHOE_PALETTE, SHOE_ROWS, SWORD_ROWS } from '.
 const TABS = [['all', '전체'], ['rec', '추천'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리']];
 const ROLE_NAME = { melee: '근접', tank: '탱커', speed: '스피드', ranged: '원거리' };
 const BLUE = { idle: 4, walk: 7, run: 7, combo: 8, die: 6 }; // sprites.json에 없는 기본 캐릭터
-const IDLE_MS = 2000, ATK_MS = 450, RUN_MS = 3000, DIE_HOLD_MS = 800, CELL = 256;
+const CELL = 256;
 
 const CSS = `
 .pk{--cream:#e8d0a9;--cream-hi:#f6e6c8;--wood:#b27c53;--wood-dk:#7a4e32;--text:#5a3a24;--leaf:#b4d36a;--leaf-dk:#6e9a3a;--navy:#14122b;--rose:#b34a5c;--empty:#7f9298;color:var(--text);display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
-.pk .pk-hero{display:grid;grid-template-columns:138px minmax(0,1fr);gap:6px;padding:10px;background:var(--cream-hi);border:3px solid #d9a63a;border-radius:12px;box-shadow:0 4px 0 #c18a1f,inset 0 0 0 3px #fff7}
-.pk .pk-stage{position:relative;height:148px;border-radius:10px;border:3px solid var(--leaf-dk);background:repeating-conic-gradient(#8fc27a 0 25%,#7db469 0 50%) 0 0/28px 28px;display:grid;place-items:end center;overflow:hidden}
-.pk .pk-stage canvas{width:138px;height:138px;margin-bottom:-6px}
+.pk .pk-hero{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px;background:var(--cream-hi);border:3px solid #d9a63a;border-radius:12px;box-shadow:0 4px 0 #c18a1f,inset 0 0 0 3px #fff7}
+.pk .pk-stage{position:relative;aspect-ratio:16/9;border-radius:10px;border:3px solid var(--leaf-dk);background:#2b4d2a;overflow:hidden}
+.pk .pk-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .pk .pk-info{min-width:0;display:grid;gap:5px;align-content:start}
 .pk .pk-nm{font-size:22px;font-weight:900;line-height:1.05}
 .pk .pk-pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:900;color:#fff;border:2px solid var(--navy);text-shadow:0 1px 0 #0006;margin-right:4px}
@@ -67,30 +67,30 @@ function icon(kind) {
 const pips = (n, kind) => `<span class="pk-pips ${kind}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
 const statRow = (kind, label, n) => `<div class="pk-stat"><div><span data-icon="${kind}"></span><span>${label}</span></div>${pips(n, kind)}</div>`;
 
-/** 한 바퀴의 구간표 */
-function timeline(sprite) {
-  const n = sprites[sprite]?.idle ? sprites[sprite] : BLUE;
-  const idle = Array.from({ length: n.idle }, (_, i) => i).concat(Array.from({ length: Math.max(0, n.idle - 2) }, (_, i) => n.idle - 2 - i)); // 앞뒤로 왕복
-  const atk = sprites[sprite]?.idle
-    ? [0, 1, 2].map(() => ({ frames: Array.from({ length: n.combo - 1 }, (_, k) => k + 1), ms: ATK_MS }))
-    : SPRITE.attackSteps.map((s) => ({ frames: s.frames, ms: s.ms }));
-  const parts = [{ ms: IDLE_MS, at: (t) => ({ m: 'idle', f: idle[Math.floor((t * 6) / 1000) % idle.length] }) }];
-  for (const a of atk) parts.push({ ms: a.ms, at: (t) => ({ m: 'combo', f: a.frames[Math.min(a.frames.length - 1, Math.floor((t / a.ms) * a.frames.length))] }) });
-  parts.push({ ms: RUN_MS, at: (t) => ({ m: 'run', f: Math.floor((t * 15) / 1000) % n.run }) });
-  parts.push({ ms: (n.die / 9) * 1000 + DIE_HOLD_MS, at: (t) => ({ m: 'die', f: Math.min(n.die - 1, Math.floor((t * 9) / 1000)) }) });
-  return parts;
+/** 카드 한 바퀴: 대기 → 걷기 → 공격 → 쓰러짐. 반환: t(ms)에 그릴 { m, f } */
+const CYC = { idle: 1200, walk: 1100, atk: 500, die: 1300 };
+const CYC_TOTAL = CYC.idle + CYC.walk + CYC.atk + CYC.die;
+function cycleAt(sprite, t) {
+  const n = sprites[sprite]?.idle ? sprites[sprite] : BLUE, own = !!sprites[sprite]?.idle;
+  if (t < CYC.idle) return { m: 'idle', f: Math.floor((t * 6) / 1000) % n.idle };
+  t -= CYC.idle;
+  if (t < CYC.walk) return { m: 'walk', f: Math.floor((t * 12) / 1000) % n.walk };
+  t -= CYC.walk;
+  if (t < CYC.atk) { const fr = own ? Array.from({ length: n.combo - 1 }, (_, k) => k + 1) : [...SPRITE.attackSteps[0].frames, ...SPRITE.attackSteps[1].frames]; return { m: 'combo', f: fr[Math.min(fr.length - 1, Math.floor((t / CYC.atk) * fr.length))] }; }
+  t -= CYC.atk;
+  return { m: 'die', f: Math.min(n.die - 1, Math.floor((t * 9) / 1000)) };
 }
 
-/** root 안에 미리보기 + 탭 + 카드 모음을 만든다. opts: { spriteUrl(sprite, motion), selected, onChange(id) } */
+/** root 안에 미리보기 + 탭 + 카드 모음을 만든다. opts: { spriteUrl(sprite, motion), ultUrl(id), selected, onChange(id) } */
 export function mountPicker(root, chars, opts) {
   if (!document.getElementById('pk-css')) { const st = document.createElement('style'); st.id = 'pk-css'; st.textContent = CSS; document.head.append(st); }
   const ids = Object.keys(chars);
   let value = opts.selected && chars[opts.selected] ? opts.selected : ids[0], filter = 'all';
   root.classList.add('pk');
-  root.innerHTML = `<div class="pk-hero"><div class="pk-stage"></div><div class="pk-info"></div><div class="pk-abil"></div></div>
+  root.innerHTML = `<div class="pk-hero"><div class="pk-stage"><video muted loop playsinline autoplay preload="auto"></video></div><div class="pk-info"></div><div class="pk-abil"></div></div>
     <div class="pk-bar"><div class="pk-tabs">${TABS.map(([k, n]) => `<button type="button" data-t="${k}" class="${k === 'all' ? 'on' : ''}">${n}</button>`).join('')}</div><button type="button" class="pk-rnd" data-r>랜덤</button></div>
     <div class="pk-tiles"></div>`;
-  const stage = root.querySelector('.pk-stage'), info = root.querySelector('.pk-info'), abil = root.querySelector('.pk-abil'), tiles = root.querySelector('.pk-tiles');
+  const stage = root.querySelector('.pk-stage'), vid = stage.querySelector('video'), info = root.querySelector('.pk-info'), abil = root.querySelector('.pk-abil'), tiles = root.querySelector('.pk-tiles');
 
   const imgs = new Map();
   const sheet = (sprite, m) => {
@@ -101,28 +101,23 @@ export function mountPicker(root, chars, opts) {
   const fillIcons = (el) => el.querySelectorAll('[data-icon]').forEach((s) => { if (!s.firstChild) s.append(icon(s.dataset.icon)); });
   const shown = () => ids.filter((id) => filter === 'all' || (filter === 'rec' ? chars[id].rec : chars[id].role === filter));
 
-  // 큰 캐릭터 + 타일 정지 그림
-  const big = { canvas: null, g: null, tl: null, total: 0, off: 0, sprite: '' };
-  function drawStill(canvas, c) {
-    const g = canvas.getContext('2d'), im = sheet(c.sprite, 'idle');
-    const paint = () => { g.clearRect(0, 0, canvas.width, canvas.height); g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, CELL, CELL, 0, 0, canvas.width, canvas.height); };
-    if (im.complete && im.naturalWidth) paint(); else im.addEventListener('load', paint, { once: true });
-  }
+  const anims = []; // 카드 애니메이션 { canvas, g, sprite, off, last }
   function renderHero() {
     const c = chars[value], s = c.stars || { atk: 3, hp: 3, spd: 3 };
-    stage.innerHTML = ''; const k = document.createElement('canvas'); k.width = k.height = 276; stage.append(k);
-    big.canvas = k; big.g = k.getContext('2d'); big.tl = timeline(c.sprite); big.total = big.tl.reduce((a, p) => a + p.ms, 0); big.sprite = c.sprite; big.start = performance.now();
+    const u = opts.ultUrl?.(value); stage.hidden = !u;
+    if (u && vid.getAttribute('src') !== u) { vid.src = u; vid.play?.().catch(() => {}); }
     info.innerHTML = `<div class="pk-nm">${c.name}</div><div><span class="pk-pill ${c.role}">${ROLE_NAME[c.role] || ''}</span>${c.rec ? '<span class="pk-pill pk-rec">처음이라면</span>' : ''}</div><div class="pk-bars">${statRow('atk', '공격', s.atk)}${statRow('hp', '체력', s.hp)}${statRow('spd', '속도', s.spd)}</div>`;
     abil.innerHTML = `<div class="k1"><i>공격</i><span>${c.atkInfo || ''}</span></div><div class="k2"><i>${c.sk?.type === 'dash' ? '대시' : '달리기'}</i><span>${skillText(c)}</span></div><div class="k3"><i>궁극기</i><span>${c.ultName || c.ult?.name || ''}</span></div>`;
     fillIcons(info);
   }
   function renderTiles() {
-    tiles.innerHTML = '';
+    tiles.innerHTML = ''; anims.length = 0;
     for (const id of shown()) {
       const c = chars[id], d = document.createElement('div');
       d.className = 'pk-tile' + (id === value ? ' sel' : ''); d.dataset.id = id;
       d.innerHTML = `<span class="pk-dot ${c.role}"></span>${c.rec ? '<span class="pk-rec">★</span>' : ''}<div class="pk-pic"></div><small>${c.name}</small>`;
-      const k = document.createElement('canvas'); k.className = 'pk-sp'; k.width = k.height = 96; drawStill(k, c); d.querySelector('.pk-pic').append(k); tiles.append(d);
+      const k = document.createElement('canvas'); k.className = 'pk-sp'; k.width = k.height = 96; d.querySelector('.pk-pic').append(k); tiles.append(d);
+      anims.push({ canvas: k, g: k.getContext('2d'), sprite: c.sprite, off: Math.random() * CYC_TOTAL, last: '' }); // 카드마다 시작 시점을 달리해 한꺼번에 같은 동작을 하지 않게
     }
   }
   renderHero(); renderTiles();
@@ -130,12 +125,14 @@ export function mountPicker(root, chars, opts) {
   let raf = 0;
   const tick = (now) => {
     raf = requestAnimationFrame(tick);
-    if (!big.canvas || big.canvas.offsetParent === null) return;
-    let t = (now - big.start) % big.total, part = big.tl[0];
-    for (const p of big.tl) { part = p; if (t < p.ms) break; t -= p.ms; }
-    const { m, f } = part.at(t), im = sheet(big.sprite, m);
-    if (!im.complete || !im.naturalWidth) return;
-    big.g.imageSmoothingQuality = 'high'; big.g.clearRect(0, 0, 276, 276); big.g.drawImage(im, f * CELL, 0, CELL, CELL, 0, 0, 276, 276);
+    if (root.offsetParent === null) return;
+    for (const a of anims) {
+      const { m, f } = cycleAt(a.sprite, (now + a.off) % CYC_TOTAL), key = `${m}${f}`;
+      if (key === a.last) continue;
+      const im = sheet(a.sprite, m);
+      if (!im.complete || !im.naturalWidth) continue;
+      a.last = key; a.g.clearRect(0, 0, 96, 96); a.g.drawImage(im, f * CELL, 0, CELL, CELL, 0, 0, 96, 96);
+    }
   };
   raf = requestAnimationFrame(tick);
 

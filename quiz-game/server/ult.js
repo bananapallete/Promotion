@@ -5,7 +5,7 @@
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -20,7 +20,8 @@ export function charge(p, amount) {
 export function useUlt(g, p, aim) {
   const u = p.cfg.ult;
   p.ult = 0;
-  const { dx, dy, near, manual } = g._aimDir(p, aim, u.range ?? 6);
+  let { dx, dy, near, manual } = g._aimDir(p, aim, u.range ?? 6);
+  if (u.type === 'flurry' && !manual && Math.hypot(p.input.mx, p.input.my) > 0.1) { dx = p.input.mx; dy = p.input.my; } // 난타는 가는 방향으로
   p.aimM = manual ? Number(aim.m) || null : null; // 직접 조준: 드래그 길이(0~1)로 거리 조절 (center가 읽음)
   if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
   g.events.push({ e: 'ult', id: p.id, name: u.name, t: u.type, x: r2(p.x), y: r2(p.y), dx: r2(dx), dy: r2(dy), r: u.radius ?? 0, sec: u.sec ?? 0, dist: u.dist ?? 0 });
@@ -74,6 +75,23 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  flurry(g, p, u, dx, dy) { // 난타 전진: sec초 동안 앞으로 걸어가며(스틱으로 방향 조절) gap마다 전방 직선을 주먹으로 때림
+    RUN.buff(g, p, { sec: u.sec, spd: u.spd });
+    p.flurry = { until: g.t + u.sec, dx, dy };
+    p.nextAttackAt = Math.max(p.nextAttackAt, g.t + u.sec); // 평타는 잠겨 있음
+    for (let i = 0; i * u.gap < u.sec - 1e-6; i++) {
+      later(g, i * u.gap, () => {
+        const f = p.flurry; if (!f || p.stunned) return;
+        g.events.push({ e: 'atk', id: p.id, dx: r2(f.dx), dy: r2(f.dy), kind: 'melee', fx: u.fx, lineW: u.width, step: i % 2, range: u.range, len: u.range });
+        for (const o of g._enemies(p)) {
+          const vx = o.x - p.x, vy = o.y - p.y, along = vx * f.dx + vy * f.dy, perp = Math.abs(vx * f.dy - vy * f.dx);
+          if (o.stunned || along < 0 || along > u.range || perp > u.width / 2 + o.cfg.radius) continue;
+          hit(g, o, p, u.dmg, u.knock, f.dx, f.dy, u.fx);
+        }
+      });
+    }
   },
 
   phoenix(g, p, u) { // 불새 변신: 받는 피해 감소 → sec초 뒤 주변에 큰 피해를 주고 자폭 → 알이 되어 stunSec 뒤 부활 (동전은 안 잃음)

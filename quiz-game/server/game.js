@@ -115,6 +115,7 @@ export class Game {
     const len = Math.hypot(mx, my);
     // 방향만 사용: 조이스틱을 얼마나 밀었든 항상 같은 속도 (가속·감속 없음)
     p.input = len > 0.1 ? { mx: mx / len, my: my / len, run: !!i.run } : { mx: 0, my: 0, run: !!i.run };
+    p.rawIn = p.input; // 난타처럼 입력을 덮어쓰는 동안에도 진짜 스틱 값은 남겨 둔다
   }
 
   // ---------- 진행 ----------
@@ -170,7 +171,7 @@ export class Game {
     p.hp = p.cfg.hp;
     p.runGauge = p.cfg.runGauge;
     p.exhausted = false;
-    p.skillReadyAt = 0; p.ult = 0; p.egg = false; p.buff = null; p.rootUntil = 0; p.baseCfg = null; p.channel = null; p.charmUntil = 0; p.orbit = null;
+    p.skillReadyAt = 0; p.ult = 0; p.egg = false; p.flurry = null; p.buff = null; p.rootUntil = 0; p.baseCfg = null; p.channel = null; p.charmUntil = 0; p.orbit = null;
     p.ammoF = p.cfg.ammo?.max ?? 99;
   }
 
@@ -637,6 +638,10 @@ export class Game {
     p.dashPass = dashing && p.dash.pass;
     const runSkill = (c.skill?.type ?? 'run') === 'run';
 
+    if (p.flurry) { // 난타 전진: 멈추지 않고 앞으로, 스틱을 밀면 그 방향으로 꺾음
+      if (p.stunned || this.t >= p.flurry.until) { p.flurry = null; if (p.rawIn) p.input = p.rawIn; }
+      else { const st = p.isBot ? p.input : p.rawIn || p.input, l = Math.hypot(st.mx, st.my); if (l > 0.1) { p.flurry.dx = st.mx / l; p.flurry.dy = st.my / l; } p.input = { mx: p.flurry.dx, my: p.flurry.dy, run: false }; }
+    }
     let vx = 0, vy = 0, running = false;
     const len = Math.hypot(p.input.mx, p.input.my);
     const rooted = this.t < p.rootUntil; // 궁극기에 묶임: 못 움직이고 못 공격
@@ -652,7 +657,9 @@ export class Game {
       const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (p.channel ? p.channel.move : 1) * (this.t < p.charmUntil ? 0.5 : 1) * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
-      if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
+      const lock = running ? null : this._aimDir(p, null, c.attack.range).near; // 자동 조준 대상이 있으면 걷는 동안에도 그쪽을 바라봄 (달리면 가는 방향)
+      if (lock && Math.abs(lock.x - p.x) > 0.15) p.face = lock.x > p.x ? 1 : -1;
+      else if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
     }
     p.running = running;
     if (dashing) { /* 돌진 중에는 달리기 게이지를 건드리지 않음 */ } else if (running) {
