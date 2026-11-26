@@ -9,7 +9,7 @@ import { burstFx, hitFx, meleeFx, muzzleFx } from './fx.js';
 import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
-import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
+import { buildFloor, MAT_MARGIN, matTexture, OBJ_PAD, objectTexture, TILE } from './mapArt.js';
 import { mapObjects } from '../shared/mapObjects.js';
 
 export const BU = 48; // 몸 폭 1칸의 화면 픽셀 수
@@ -46,7 +46,7 @@ export class WorldScene extends Phaser.Scene {
 
     for (const o of mapObjects()) { // 맵 장식물: 아래쪽 기준으로 캐릭터와 앞뒤가 맞게 겹침 (꽃·버섯은 바닥에 깔림)
       const low = o.kind === 'flower';
-      this.add.image(o.x * BU, o.y * BU, objectTexture(this, o.kind, o.v)).setOrigin(0.5, 1).setScale(BU / TILE).setDepth(low ? -90 : o.y * BU);
+      this.add.image(o.x * BU, o.y * BU + OBJ_PAD * (BU / TILE), objectTexture(this, o.kind, o.v)).setOrigin(0.5, 1).setScale(BU / TILE).setDepth(low ? -90 : o.y * BU);
     }
     this.zoneGfx = this.add.graphics().setDepth(-80);
     this.teleGfx = this.add.graphics().setDepth(-45); // 예고 범위 (타격 전 붉은 부채꼴)

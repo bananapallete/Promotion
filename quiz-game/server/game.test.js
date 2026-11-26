@@ -793,16 +793,22 @@ test('오크: 예고 0.4초 뒤에 부채꼴로 타격, 그 전에 쓰러지면 
   assert.equal(B.hp, B.cfg.hp, '쓰러지면 취소');
 });
 
-test('맵 장식물: 고정 배치이고 정답 구역 안에는 놓이지 않는다', async () => {
-  const { mapObjects } = await import('../shared/mapObjects.js');
+test('맵 장식물: 규칙 배치 — 구역 밖, 중앙 통로엔 꽃만, 나무는 줄지어 서고 겹치지 않는다', async () => {
+  const { mapObjects, CORRIDOR } = await import('../shared/mapObjects.js');
   const { ZONES, MAP } = await import('../shared/constants.js');
   const a = mapObjects(), b = mapObjects();
-  assert.deepEqual(a, b);
-  assert.ok(a.length > 30);
+  assert.deepEqual(a, b, '난수 없이 항상 같음');
+  assert.ok(a.length >= 55, `개수 ${a.length}`);
   for (const o of a) {
     assert.ok(o.x > 0 && o.x < MAP.w && o.y > 0 && o.y < MAP.h);
     for (const z of [...ZONES.ox, ...ZONES.choice]) assert.ok(Math.hypot(o.x - z.cx, o.y - z.cy) > z.r, `${o.kind} (${o.x},${o.y})가 구역 안`);
+    if (o.x > CORRIDOR[0] && o.x < CORRIDOR[1]) assert.equal(o.kind, 'flower', '통로엔 꽃만');
   }
+  const trees = a.filter((o) => o.kind === 'tree');
+  assert.ok(trees.length >= 18, `나무 ${trees.length}`);
+  for (let i = 0; i < trees.length; i++) for (let j = i + 1; j < trees.length; j++) assert.ok(Math.hypot(trees[i].x - trees[j].x, trees[i].y - trees[j].y) >= 2.4, '나무끼리 겹침');
+  assert.ok(trees.every((t) => t.x < 8 || t.x > MAP.w - 8 || t.y < 3), '나무는 가장자리 줄에만');
+  assert.deepEqual([...new Set(trees.map((t) => t.v))].sort(), [0, 1, 2], '세 가지 모양을 돌려 씀');
 });
 
 test('하트: 체력을 최대 체력의 30% 회복하고, 가득이면 못 먹는다', () => {
