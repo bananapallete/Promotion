@@ -372,6 +372,11 @@ export class Game {
       }
       const px = q.x, py = q.y;
       q.x += q.vx * dt; q.y += q.vy * dt; q.travel += q.speed * dt;
+      if (q.carried) for (const [id, until] of q.carried) { // 휩쓸림: 묶인 동안 파도와 같은 속도로 함께 밀려감
+        const o = this.players.get(id);
+        if (!o || this.t >= until) { q.carried.delete(id); continue; }
+        if (!o.stunned) { o.x += q.vx * dt; o.y += q.vy * dt; this._clamp(o); }
+      }
       let gone = q.travel >= q.maxDist || q.x < 0 || q.y < 0 || q.x > MAP.w || q.y > MAP.h;
       let blocked = false;
       for (const w of this.walls.values()) { // 방패 성벽은 상대의 투사체를 막는다
@@ -386,7 +391,7 @@ export class Game {
         if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
         q.hit.add(o.id);
         if (q.ult) ultHit(this, o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art); else this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
-        if (q.root) o.rootUntil = Math.max(o.rootUntil, this.t + q.root);
+        if (q.root) { o.rootUntil = Math.max(o.rootUntil, this.t + q.root); if (q.carried) q.carried.set(o.id, this.t + q.root); }
         if (!q.pierce) { gone = true; break; }
       }
       if (gone) this.projectiles.delete(q.id);

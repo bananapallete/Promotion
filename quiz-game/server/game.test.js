@@ -931,6 +931,8 @@ test('해일(귀상어): 폭이 넓은 파도가 줄 선 상대를 모두 맞히
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 5; A.y = 10; B.x = 9; B.y = 10.8; C.x = 14; C.y = 9.3;
   A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
+  run(g, 0.5); const bx = B.x; run(g, 0.3);
+  assert.ok(B.x > bx + 1, '맞은 적은 묶인 채 파도에 휩쓸려 앞으로 밀려감');
   run(g, 2);
   assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp, '둘 다 맞음 (폭이 넓음)');
   assert.equal(B.cfg.hp - B.hp, A.cfg.ult.dmg);

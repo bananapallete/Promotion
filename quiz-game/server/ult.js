@@ -175,9 +175,9 @@ const RUN = {
     g.events.push({ e: 'pull', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, ts });
   },
 
-  wave(g, p, u, dx, dy) { // 맵을 쓸고 가는 거대한 파도: 폭이 넓은 관통 투사체, 맞으면 묶임
+  wave(g, p, u, dx, dy) { // 맵을 쓸고 가는 거대한 파도: 폭이 넓은 관통 투사체, 맞으면 묶인 채 파도에 휩쓸려 함께 밀려감
     const id = ++g.projSeq;
-    g.projectiles.set(id, { id, ult: true, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set() });
+    g.projectiles.set(id, { id, ult: true, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set(), carried: new Map() });
   },
 
   magnet(g, p, u) { // 반경 안의 맵 동전은 전부, 다른 사람이 든 동전은 한 명당 최대 steal개를 흡수하고 잠깐 빨라짐
