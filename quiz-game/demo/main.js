@@ -84,7 +84,7 @@ scene.onFrame = (sc, dt) => {
     const dead = !!v.p.st; deadT = Math.max(0, Math.min(1, deadT + (dead ? dt : -dt) / 500));
     const de = deadT < 0.5 ? 4 * deadT ** 3 : 1 - (-2 * deadT + 2) ** 3 / 2;
     { const z = ultZoom(); frameCv.style.opacity = z > 0.01 ? 1 : 0; drawFrame(performance.now(), z); }
-    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + (ultDir ? 0.15 : 0.5) * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.15 * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
     document.body.classList.toggle('dead', dead && v.p.s !== 'egg'); // 알이 된 동안엔 흑백 대신 컬러로(폭발 연출)
     deathMsg.hidden = !dead; if (dead) deathMsg.textContent = `${Math.ceil(v.p.rv)}초 뒤 부활합니다`;
     { const uz = ultDir ? ultZoom() : 0; cam.centerOn(v.x + (ultDir ? ultDir.dx * 2.2 * BU * uz : 0), v.y - 30 + (ultDir ? ultDir.dy * 2.2 * BU * uz : 0)); } // 투사체형 궁극기: 발사 방향으로 살짝 당겨 보여 줌
