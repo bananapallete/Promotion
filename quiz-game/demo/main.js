@@ -44,6 +44,21 @@ let follow = true;
 let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
 let deadT = 0; // 쓰러지면 0→1 (0.5초에 걸쳐): 줌인 + 흑백
 const deathMsg = document.getElementById('deathMsg');
+// 궁극기 줌인 중 화면 가장자리에서 중앙으로 몰리는 흰 도트 프레임 (시안: window.__ultFrame = 'A' 띠 / 'B' 둥근 비네트)
+const frameCv = document.createElement('canvas'); frameCv.id = 'ultframe'; document.body.append(frameCv);
+const BAY = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+let frameKey = '';
+function drawFrame() {
+  const mode = window.__ultFrame || 'A', DOTP = 4, w = Math.ceil(innerWidth / DOTP), h = Math.ceil(innerHeight / DOTP), key = `${mode}${w}x${h}`;
+  if (key === frameKey) return; frameKey = key; frameCv.width = w; frameCv.height = h;
+  const g = frameCv.getContext('2d'), img = g.createImageData(w, h), band = 0.14 * Math.min(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const t = (BAY[y & 3][x & 3] + 0.5) / 16;
+    const e = mode === 'A' ? 1 - Math.min(1, Math.min(x, y, w - 1 - x, h - 1 - y) / band) : Math.max(0, (Math.hypot((x - w / 2) / (w / 2), (y - h / 2) / (h / 2)) - 0.72) / 0.5);
+    if (t < e * 0.85) { const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = 255; img.data[i + 3] = 235; }
+  }
+  g.putImageData(img, 0, 0);
+}
 let ultAt = -1e9; // 내가 궁극기를 쓴 시각 (카메라 줌인용)
 const ultZoom = () => { // 0.15초에 확 들어갔다가 0.75초 유지, 0.5초에 걸쳐 돌아옴 → 0~1
   const t = (performance.now() - ultAt) / 1000, e = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
@@ -59,7 +74,8 @@ scene.onFrame = (sc, dt) => {
     const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
     const dead = !!v.p.st; deadT = Math.max(0, Math.min(1, deadT + (dead ? dt : -dt) / 500));
     const de = deadT < 0.5 ? 4 * deadT ** 3 : 1 - (-2 * deadT + 2) ** 3 / 2;
-    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
+    drawFrame(); frameCv.style.opacity = ultZoom();
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.5 * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
     document.body.classList.toggle('dead', dead && v.p.s !== 'egg'); // 알이 된 동안엔 흑백 대신 컬러로(폭발 연출)
     deathMsg.hidden = !dead; if (dead) deathMsg.textContent = `${Math.ceil(v.p.rv)}초 뒤 부활합니다`;
     cam.centerOn(v.x, v.y - 30);

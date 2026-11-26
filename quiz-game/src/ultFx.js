@@ -669,3 +669,38 @@ export function stageFx(scene, e, BU) {
     }
   }, FXD);
 }
+
+// ---------- Aura Pulse: 민트 오라가 46px → 반경까지 순식간에 부풀고, 맞은 적은 깜빡이다 팡 ----------
+const MINT = [0xd6fff0, 0x9ff5d0, 0x5fdcb0, 0x2fa98a];
+export function auraPulse(scene, e, BU, tint) {
+  const x = e.x * BU, y = e.y * BU, R1 = Math.max(e.r || 0, 2.25) * BU, R0 = 46, pal = tint || MINT;
+  drawLoop(scene, 420, (g, u) => {
+    const grow = easeOut(Math.min(1, u / 0.12)), R = R0 + (R1 - R0) * grow, fade = Math.max(0, 1 - Math.max(0, u - 0.25) / 0.75);
+    for (let gy = -R; gy <= R; gy += 6) for (let gx = -R; gx <= R; gx += 6) {
+      const d = Math.hypot(gx, gy * 1.2) / R; if (d > 1) continue;
+      if (bay(Math.round(gx / 6) + 20, Math.round(gy / 6) + 20) > (d > 0.85 ? 0.9 : 0.35 * (1 - d) + 0.1) * fade * 1.6) continue;
+      sq(g, x + gx, y + gy * 0.82, 6, pal[Math.min(3, Math.floor(d * 4))], 0.85 * fade);
+    }
+  }, FXD);
+  for (const v of scene.views.values()) { // 범위 안 다른 캐릭터: 깜빡임 → 팡
+    if (v.p.id === e.id || Math.hypot(v.x - x, v.y - y) > R1) continue;
+    const now = performance.now(); v.blinkUntil = now + 320; v.popAt = now + 320;
+  }
+}
+
+// ---------- Ground Slam: 30px 뛰었다 내려찍고, 8갈래 균열이 뻗고, 화면이 4px 흔들림 ----------
+export function groundSlam(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU, seeds = Array.from({ length: 8 }, (_, i) => ({ a: (i / 8) * 6.283 + (Math.random() - 0.5) * 0.3, j: Math.random() * 100 }));
+  drawLoop(scene, 1100, (g, u) => {
+    const grow = easeOut(Math.min(1, u / 0.2)), fade = Math.min(1, (1 - u) / 0.35);
+    for (const s of seeds) {
+      let px = x, py = y;
+      for (let k = 1; k <= 12; k++) {
+        const f = k / 12; if (f > grow) break;
+        const wob = Math.sin(s.j + k * 2.3) * 9, nx = x + Math.cos(s.a) * R * 0.95 * f + -Math.sin(s.a) * wob, ny = y + (Math.sin(s.a) * R * 0.95 * f + Math.cos(s.a) * wob) * 0.82;
+        dotLine(g, px, py, nx, ny, 9, 0x2a1a12, fade, 6); dotLine(g, px, py, nx, ny, 3, 0xb08a60, fade, 6); px = nx; py = ny;
+      }
+    }
+  }, -46);
+  if (scene.focusId) scene.cameras.main.shake(160, 0.005);
+}

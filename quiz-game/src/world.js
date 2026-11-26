@@ -8,7 +8,7 @@ import BOUNDS from '../shared/spriteBounds.json';
 import { FXD } from './pixel.js';
 import { MinionLayer } from './minions.js';
 import { burstFx, chainFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
-import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, stageFx, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
+import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, stageFx, auraPulse, groundSlam, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, OBJ_PAD, objectTexture, TILE } from './mapArt.js';
@@ -249,6 +249,7 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     const v = this.views.get(e.id);
     if (e.e === 'ult' && v) {
+      if (['channel', 'charm', 'magnet', 'tether', 'stage', 'brood'].includes(e.t)) auraPulse(this, { ...e, r: e.r || 2.25 }, BU, e.t === 'charm' ? [0xffe6f2, 0xffb3d9, 0xff7ab8, 0xc94c8a] : undefined);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
     } else if (e.e === 'chain') {
@@ -283,7 +284,7 @@ export class WorldScene extends Phaser.Scene {
       hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
       if (e.r) rangeDisc(this, e.x, e.y, e.r, BU);
-      if (e.fx === 'phoenix') phoenixBlast(this, e, BU); else if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
+      if (e.fx === 'phoenix') phoenixBlast(this, e, BU); else if (e.fx === 'stomp') { const hv = this.views.get(e.id); if (hv) hv.slamAt = now; this.time.delayedCall(200, () => { quake(this, e, BU); groundSlam(this, e, BU); }); } else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
       warnFx(this, e, BU);
       meteorFall(this, e, BU);
@@ -301,7 +302,7 @@ export class WorldScene extends Phaser.Scene {
         line.lineStyle(9, 0xff6f91, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
         line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
         this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
-      } else { meleeFx(this, e, v, BU); if (e.fx === 'smash') orcDust(this, e, v, BU, v.p.id === this.focusId); }
+      } else { meleeFx(this, e, v, BU); if (e.fx === 'smash') { orcDust(this, e, v, BU, v.p.id === this.focusId); groundSlam(this, { x: v.p.x + e.dx * e.range * 0.55, y: v.p.y + e.dy * e.range * 0.55, r: e.range * 0.6 }, BU); } }
     } else if (e.e === 'hit' && v) {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
       const crit = !!e.crit;
@@ -355,8 +356,10 @@ export class WorldScene extends Phaser.Scene {
       const p = v.p;
       v.x += (v.tx - v.x) * k;
       v.y += (v.ty - v.y) * k;
+      const slamU = v.slamAt ? (now - v.slamAt) / 200 : 1; // 대지 강타: 30px 뛰었다 내려옴
+      const hop0 = slamU < 1 ? Math.sin(Math.PI * slamU) * 30 : 0;
       const hop = v.hopUntil > now ? Math.sin(Math.PI * (1 - (v.hopUntil - now) / 350)) * 1.3 * BU : 0; // 도약: 포물선으로 뜸
-      v.sprite.setPosition(v.x, v.y - hop).setDepth(v.y);
+      v.sprite.setPosition(v.x, v.y - hop - hop0).setDepth(v.y);
       this._dust(v, p, now);
       if (p.ub > 0 && !p.sl) auraTick(this, v, now, BU); else auraOff(v);
       if (p.bn) burnTick(this, v, now, BU);
@@ -366,7 +369,8 @@ export class WorldScene extends Phaser.Scene {
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
       v.zsCur = (v.zsCur ?? (p.zs || 1)) + ((p.zs || 1) - (v.zsCur ?? (p.zs || 1))) * Math.min(1, (delta / 1000) * 8); // 진화 등 크기 변화는 부드럽게
-      v.sprite.setScale(SPR_SCALE * v.zsCur);
+      const pop = v.popAt && now > v.popAt && now < v.popAt + 200 ? 1 + 0.35 * Math.sin(Math.PI * ((now - v.popAt) / 200)) : 1; // 오라에 맞으면 깜빡 → 팡
+      v.sprite.setScale(SPR_SCALE * v.zsCur * pop);
 
       // 모션: 공격 중이면 유지, 아니면 이동 상태에 맞춰
       const dies = p.st && sprites[p.s]?.die; // 기절하면 죽음 모션을 한 번 재생하고 누운 채로 둠
@@ -382,7 +386,7 @@ export class WorldScene extends Phaser.Scene {
 
       // 기절: 쓰러진 모습 / 무적: 깜빡임
       v.sprite.setAngle(p.st && !dies ? 80 * p.f : 0);
-      v.sprite.setAlpha(p.sl ? (p.id === this.focusId ? 0.35 : 0.12) : p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1); // 은신 / 무적 깜빡임
+      v.sprite.setAlpha(v.blinkUntil > now ? (Math.floor(now / 50) % 2 ? 0.2 : 1) : p.sl ? (p.id === this.focusId ? 0.35 : 0.12) : p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1); // 은신 / 무적 깜빡임
 
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
       phoenixTick(this, v, p, BU, pixText);
