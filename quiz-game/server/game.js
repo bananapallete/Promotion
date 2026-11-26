@@ -25,7 +25,7 @@ function spawnPos() {
 export class Game {
   constructor(characters, quizzes) {
     this.characters = characters;
-    this.questions = quizzes.map((q, i) => ({ ...q, id: i + 1 }));
+    this.questions = quizzes.map((q, i) => ({ ...q, id: i + 1, mode: q.type === 'real' ? '현실' : q.mode === '팀' ? '팀' : '개인' }));
     this.players = new Map();
     this.t = 0; // 게임 시간(초)
     this.phase = PHASE.LOBBY;

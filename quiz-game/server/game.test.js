@@ -1179,6 +1179,12 @@ test('방패 성벽(기사): 천천히 전진하며 적을 밀어내고, 막다�
   run(g2, 1); assert.equal(g2.walls.size, 0, '지속시간 끝나면 사라짐'); assert.ok(g2.events.some((e) => e.e === 'wallBlast'), '폭파');
 });
 
+test('시트에서 만든 문제 목록에 현실 퀴즈가 있어도 그대로 불러오고 방식이 현실로 잡힌다', () => {
+  const g = new Game(chars, [{ type: 'ox', text: 'a', answer: 'O', time: 10 }, { type: 'real', text: '줄다리기', answer: null, time: 0 }, { type: 'ox', text: 'b', answer: 'X', time: 10, mode: '팀' }]);
+  assert.deepEqual(g.questions.map((q) => q.mode), ['개인', '현실', '팀']);
+  assert.ok(g.ask(2)); assert.equal(g.phase, PHASE.REAL);
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;

@@ -27,4 +27,4 @@ cloudflared tunnel --url http://localhost:3000
 node tools/quiz_csv.mjs 내문제.csv server/quizzes.json
 QUIZ_FILE=server/quizzes.json HOST_KEY=비밀키 npm start
 ```
-(`현실` 유형은 관리자 화면이 생기기 전까지 제외된다)
+(`현실` 유형 문제는 진행자 화면에서 점수를 입력 → 확인 → 공개하기로 진행한다)
