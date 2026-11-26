@@ -17,5 +17,7 @@ export function dragAim(btn, arrow, fire, canAim = () => true) { // canAim()이 
     fire(d > 16 ? { x: st.vec.x / d, y: st.vec.y / d, m: Math.min(1, d / 70) } : null);
   };
   btn.addEventListener('pointerup', (e) => end(e, false)); btn.addEventListener('pointercancel', (e) => end(e, true));
+  st.cancel = () => { id = null; st.active = false; st.vec = { x: 0, y: 0 }; arrow.style.opacity = 0; }; // 재접속·화면 전환 등으로 손가락이 끊겼을 때 조준 상태를 비움
+  btn.addEventListener('lostpointercapture', st.cancel);
   return st;
 }

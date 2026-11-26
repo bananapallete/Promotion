@@ -87,9 +87,9 @@ let aimBusy = false;
 setInterval(() => {
   if (!ME || aimBusy) return;
   const dragLen = Math.hypot(atkVec.x, atkVec.y), dragging = atkId !== null && dragLen > 16;
-  aimBusy = true;
-  socket.emit('aimq', dragging ? { x: atkVec.x / dragLen, y: atkVec.y / dragLen, m: Math.min(1, dragLen / 70) } : null, (info) => {
-    aimBusy = false; scene.setAim(info && { id: ME, ...info, dragging });
+  aimBusy = true; const to = setTimeout(() => { aimBusy = false; }, 400); // 응답이 안 오면(끊김·재접속) 다음 틱에 다시 물어봄 — 안 그러면 조준 표시가 그 자리에 굳음
+  socket.volatile.emit('aimq', dragging ? { x: atkVec.x / dragLen, y: atkVec.y / dragLen, m: Math.min(1, dragLen / 70) } : null, (info) => {
+    clearTimeout(to); aimBusy = false; scene.setAim(info && { id: ME, ...info, dragging });
   });
   const ul = Math.hypot(ultDrag.vec.x, ultDrag.vec.y), cu = me?.ult; // 궁극기를 끌어 조준 중이면 방향·거리 표시
   scene.setUltAim(ultDrag.active && ul > 16 && cu ? { id: ME, dx: ultDrag.vec.x / ul, dy: ultDrag.vec.y / ul, len: (cu.range ?? cu.dist ?? 6) * Math.min(1, ul / 70) } : null);
@@ -136,7 +136,7 @@ function showAmmo(p) {
 const input = { mx: 0, my: 0, run: false };
 let dirty = false;
 const sendInput = () => { dirty = true; };
-setInterval(() => { if (dirty) { dirty = false; socket.emit('input', { ...input }); } }, 50);
+setInterval(() => { if (dirty) { dirty = false; socket.volatile.emit('input', { ...input }); } }, 50); // volatile: 끊긴 동안 쌓였다가 재접속 때 한꺼번에 쏟아지지 않게
 
 // 조이스틱: 화면 왼쪽 절반 어디든 터치하면 그 지점이 중심이 된다 (플로팅 조이스틱)
 const zone = $('#lzone'), pad = $('#pad'), stick = $('#stick'), hint = $('#padHint');
@@ -176,14 +176,14 @@ const setRun = (v) => { input.run = v; runBtn.classList.toggle('on', v); sendInp
 // 스킬 버튼: 달리기는 누르고 있는 동안, 대쉬는 탭하면 한 번
 runBtn.addEventListener('pointerdown', (e) => {
   runBtn.setPointerCapture(e.pointerId);
-  if (skillType() === 'dash') { socket.emit('skill'); runBtn.classList.add('on'); } else setRun(true);
+  if (skillType() === 'dash') { socket.volatile.emit('skill'); runBtn.classList.add('on'); } else setRun(true);
 });
 runBtn.addEventListener('pointerup', () => setRun(false));
 runBtn.addEventListener('pointercancel', () => setRun(false));
 
 // 궁극기: 충전되면 탭 (키보드 K)
 const ultBtn = $('#btnUlt');
-const ultDrag = dragAim(ultBtn, $('#aimU'), (a) => socket.emit('ult', a), () => ultNeedsAim(me?.ult)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
+const ultDrag = dragAim(ultBtn, $('#aimU'), (a) => socket.volatile.emit('ult', a), () => ultNeedsAim(me?.ult)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
 
 // 공격: 탭 = 자동 조준, 드래그 후 놓기 = 그 방향으로 직접 조준
 const atk = $('#btnAtk'), aim = $('#aim');
@@ -202,7 +202,7 @@ const atkEnd = (e, cancel) => {
   atkId = null; aim.style.opacity = 0;
   if (cancel) return;
   const d = Math.hypot(atkVec.x, atkVec.y);
-  socket.emit('attack', d > 16 ? { x: atkVec.x / d, y: atkVec.y / d, m: Math.min(1, d / 70) } : null);
+  socket.volatile.emit('attack', d > 16 ? { x: atkVec.x / d, y: atkVec.y / d, m: Math.min(1, d / 70) } : null);
 };
 atk.addEventListener('pointerup', (e) => atkEnd(e, false));
 atk.addEventListener('pointercancel', (e) => atkEnd(e, true));
@@ -217,9 +217,9 @@ function keyMove() {
 }
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
-  if (k === 'shift' && !e.repeat && skillType() === 'dash') socket.emit('skill');
-  if ((k === ' ' || k === 'j') && !e.repeat) { socket.emit('attack', null); e.preventDefault(); return; }
-  if (k === 'k' && !e.repeat) { socket.emit('ult', null); return; }
+  if (k === 'shift' && !e.repeat && skillType() === 'dash') socket.volatile.emit('skill');
+  if ((k === ' ' || k === 'j') && !e.repeat) { socket.volatile.emit('attack', null); e.preventDefault(); return; }
+  if (k === 'k' && !e.repeat) { socket.volatile.emit('ult', null); return; }
   if (!keys.has(k)) { keys.add(k); keyMove(); }
 });
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
@@ -269,13 +269,22 @@ $('#pickgo').addEventListener('click', () => {
 });
 
 // 연결(재연결 포함)될 때마다 저장된 정보로 자동 입장 → 외형과 점수 복원
+// 조작 상태 비우기: 끊김·재접속·앱 전환 때 손가락 상태가 남아 조이스틱·조준이 굳는 것을 막는다
+function resetControls() {
+  input.mx = 0; input.my = 0; input.run = false; runBtn.classList.remove('on'); dirty = true;
+  padId = null; stick.style.transform = ''; pad.classList.remove('on'); hint.classList.remove('off');
+  atkId = null; atkVec = { x: 0, y: 0 }; aim.style.opacity = 0; ultDrag.cancel(); aimBusy = false; scene.setAim(null); scene.setUltAim(null);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) resetControls(); });
+addEventListener('blur', resetControls);
+atk.addEventListener('lostpointercapture', () => { atkId = null; atkVec = { x: 0, y: 0 }; aim.style.opacity = 0; });
 socket.on('connect', () => {
-  $('#conn').hidden = true;
+  resetControls(); $('#conn').hidden = true;
   const saved = me || load();
   if (saved?.token) join({ token: saved.token, name: saved.name, charId: saved.charId });
   else if (savedName()) { $('#nick').hidden = true; openPicker('join'); }
   else { $('#pick').hidden = true; $('#nick').hidden = false; setTimeout(() => nickIn.focus(), 50); }
 });
 socket.on('kicked', () => { save(null); me = null; ME = null; $('#conn').hidden = false; $('#conn').textContent = '진행자가 내보냈어요'; });
-socket.on('disconnect', () => { $('#conn').hidden = false; $('#conn').textContent = '연결 끊김 · 다시 연결 중…'; });
+socket.on('disconnect', () => { resetControls(); $('#conn').hidden = false; $('#conn').textContent = '연결 끊김 · 다시 연결 중…'; });
 window.__world = scene;
