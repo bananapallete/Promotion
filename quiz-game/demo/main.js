@@ -4,7 +4,7 @@ import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
 import { addBtnIcons, setBtnLabel } from '../src/btnIcons.js';
 import { ultNeedsAim } from '../shared/ultAim.js';
-import { renderTopRank } from '../src/topRank.js';
+import { mountQuizTop, renderQuizTop } from '../src/quizTop.js';
 import { dragAim } from '../src/aimDrag.js';
 import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
@@ -18,6 +18,7 @@ hooks.fxUrl = (n) => fxUrls[`../public/fx/${n}.png`];
 
 const $ = (s) => document.querySelector(s);
 addBtnIcons();
+const qtop = mountQuizTop();
 const ME = 'me';
 window.__game = null; // 테스트용 접근
 
@@ -106,13 +107,13 @@ setInterval(() => {
 }, 50);
 
 function hud(s) {
+  renderQuizTop(qtop, s, s.players.map((x) => ({ id: x.id, name: x.n, score: x.sc })).sort((a, b) => b.score - a.score), ME);
   const p = s.players.find((x) => x.id === ME);
   if (p) {
     showAmmo(p);
     $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
     $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
     $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
-    renderTopRank($('#toprank'), s.players.map((x) => ({ id: x.id, name: x.n, score: x.sc })).sort((a, b) => b.score - a.score), ME);
     $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';
   }
   const counting = s.phase === PHASE.READING || s.phase === PHASE.MOVING;

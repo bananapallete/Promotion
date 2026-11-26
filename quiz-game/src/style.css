@@ -166,3 +166,4 @@ td, th, .qrow { border-bottom-color: #7a4e3233; }
 #toprank div.me { background: #b4d36acc; }
 #toprank span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #toprank i { font-style: normal; font-variant-numeric: tabular-nums; }
+#hudbar, #phase, #result { display: none !important; } /* 상단 UI(quizTop)로 대체 */

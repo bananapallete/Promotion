@@ -2,12 +2,13 @@ import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
 import { addBtnIcons, setBtnLabel } from './btnIcons.js';
 import { ultNeedsAim } from '../shared/ultAim.js';
-import { renderTopRank } from './topRank.js';
+import { mountQuizTop, renderQuizTop } from './quizTop.js';
 import { dragAim } from './aimDrag.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
 addBtnIcons();
+const qtop = mountQuizTop();
 const socket = io();
 const LS = 'quiz_player';
 const load = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } };
@@ -164,7 +165,7 @@ socket.on('state', (s) => {
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
   $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
-  renderTopRank($('#toprank'), s.lb || [], me.token);
+  renderQuizTop(qtop, s, s.lb || [], me.token);
   const left = s.left > 0 ? ` ${Math.ceil(s.left)}` : '';
   $('#phase').textContent = ((phaseText[s.phase] || '') + left).trim();
   $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';
