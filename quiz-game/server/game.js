@@ -14,6 +14,7 @@ const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
 // 어떤 구역도 아닌 맵 안쪽 지점 (입장·모이기 위치)
+export const SANDBAG_ATTACK = false; // 샌드백(지킴이) 공격 기능: 지금은 꺼 둠 (true면 가까이 오면 때림)
 function spawnPos() {
   for (let i = 0; i < 20; i++) {
     const x = rand(2, MAP.w - 2), y = rand(2, MAP.h - 2);
@@ -75,7 +76,9 @@ export class Game {
   }
 
   /** 나와 같은 팀(팀이 있을 때만) 접속자, 나 포함 */
-  _allies(p) { return p.team ? [...this.players.values()].filter((o) => o.connected && !o.stunned && o.team === p.team) : [p]; }
+  /** 같은 편인가: 같은 팀이거나, 아군 봇(ally)과 사람/아군 봇 */
+  _sameSide(a, b) { return !!(a.team && a.team === b.team) || !!((a.ally && (!b.isBot || b.ally)) || (b.ally && !a.isBot)); }
+  _allies(p) { return [...this.players.values()].filter((o) => o === p || (o.connected && !o.stunned && this._sameSide(p, o))); }
 
   humans() {
     return [...this.players.values()].filter((p) => !p.isBot);
@@ -255,6 +258,15 @@ export class Game {
     }
   }
 
+  /** 대기실 왼쪽 아군 봇: 가만히 서 있고 체력이 반쯤 깎여 있어서 힐·버프·방어 스킬을 시험해 볼 수 있다 (사람과 같은 편) */
+  addAllies(only) {
+    const ids = only || Object.keys(this.characters);
+    for (const [x, y] of [[3, 5], [4, 9], [3, 13], [4, 17]]) {
+      const p = this.addBot('idle', ids[Math.floor(Math.random() * ids.length)]);
+      p.name = '아군'; p.x = x; p.y = y; p.home = { x, y }; p.ally = true; p.hp = Math.ceil(p.cfg.hp * 0.5);
+    }
+  }
+
   /** 대기실 우측 샌드백: 가만히 서 있는 봇(idle)과, 가까이 오면 때리고 구역을 벗어나면 제자리로 돌아가는 봇(guard) */
   addSandbags(only) {
     const ids = only || Object.keys(this.characters).filter((c) => this.characters[c].attack.type === 'melee' || this.characters[c].role !== 'support');
@@ -325,7 +337,7 @@ export class Game {
   _stealthed(o) { return !!(o.buff && this.t < o.buff.until && o.buff.stealth); }
 
   _enemies(p) {
-    return [...this.players.values()].filter((o) => o !== p && o.connected && !(p.team && o.team === p.team)); // 같은 팀은 적이 아님
+    return [...this.players.values()].filter((o) => o !== p && o.connected && !this._sameSide(p, o)); // 같은 팀·아군 봇은 적이 아님
   }
 
   // 지금 공격을 하면 몇 타째인지, 그 타의 배율과 사거리
@@ -492,7 +504,7 @@ export class Game {
 
   _updateProjectiles(dt) {
     for (const q of [...this.projectiles.values()]) {
-      const ownerP = this.players.get(q.owner), foes = [...this.players.values()].filter((o) => o.connected && o.id !== q.owner && !(ownerP?.team && o.team === ownerP.team));
+      const ownerP = this.players.get(q.owner), foes = [...this.players.values()].filter((o) => o.connected && o.id !== q.owner && !(ownerP && this._sameSide(ownerP, o)));
       if (q.kind === 'lob') {
         const u = (this.t - q.t0) / q.T;
         if (u < 1) { q.x = q.sx + (q.tx - q.sx) * u; q.y = q.sy + (q.ty - q.sy) * u; continue; }
@@ -919,6 +931,7 @@ export class Game {
   // ---------- 더미 봇 ----------
   /** 샌드백 지킴이: 사람이 sense 안으로 오면 쫓아가 때리고, 집에서 leash보다 멀어지면 포기하고 제자리로 돌아간다 */
   _guardThink(p) {
+    if (!SANDBAG_ATTACK) { p.input = { mx: 0, my: 0, run: false }; return; } // 샌드백 공격 기능 꺼짐: 가만히 서 있기만 함
     const h = p.home, a = p.cfg.attack, SENSE = 4.5, LEASH = 6.5, dh = Math.hypot(h.x - p.x, h.y - p.y);
     let best = null, bd = Infinity;
     for (const o of this.players.values()) { if (o.isBot || !o.connected || o.stunned || this._stealthed(o)) continue; const d = Math.hypot(o.x - p.x, o.y - p.y), dt = Math.hypot(o.x - h.x, o.y - h.y); if (dt <= SENSE + 1 && d < bd) { best = o; bd = d; } }

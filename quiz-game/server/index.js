@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
 // 기본 봇: 서로 공격하는 15마리 (호스트 화면에서 제거 가능)
 const charIds = Object.keys(characters);
 game.botsCanAttack = true;
-game.addSandbags(); // 대기실 우측 샌드백 봇 (돌아다니는 봇은 진행자 화면의 '공격봇 15'로 필요할 때만)
+game.addSandbags(); game.addAllies(); // 오른쪽 샌드백(공격 안 함) · 왼쪽 아군 봇 // 대기실 우측 샌드백 봇 (돌아다니는 봇은 진행자 화면의 '공격봇 15'로 필요할 때만)
 
 // ---------- 루프 ----------
 let last = performance.now();

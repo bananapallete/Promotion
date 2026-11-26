@@ -28,7 +28,7 @@ window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
 const charIds = Object.keys(characters);
 game.botsCanAttack = true; // 기본 봇은 서로 싸우고, 문제 시간에는 구역으로 이동
-game.addSandbags(); // 우측 샌드백 봇 (돌아다니는 봇은 설정 패널의 '공격봇 15')
+game.addSandbags(); game.addAllies(); // 우측 샌드백 봇 (돌아다니는 봇은 설정 패널의 '공격봇 15')
 
 let last = performance.now();
 setInterval(() => {

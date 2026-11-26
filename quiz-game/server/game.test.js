@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Game } from './game.js';
+import { Game, SANDBAG_ATTACK } from './game.js';
 import { CRIT, PHASE, RUN_DRAIN, ULT_CHARGE } from '../shared/constants.js';
 const HUMAN_MUL = ULT_CHARGE.humanMul; ULT_CHARGE.humanMul = 1; // 규칙 테스트는 배수 없이(배포용 값), 배수는 아래 전용 테스트에서 확인
 
@@ -1202,7 +1202,7 @@ test('샌드백: 가만히 선 봇과, 가까이 오면 때리고 구역을 벗�
   assert.ok(idle.length >= 3 && guards.length >= 2 && sand.every((p) => p.x >= 30), '우측에 배치');
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' }), gd = guards[0]; gd.cfg = { ...gd.cfg, hp: 9999 }; gd.hp = 9999;
   a.x = gd.home.x - 3; a.y = gd.home.y; a.hp = 999; a.invUntil = 1e9; const before = a.hp; run(g, 3);
-  assert.ok(Math.abs(a.x - gd.x) < 4, '가까이 오면 쫓아옴'); void before;
+  if (SANDBAG_ATTACK) assert.ok(Math.abs(a.x - gd.x) < 4, '가까이 오면 쫓아옴'); else assert.equal(Math.hypot(gd.x - gd.home.x, gd.y - gd.home.y) < 0.5, true, '공격 기능이 꺼져 있어 가만히 있음'); void before;
   a.x = 5; a.y = 5; run(g, 10); assert.ok(Math.hypot(gd.x - gd.home.x, gd.y - gd.home.y) < 1, '멀어지면 제자리로 복귀');
   g.gather(); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '모이기에 안 끌려감');
   a.x = 5; a.y = 5; g.ask(1); run(g, 20); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '문제 중에도 제자리');
@@ -1221,6 +1221,15 @@ test('진행자 도구: 타이머 일시정지·±시간, 점수 되돌리기·2
   g.setFrozen(true); const t0 = g.t; run(g, 2); assert.equal(g.t, t0, '비상 정지 중엔 시간이 멈춤'); g.setFrozen(false);
   g.coins.clear(); g.coinRain(10, 2); run(g, 3); assert.ok(g.coins.size >= 9, `동전 비 ${g.coins.size}`);
   assert.ok(g.kick('a')); assert.equal(g.players.has('a'), false);
+});
+
+test('아군 봇: 왼쪽에 서 있고 사람과 같은 편이라 공격·궁극기에 안 맞고, 공주·간호사의 회복을 받는다', () => {
+  const g = new Game(chars, quizzes); g.addAllies(['blue']); const al = [...g.players.values()].filter((p) => p.ally);
+  assert.ok(al.length >= 3 && al.every((p) => p.x <= 6 && p.hp < p.cfg.hp), '왼쪽·체력 반쯤');
+  const a = g.join({ token: 'a', name: 'A', charId: 'princess' }); a.x = al[0].x + 2; a.y = al[0].y; const hp = al[0].hp;
+  g.attack('a', { x: -1, y: 0 }); run(g, 1); assert.equal(al[0].hp, hp, '사람의 공격이 아군 봇에 안 맞음');
+  a.ult = a.cfg.ult.need; g.ult('a', null); run(g, 3.5); assert.ok(al[0].hp > hp, '공주 응원으로 회복'); assert.ok(al[0].charmUntil <= g.t, '매혹 안 됨');
+  g.gather(); assert.ok(al.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '모이기에 안 끌려감');
 });
 
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
