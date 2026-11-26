@@ -7,7 +7,7 @@ const CSS = `
 #qtop .tg{position:absolute;left:1.4vw;right:1.4vw;top:0;height:1.6vh;background:#14122b66;border-radius:0 0 99px 99px;overflow:hidden}
 #qtop .tg i{display:block;height:100%;width:0;background:linear-gradient(#ffe27a,#f2c230);transition:width .25s linear}
 #qtop .tg.low i{background:linear-gradient(#ff8f84,#e5483c)}#qtop .tg.ok i{background:linear-gradient(#9af0a4,#4fd16a)}
-#qtop .row{display:grid;grid-template-columns:minmax(0,.22fr) minmax(0,1fr) auto;gap:1.2vw;align-items:start;padding:2.5vh 1.4vw 0 max(1.4vw,env(safe-area-inset-left,0px))}
+#qtop .row{display:grid;grid-template-columns:minmax(0,.22fr) minmax(0,1fr) auto;gap:1.2vw;align-items:start;padding:2.5vh calc(1.4vw + 84px) 0 max(1.4vw,env(safe-area-inset-left,0px))}
 #qtop #toprank{position:static;pointer-events:none}
 #qtop .q{background:#f6e6c8;border:3px solid #14122b;border-radius:14px;box-shadow:0 3px 0 #14122b66;padding:2vh 1.4vw;display:grid;grid-template-columns:auto 1fr auto;gap:1vw;align-items:center;pointer-events:auto}
 #qtop .q[hidden],#qtop .tm[hidden]{display:none}

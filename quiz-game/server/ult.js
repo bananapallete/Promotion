@@ -105,8 +105,8 @@ const RUN = {
     const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: u.move ?? 0, armor: true }, ry = u.radiusY ?? u.radius; // 무대는 디바를 따라 움직임 // armor: 춤추는 동안 밀리지 않음
     p.shield = { until: g.t + intro + u.sec, mul: u.shield ?? 0.5 }; // 받는 피해 감소
     g.events.push({ e: 'stageOpen', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, ry, sec: u.sec, intro });
-    for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {
-      later(g, intro + i * u.tick, () => { // 무대가 완성된 뒤(intro) 피해 시작
+    for (let i = 0; i * u.tick < intro + u.sec - 1e-6; i++) {
+      later(g, i * u.tick, () => { // 설치하는 동안에도 피해
         if (p.channel !== ch || p.stunned) return;
         for (const o of g._enemies(p)) {
           if (o.stunned || ((o.x - p.x) / (u.radius + o.cfg.radius)) ** 2 + ((o.y - p.y) / (ry + o.cfg.radius)) ** 2 > 1) continue; // 가로 radius × 세로 radiusY 타원

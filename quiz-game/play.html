@@ -131,7 +131,7 @@
   #toprank i { font-style: normal; font-variant-numeric: tabular-nums; }
   #ultframe { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 25; pointer-events: none; image-rendering: pixelated; opacity: 0; }
   #top, #banner, #reveal, #phase { display: none !important; } /* 상단 UI(quizTop)로 대체 */
-  #charbtn { top: calc(2.5vh + 13vh + 10px) !important; bottom: auto !important; left: auto !important; right: max(10px, env(safe-area-inset-right, 0px)); padding: 7px 11px; font-size: 12px; } /* 우측 상단(시간 링 아래) */
+  #charbtn { top: max(8px, env(safe-area-inset-top, 0px)) !important; bottom: auto !important; left: auto !important; right: max(10px, env(safe-area-inset-right, 0px)); padding: 7px 11px; font-size: 12px; } /* 우측 상단 모서리 */
   /* 버튼 배치 통일: 공격(104) 기준, 간격 12px. 궁극기는 공격 왼쪽, 달리기는 공격 위(가운데 맞춤). 글자 14px, 아이콘·글자 간격 같게 */
   :root { --bR: max(10px, env(safe-area-inset-right, 0px)); --bB: max(24px, env(safe-area-inset-bottom, 0px)); --bg: 12px; }
   #btnAtk { width: 104px; height: 104px; right: var(--bR); bottom: var(--bB); }

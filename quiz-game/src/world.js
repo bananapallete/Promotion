@@ -34,9 +34,9 @@ export class WorldScene extends Phaser.Scene {
 
   preload() {
     this.load.image('diva-stage', hooks.fxUrl('diva_stage')); // 크림슨 디바 무대 장비
-    this.load.spritesheet('diva-intro', hooks.fxUrl('diva_intro'), { frameWidth: 48, frameHeight: 66 });
-    this.load.spritesheet('diva-spot', hooks.fxUrl('diva_spot'), { frameWidth: 24, frameHeight: 22 });
-    this.load.spritesheet('diva-amp', hooks.fxUrl('diva_amp'), { frameWidth: 26, frameHeight: 29 });
+    this.load.spritesheet('diva-intro', hooks.fxUrl('diva_intro'), { frameWidth: 96, frameHeight: 131 });
+    this.load.spritesheet('diva-spot', hooks.fxUrl('diva_spot'), { frameWidth: 48, frameHeight: 43 });
+    this.load.spritesheet('diva-amp', hooks.fxUrl('diva_amp'), { frameWidth: 52, frameHeight: 59 });
     this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
     for (const s of SPRITES) {
       for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : []), ...(sprites[s]?.ult ? ['ult'] : []), ...(sprites[s]?.morph ? ['morph'] : [])]) {

@@ -1110,10 +1110,10 @@ test('무대 펼치기(크림슨 디바): 제자리에서 5초 춤추며 무대 
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 20; C.y = 10; B.invUntil = 0; C.invUntil = 0; A.ult = A.cfg.ult.need;
   g.ult('a', null); const hp = B.hp;
-  run(g, 1.8); assert.equal(B.hp, hp, '무대 등장(2초) 동안은 피해 없음');
+  run(g, 1.8); assert.ok(B.hp < hp - 5, '무대를 설치하는 2초 동안에도 피해');
   run(g, 2.8); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
   run(g, 3);
-  const total = hp - B.hp; assert.ok(total >= 28 && total <= 40, `5초 합계 ${total}`);
+  const total = hp - B.hp; assert.ok(total >= 38 && total <= 52, `설치 2초 + 춤 5초 합계 ${total}`);
   assert.equal(C.hp, C.cfg.hp, '무대 밖은 안 맞음');
   const after = B.hp; run(g, 1); assert.equal(B.hp, after, '끝나면 피해 멈춤');
   const { g: g3, A: M } = duo('gaga', 'blue'); M.x = 10; M.y = 10; M.ult = M.cfg.ult.need; g3.ult('a', null); g3.setInput('a', { mx: 1, my: 0, run: false }); run(g3, 3);

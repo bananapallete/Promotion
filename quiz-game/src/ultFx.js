@@ -666,20 +666,23 @@ export function stageFx(scene, e, BU) {
   // 깊이: 바닥 < 바닥 효과(FXD) < 무대 장비(FXD+1) < 조명(FXD+2) < 캐릭터
   const floor = add(scene.add.image(0, 0, stageTex(scene, Math.max(6, Math.round(R / DOT)), Math.max(4, Math.round(RY / DOT)))).setScale(DOT).setDepth(-43).setAlpha(0), 0, 0);
   scene.tweens.add({ targets: floor, alpha: 1, duration: Math.max(200, intro * 0.5) });
-  const stageH = 56 * DOT, baseY = RY * 0.4; // 무대 배경의 아랫단을 발 바로 뒤에: 디바가 무대 위에서 춤춤
+  const stageH = 112 * DOT, baseY = RY * 0.4; // 무대 배경의 아랫단을 발 바로 뒤에: 디바가 무대 위에서 춤춤 (그림은 도트 그리드를 키워 2배, 도트 크기는 그대로)
   const build = add(scene.add.sprite(0, 0, 'diva-intro', 0).setOrigin(0.5, 1).setScale(DOT).setDepth(FXD + 1), 0, baseY);
-  const back = add(scene.add.image(0, 0, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD + 1).setVisible(false), 0, baseY);
+  const back = add(scene.add.image(0, 0, 'diva-stage').setOrigin(0.5, 1).setScale(DOT).setDepth(FXD + 1).setVisible(false).setAlpha(0), 0, baseY);
   if (intro) {
     const n = 6, step = (intro * 0.85) / n;
     for (let i = 1; i < n; i++) scene.time.delayedCall(step * i, () => build.active && build.setFrame(i));
-    scene.time.delayedCall(intro * 0.85, () => { if (!back.active) return; build.setVisible(false); back.setVisible(true); scene.tweens.add({ targets: back, scaleY: DOT, duration: intro * 0.15, ease: 'Back.easeOut' }); });
-  } else { build.setVisible(false); back.setVisible(true).setScale(DOT); }
-  const spotScale = (stageH + baseY + RY * 0.55) / (22 * 1); // 조명: 무대 맨 위에서 무대 아래 바닥까지 비춤
+    scene.time.delayedCall(intro * 0.85, () => { if (!back.active) return; build.setVisible(false); back.setVisible(true); scene.tweens.add({ targets: back, alpha: 1, duration: intro * 0.15 }); });
+  } else { build.setVisible(false); back.setVisible(true).setAlpha(1); }
+  // 조명: 무대 맨 위 기구(원본 그림) + 그 아래 바닥까지 이어지는 빛줄기(도트 질감, 늘이지 않고 새로 그림)
+  const lampH = 43 * DOT, beamTop = baseY - stageH + lampH * 0.9, beamH = Math.max(40, (RY * 0.55) - beamTop), bw = 20, bh = Math.max(8, Math.round(beamH / DOT));
+  const beamKey = `ux-beam-${bw}x${bh}`;
+  tex(scene, beamKey, bw * 2, bh, (put, w, h) => { for (let y = 0; y < h; y++) { const k = y / h, half = (4 + k * 14) / 2 * 1; for (let x = 0; x < w; x++) { const dd = Math.abs(x + 0.5 - w / 2) / half; if (dd > 1) continue; if (bay(x, y) > (1 - dd * 0.7) * (0.7 - 0.45 * k)) continue; put(x, y, [255, 232, 170], 140); } } });
   for (const sx of [-1, 1]) {
     const amp = add(scene.add.sprite(0, 0, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD + 1).setAlpha(0).play('diva-amp'), sx * R * 0.8, RY * 0.35);
-    const spot = add(scene.add.sprite(0, 0, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, spotScale).setDepth(FXD + 2).setAlpha(0).play('diva-spot'), sx * R * 0.5, baseY - stageH + 8 * DOT);
-    scene.tweens.add({ targets: amp, alpha: { from: 0, to: 0.95 }, delay: intro, duration: 250 });
-    scene.tweens.add({ targets: spot, alpha: { from: 0, to: 0.55 }, delay: intro, duration: 250 });
+    const lamp = add(scene.add.sprite(0, 0, 'diva-spot').setOrigin(0.5, 0).setScale(DOT).setDepth(FXD + 2).setAlpha(0).play('diva-spot'), sx * R * 0.5, baseY - stageH);
+    const beam = add(scene.add.image(0, 0, beamKey).setOrigin(0.5, 0).setScale(DOT).setDepth(FXD + 2).setAlpha(0), sx * R * 0.5, beamTop);
+    scene.tweens.add({ targets: [amp, lamp, beam], alpha: { from: 0, to: 0.95 }, delay: intro, duration: 250 });
   }
   const follow = () => { const { x, y } = pos(); for (const o of parts) if (o.active) o.setPosition(x + o.ox, y + o.oy); };
   scene.events.on('update', follow); follow();
