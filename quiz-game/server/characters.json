@@ -125,30 +125,32 @@
     },
     "attack": {
       "type": "ranged",
-      "dmgMin": 5,
-      "dmgMax": 5,
-      "interval": 0.8,
+      "dmgMin": 4,
+      "dmgMax": 4,
+      "interval": 0.55,
       "range": 6.5,
       "knockback": 0,
+      "multi": true,
       "canAttackWhileRunning": false,
-      "projectile": {
-        "speed": 18,
-        "radius": 0.2,
-        "art": "arrow"
+      "chain": {
+        "bounces": 2,
+        "radius": 3.2,
+        "mul": 0.8,
+        "width": 0.35
       },
-      "fx": "arrow"
+      "fx": "bolt"
     },
     "scale": 1.05,
     "ammo": {
       "max": 3,
-      "reload": 2.2
+      "reload": 1.8
     },
     "role": "ranged",
-    "atkInfo": "멀리 쏘는 화살",
+    "atkInfo": "번개, 2번 튕김",
     "ult": {
       "name": "저격",
       "need": 100,
-      "chargeSec": 15,
+      "chargeSec": 30,
       "type": "snipe",
       "aim": 0.8,
       "range": 18,
@@ -575,18 +577,21 @@
     },
     "attack": {
       "type": "ranged",
-      "dmgMin": 6,
-      "dmgMax": 6,
+      "dmgMin": 4,
+      "dmgMax": 4,
       "interval": 0.65,
-      "range": 4,
+      "range": 5,
       "knockback": 0,
       "canAttackWhileRunning": true,
       "multi": true,
       "projectile": {
-        "speed": 13,
-        "radius": 0.3,
+        "speed": 11,
+        "radius": 0.35,
         "pierce": true,
-        "art": "star"
+        "art": "boomerang",
+        "boomerang": {
+          "wait": 0.5
+        }
       },
       "fx": "star"
     },
@@ -596,18 +601,18 @@
       "reload": 1.95
     },
     "role": "ranged",
-    "atkInfo": "별 던지기, 관통",
+    "atkInfo": "부메랑, 왕복 2번 타격",
     "ult": {
-      "name": "별 궤도",
+      "name": "부메랑 난사",
       "need": 90,
-      "type": "orbit",
-      "sec": 5,
-      "n": 4,
-      "r": 1.7,
-      "speed": 4.5,
-      "dmg": 5,
-      "hitGap": 0.6,
-      "range": 2
+      "type": "boomerang",
+      "volleys": 2,
+      "gap": 0.5,
+      "dmg": 4,
+      "speed": 11,
+      "range": 5,
+      "radius": 0.35,
+      "wait": 0.5
     }
   },
   "knight": {

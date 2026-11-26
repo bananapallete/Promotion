@@ -57,7 +57,7 @@ const star = (g, x, y, r, c) => { // 네 갈래 반짝임
 export const FX_COLOR = {
   punch: 0xffffff, flurry: 0xff8fb0, shock: 0xffa43a, thrust: 0xcfe3f5, smash: 0x8fd16a, bite: 0xffffff, claw: 0xff9a3c, paw: 0xf6e7b4,
   crescent: 0xff8a2a, stomp: 0xc9b79a, bump: 0xff8fb8, sweep: 0x5aa7ff, tongue: 0xff6f91,
-  stone: 0xb8bcc8, arrow: 0xc89b62, orb: 0xb072ff, spark: 0xffe066, star: 0xff7ab8, bottle: 0xff7a3c, egg: 0xffd54a, note: 0xff7ad9,
+  stone: 0xb8bcc8, arrow: 0xc89b62, orb: 0xb072ff, spark: 0xffe066, star: 0xff7ab8, bottle: 0xff7a3c, egg: 0xffd54a, note: 0xff7ad9, bolt: 0x8fe8ff,
 };
 
 /** 근접 공격: e = { dx, dy, arc(도, 반각), range(칸), fx, step } */
@@ -203,5 +203,21 @@ export function hitFx(scene, e, BU) {
   play(scene, e.crit ? 420 : 300, (g, u) => {
     for (let i = 0; i < n; i++) { const t = rot + (i / n) * 6.283, r = (0.35 + 0.35 * ((i * 7) % 3) / 2) * BU * u; dot(g, x + Math.cos(t) * r, y + Math.sin(t) * r + 14 * u * u, e.crit ? 8 : 6, cols[i % cols.length], 1 - u); }
     if (e.guard) arcDots(g, x, y, 0.5 * BU, -2.2, 2.2, 6, 0x8ec5ff, 1 - u); // 방패로 막음
+  }, FXD);
+}
+
+/** 체인 라이트닝: 꼭짓점(칸 좌표)을 지그재그 번개로 잇는다 */
+export function chainFx(scene, e, BU) {
+  const pts = e.pts.map(([x, y]) => [x * BU, y * BU - 0.5 * BU]);
+  play(scene, 240, (g, u) => {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], len = Math.hypot(x1 - x0, y1 - y0) || 1, n = Math.max(3, Math.round(len / 16)), nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+      let px = x0, py = y0;
+      for (let k = 1; k <= n; k++) {
+        const f = k / n, off = k < n ? Math.sin(k * 12.9 + i * 7 + Math.floor(u * 7) * 3.1) * 11 : 0, x = x0 + (x1 - x0) * f + nx * off, y = y0 + (y1 - y0) * f + ny * off;
+        lineDots(g, px, py, x, y, 4 * D, 0x8fe8ff, 1 - u * 0.6, 5); lineDots(g, px, py, x, y, 2 * D, 0xffffff, 1 - u * 0.6, 5); px = x; py = y;
+      }
+      star(g, x1, y1, 12 * (1 - u * 0.5), 0x8fe8ff);
+    }
   }, FXD);
 }

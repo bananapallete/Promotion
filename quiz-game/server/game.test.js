@@ -104,7 +104,7 @@ test('투사체: 날아가는 동안 상대가 비키면 안 맞는다', () => {
 });
 
 test('투사체: 관통형은 한 줄의 상대를 모두, 일반형은 처음 닿은 상대만 맞힌다', () => {
-  for (const [id, both] of [['girl_short', true], ['elf', false]]) {
+  for (const [id, both] of [['girl_short', true], ['blue_ranged', false]]) {
     const g = new Game(chars, quizzes);
     const a = g.join({ token: 'a', name: 'A', charId: id });
     const b = g.join({ token: 'b', name: 'B', charId: 'blue' });
@@ -689,7 +689,7 @@ test('모든 캐릭터가 서버 규칙으로 문제없이 싸운다 (공격 →
 // ---------- 탄창 ----------
 test('탄창: 3발로 시작해 쏠 때마다 줄고, 비면 못 쏘고, 시간이 지나면 한 발씩 장전된다', () => {
   const g = new Game(chars, quizzes);
-  const a = g.join({ token: 'a', name: 'A', charId: 'elf' }); // 장전 2.2초
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue_ranged' }); // 장전 1.5초
   g.join({ token: 'b', name: 'B', charId: 'blue' }).x = 30;
   a.x = 10; a.y = 10;
   const atks = () => g.events.filter((e) => e.e === 'atk').length;
@@ -1033,11 +1033,37 @@ test('블랙홀(마녀): 지정한 곳에 떨어져 2초간 적을 끌어당긴 
   assert.ok(B.hp < hp, '폭발 피해');
 });
 
-test('엘프 궁극기: 가만히 있어도 15초면 가득 차고, 피해는 낮고 사거리가 길다', () => {
+test('엘프 궁극기: 가만히 있어도 30초면 가득 차고, 피해는 낮고 사거리가 길다', () => {
   const { g, A } = duo('elf', 'blue');
-  A.ult = 0; run(g, 14); assert.ok(A.ult < A.cfg.ult.need, '14초엔 아직');
-  run(g, 1.2); assert.ok(A.ult >= A.cfg.ult.need, '15초면 가득');
+  A.ult = 0; run(g, 29); assert.ok(A.ult < A.cfg.ult.need, '29초엔 아직');
+  run(g, 1.5); assert.ok(A.ult >= A.cfg.ult.need, '30초면 가득');
   assert.ok(A.cfg.ult.dmg <= 10 && A.cfg.ult.range >= 18);
+});
+
+test('체인 라이트닝(엘프): 처음 맞힌 적에게서 가까운 다른 적 최대 2명에게 튕긴다', () => {
+  const { g, A, B } = duo('elf', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' }), D = g.join({ token: 'd', name: 'D', charId: 'blue' }), E = g.join({ token: 'e', name: 'E', charId: 'blue' });
+  A.x = 5; A.y = 10; B.x = 9; B.y = 10; C.x = 11; C.y = 11; D.x = 13; D.y = 12; E.x = 15; E.y = 13; // 튕김 거리 안쪽으로 사슬
+  [B, C, D, E].forEach((o) => { o.invUntil = 0; }); g.events = [];
+  g.attack('a', { x: 1, y: 0 });
+  assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp && D.hp < D.cfg.hp, '3명 맞음');
+  assert.equal(E.hp, E.cfg.hp, '튕김은 2번까지');
+  assert.equal(g.events.find((e) => e.e === 'chain').pts.length, 4, '번개 꼭짓점');
+});
+
+test('부메랑(단발 소녀): 최대 거리에서 0.5초 쉬었다 돌아오고, 한 적을 갈 때 한 번·올 때 한 번 맞힌다', () => {
+  const { g, A, B } = duo('girl_short', 'blue');
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; B.invUntil = 0; g.attack('a', { x: 1, y: 0 });
+  run(g, 0.45); const h1 = B.hp; assert.ok(h1 < B.cfg.hp, '갈 때 맞음');
+  run(g, 0.2); assert.equal(B.hp, h1, '같은 방향 진행 중엔 다시 안 맞음');
+  run(g, 1.6); assert.ok(B.hp < h1, '돌아올 때 또 맞음'); assert.equal(B.cfg.hp - B.hp, 8, '총 2번');
+  run(g, 2); assert.equal(g.projectiles.size, 0, '돌아온 뒤 사라짐');
+});
+
+test('부메랑 난사: 8방향으로 두 차례 던진다', () => {
+  const { g, A } = duo('girl_short', 'blue'); A.x = g.map.w / 2; A.y = g.map.h / 2; A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(g.projectiles.size, 8, '첫 8발');
+  run(g, 0.6); assert.equal([...g.projectiles.values()].filter((q) => q.ult).length, 16, '두 번째 8발');
 });
 
 test('격투가 평타: 탄창 1개로 3연타(잽·잽·강타)가 빠르게 이어진다', () => {
@@ -1152,6 +1178,7 @@ test('매혹(공주): 범위 안 상대가 공주 쪽으로 걸어오고 공격�
 
 test('별 궤도(단발 소녀): 몸 주위를 도는 별이 가까운 상대를 때린다', () => {
   const { g, A, B } = duo('girl_short', 'blue');
+  A.cfg = { ...A.cfg, ult: { name: 't', need: 90, type: 'orbit', sec: 5, n: 4, r: 1.7, speed: 4.5, dmg: 5, hitGap: 0.6, range: 2 } }; // 지금 쓰는 캐릭터가 없어 직접 지정
   A.x = 10; A.y = 10; B.x = 11.7; B.y = 10;
   A.ult = A.cfg.ult.need; g.ult('a', null);
   run(g, 1.5);

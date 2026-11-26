@@ -267,7 +267,7 @@ export class Game {
         if (d <= range && along / d >= cosMin) hits.push({ o, dist: d });
       } else {
         const perp = Math.abs(vx * dy - vy * dx);
-        if (along <= range && perp <= o.cfg.radius + (a.projectile?.radius || 0)) hits.push({ o, dist: along });
+        if (along <= range && perp <= o.cfg.radius + (a.projectile?.radius ?? a.chain?.width ?? 0)) hits.push({ o, dist: along });
       }
     }
     return hits.sort((x, y) => x.dist - y.dist);
@@ -312,6 +312,11 @@ export class Game {
     p.lastAttackAt = this.t;
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
+    if (a.chain) { // 체인 라이트닝: 맞히면 가까운 다른 적에게 최대 bounces번 튕김
+      this._chain(p, a, dx, dy, range);
+      this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: 'proj', step, len: range });
+      return;
+    }
     if (a.projectile) { // 투사체: 날아가서 닿아야 맞는다 (피할 수 있음)
       this._shoot(p, a, aim, dx, dy, range, near);
       this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: 'proj', step, len: range });
@@ -351,6 +356,19 @@ export class Game {
     return { x: Math.min(MAP.w - 0.3, Math.max(0.3, p.x + dir.dx * dist)), y: Math.min(MAP.h - 0.3, Math.max(0.3, p.y + dir.dy * dist)) };
   }
 
+  _chain(p, a, dx, dy, range) {
+    const c = a.chain, first = this._pickTarget(p, range, dx, dy).target, pts = [[r2(p.x), r2(p.y)]];
+    if (!first) { this.events.push({ e: 'chain', id: p.id, pts: [...pts, [r2(p.x + dx * range), r2(p.y + dy * range)]] }); return; }
+    const done = new Set([first.id]); let cur = first; this._hit(first, p, dx, dy, 1, 0); pts.push([r2(first.x), r2(first.y)]);
+    for (let i = 0; i < c.bounces; i++) {
+      let nx = null, bd = c.radius;
+      for (const o of this._enemies(p)) { if (done.has(o.id) || o.stunned || this._stealthed(o)) continue; const d = Math.hypot(o.x - cur.x, o.y - cur.y); if (d < bd) { bd = d; nx = o; } }
+      if (!nx) break;
+      done.add(nx.id); this._hit(nx, p, (nx.x - cur.x) / (bd || 1), (nx.y - cur.y) / (bd || 1), c.mul, 0); pts.push([r2(nx.x), r2(nx.y)]); cur = nx;
+    }
+    this.events.push({ e: 'chain', id: p.id, pts });
+  }
+
   _shoot(p, a, aim, dx, dy, range, near) {
     const pr = a.projectile;
     const base = { id: ++this.projSeq, owner: p.id, art: pr.art, dmgMin: a.dmgMin, dmgMax: a.dmgMax, knock: a.knockback };
@@ -359,7 +377,7 @@ export class Game {
       const dist = Math.hypot(L.x - p.x, L.y - p.y);
       this.projectiles.set(base.id, { ...base, kind: 'lob', sx: p.x, sy: p.y, tx: L.x, ty: L.y, x: p.x, y: p.y, t0: this.t, T: Math.max(0.15, dist / pr.speed), r: pr.explodeRadius });
     } else {
-      this.projectiles.set(base.id, { ...base, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * pr.speed, vy: dy * pr.speed, speed: pr.speed, travel: 0, maxDist: range, radius: pr.radius, pierce: !!pr.pierce, hit: new Set() });
+      this.projectiles.set(base.id, { ...base, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * pr.speed, vy: dy * pr.speed, speed: pr.speed, travel: 0, maxDist: range, radius: pr.radius, pierce: !!pr.pierce || !!pr.boomerang, hit: new Set(), boom: pr.boomerang ? { ph: 'out', wait: pr.boomerang.wait, until: 0 } : null });
     }
   }
 
@@ -383,6 +401,15 @@ export class Game {
         }
         continue;
       }
+      if (q.boom) { // 부메랑: 최대 거리까지 → wait초 멈춤 → 주인에게 돌아옴. 나갈 때 한 번, 돌아올 때 한 번 맞힘
+        const ow = this.players.get(q.owner);
+        if (q.boom.ph === 'hold') { if (this.t < q.boom.until) continue; q.boom.ph = 'back'; q.hit = new Set(); }
+        if (q.boom.ph === 'back') {
+          if (!ow || ow.stunned) { this.projectiles.delete(q.id); continue; }
+          const d = Math.hypot(ow.x - q.x, ow.y - q.y); if (d < 0.6) { this.projectiles.delete(q.id); continue; }
+          q.dx = (ow.x - q.x) / d; q.dy = (ow.y - q.y) / d; q.vx = q.dx * q.speed; q.vy = q.dy * q.speed;
+        }
+      }
       const px = q.x, py = q.y;
       q.x += q.vx * dt; q.y += q.vy * dt; q.travel += q.speed * dt;
       if (q.carried) for (const [id, until] of q.carried) { // 휩쓸림: 묶인 동안 파도와 같은 속도로 함께 밀려감
@@ -390,7 +417,8 @@ export class Game {
         if (!o || this.t >= until) { q.carried.delete(id); continue; }
         if (!o.stunned) { o.x += q.vx * dt; o.y += q.vy * dt; this._clamp(o); }
       }
-      let gone = q.travel >= q.maxDist || q.x < 0 || q.y < 0 || q.x > MAP.w || q.y > MAP.h;
+      if (q.boom?.ph === 'out' && q.travel >= q.maxDist) { q.boom.ph = 'hold'; q.boom.until = this.t + q.boom.wait; q.vx = q.vy = 0; }
+      let gone = (!q.boom && q.travel >= q.maxDist) || q.x < 0 || q.y < 0 || q.x > MAP.w || q.y > MAP.h;
       let blocked = false;
       for (const w of this.walls.values()) { // 방패 성벽은 상대의 투사체를 막는다
         if (w.owner !== q.owner && Math.abs(q.x - w.x) <= w.hx + (q.radius || 0.2) && Math.abs(q.y - w.y) <= w.hy + (q.radius || 0.2)) { blocked = true; this.events.push({ e: 'wallHit', x: r2(q.x), y: r2(q.y) }); break; }

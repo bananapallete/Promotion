@@ -52,7 +52,7 @@ export class ProjectileLayer {
       let x, y, z, ang = 0;
       if (q.k === 'b') {
         x = q.x + q.vx * dt; y = q.y + q.vy * dt; z = 0.7;
-        ang = q.a === 'arrow' || q.a === 'archer_arrow' || q.a === 'wave' ? Math.atan2(q.vy, q.vx) : q.a === 'star' ? now / 60 : 0;
+        ang = q.a === 'arrow' || q.a === 'archer_arrow' || q.a === 'wave' ? Math.atan2(q.vy, q.vx) : q.a === 'star' || q.a === 'boomerang' ? now / 60 : 0;
       } else { // 던지기: 출발점에서 착탄점으로 직선 이동 + 포물선 높이
         const u = Math.min(1, q.u + dt / q.T);
         x = q.sx + (q.tx - q.sx) * u; y = q.sy + (q.ty - q.sy) * u;

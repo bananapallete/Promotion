@@ -7,7 +7,7 @@ import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
 import { FXD } from './pixel.js';
 import { MinionLayer } from './minions.js';
-import { burstFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
+import { burstFx, chainFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
 import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, stageFx, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
@@ -251,6 +251,8 @@ export class WorldScene extends Phaser.Scene {
     if (e.e === 'ult' && v) {
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'chain') {
+      chainFx(this, e, BU);
     } else if (e.e === 'stageOpen') {
       stageFx(this, e, BU);
     } else if (e.e === 'eggDrop') {

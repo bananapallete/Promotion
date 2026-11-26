@@ -6,7 +6,7 @@ import { ULT_CHARGE } from '../shared/constants.js';
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood', 'stage'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood', 'stage', 'boomerang'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -77,6 +77,18 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  boomerang(g, p, u) { // 부메랑 난사: 8방향으로 기본 공격 부메랑을 volleys번 연달아
+    for (let v = 0; v < u.volleys; v++) {
+      later(g, v * u.gap, () => {
+        if (p.stunned) return;
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4 + (v * Math.PI) / 8, dx = Math.cos(a), dy = Math.sin(a);
+          g.projectiles.set(++g.projSeq, { id: g.projSeq, owner: p.id, art: 'boomerang', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.radius, pierce: true, hit: new Set(), boom: { ph: 'out', wait: u.wait, until: 0 }, ult: true });
+        }
+      });
+    }
   },
 
   stage(g, p, u, dx, dy) { // 무대 펼치기: 제자리에서 sec초 춤추며, 무대(반경) 안 적에게 tick마다 피해 (소수 피해는 모아서 1 이상이 될 때 적용)

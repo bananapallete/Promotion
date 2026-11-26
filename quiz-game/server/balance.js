@@ -1,5 +1,5 @@
 // 캐릭터 균형 계산: 초당 피해(DPS)와 전투력 지수. 테스트와 tools/balance.mjs가 함께 쓴다.
-const HIT = { stone: 0.8, arrow: 0.9, orb: 0.65, spark: 0.8, star: 0.8, bottle: 0.65 }; // 투사체는 피할 수 있어서 명중률을 깎는다
+const HIT = { boomerang: 0.9, stone: 0.8, arrow: 0.9, orb: 0.65, spark: 0.8, star: 0.8, bottle: 0.65 }; // 투사체는 피할 수 있어서 명중률을 깎는다
 const AREA = 1.15; // 범위·관통 공격은 평균 1.15명을 맞힌다고 본다
 export const FIGHT_SEC = 10; // 한 번의 교전을 이만큼으로 보고 쏠 수 있는 발수를 센다
 
@@ -13,7 +13,7 @@ export function shotsOf(c, sec = FIGHT_SEC) {
 export function dpsOf(c) {
   const a = c.attack;
   const comboMul = a.combo ? (2 + (a.combo[2].dmg ?? 1)) / 3 : 1;
-  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * (1 + (a.critBonus ?? 0) * 0.5) * shotsOf(c) * (a.burst?.n ?? 1) / FIGHT_SEC; // 연타형은 탄창 하나에 n번
+  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * (1 + (a.critBonus ?? 0) * 0.5) * shotsOf(c) * (a.burst?.n ?? 1) * (a.projectile?.boomerang ? 1.5 : 1) / FIGHT_SEC; // 부메랑은 왕복해서 최대 2번 맞힘(평균 1.5) // 연타형은 탄창 하나에 n번
   const hit = a.projectile ? HIT[a.projectile.art] ?? 0.8 : a.fx === 'tongue' ? 0.95 : a.lineW ? 0.85 : 1; // 직선 주먹은 부채꼴보다 맞히기 어렵다
   const skill = c.skill?.hitDmg ? c.skill.hitDmg / c.skill.cooldown : 0;
   return { basic, dps: basic * hit * (a.multi ? AREA : 1) + skill };
