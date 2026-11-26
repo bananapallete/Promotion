@@ -143,13 +143,28 @@
   "walk": 8,
   "run": 8,
   "combo": 6,
-  "die": 6
+  "die": 6,
+  "morph": 8
  },
  "egg": {
   "idle": 4,
   "walk": 8,
   "run": 8,
   "combo": 6,
+  "die": 6
+ },
+ "archer": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 8,
+  "die": 6
+ },
+ "thrower": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 8,
   "die": 6
  }
 }

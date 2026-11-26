@@ -3,6 +3,7 @@ import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
 import { addBtnIcons, setBtnLabel } from '../src/btnIcons.js';
+import { ultNeedsAim } from '../shared/ultAim.js';
 import { dragAim } from '../src/aimDrag.js';
 import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
@@ -172,7 +173,7 @@ runBtn.addEventListener('pointercancel', () => setRun(false));
 
 // 궁극기: 충전되면 탭 (키보드 K)
 const ultBtn = $('#btnUlt');
-const ultDrag = dragAim(ultBtn, $('#aimU'), (a) => game.ult(ME, a)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
+const ultDrag = dragAim(ultBtn, $('#aimU'), (a) => game.ult(ME, a), () => ultNeedsAim(game.players.get(ME)?.cfg.ult)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
 
 // 공격: 탭 = 자동 조준, 드래그 후 놓기 = 그 방향으로 직접 조준
 const atk = $('#btnAtk'), aim = $('#aim');

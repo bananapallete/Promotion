@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
 import { addBtnIcons, setBtnLabel } from './btnIcons.js';
+import { ultNeedsAim } from '../shared/ultAim.js';
 import { dragAim } from './aimDrag.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
@@ -24,7 +25,7 @@ async function buildJoin() {
 function join(data) {
   socket.emit('join', data, (res) => {
     if (!res?.ok) { $('#err').textContent = res?.error || '입장 실패'; showJoin(); return; }
-    me = { token: res.token, name: res.name, charId: res.charId, skill: res.cfg?.skill?.type || 'run' };
+    me = { token: res.token, name: res.name, charId: res.charId, skill: res.cfg?.skill?.type || 'run', ult: res.cfg?.ult };
     setBtnLabel(runBtn, me.skill === 'dash' ? '대쉬' : '달리기');
     save(me);
     $('#join-ui').hidden = true;
@@ -123,7 +124,7 @@ atk.addEventListener('pointercancel', (e) => atkEnd(e, true));
 
 // 궁극기: 충전되면 탭
 const ultBtn = $('#btnUlt');
-dragAim(ultBtn, $('#aimU'), (a) => socket.emit('ult', a)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
+dragAim(ultBtn, $('#aimU'), (a) => socket.emit('ult', a), () => ultNeedsAim(me?.ult)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
 
 // 키보드 (PC에서 테스트용): WASD/방향키 이동, Shift 달리기, Space/J 공격
 const keys = new Set();

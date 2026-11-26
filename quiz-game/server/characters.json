@@ -61,8 +61,9 @@
     "rec": "기본"
   },
   "blue_ranged": {
-    "name": "파란티 원거리",
-    "sprite": "blue",
+    "name": "궁수",
+    "sprite": "archer",
+    "scale": 1.19,
     "radius": 0.5,
     "hp": 50,
     "walkSpeed": 6,
@@ -85,16 +86,16 @@
       "projectile": {
         "speed": 12,
         "radius": 0.25,
-        "art": "stone"
+        "art": "archer_arrow"
       },
-      "fx": "stone"
+      "fx": "arrow"
     },
     "ammo": {
       "max": 3,
       "reload": 1.5
     },
     "role": "ranged",
-    "atkInfo": "돌 연사",
+    "atkInfo": "화살 연사",
     "ult": {
       "name": "저격",
       "need": 100,
@@ -205,8 +206,8 @@
     }
   },
   "bomber": {
-    "name": "화염병",
-    "sprite": "bomber",
+    "name": "투척병",
+    "sprite": "thrower",
     "radius": 0.5,
     "hp": 40,
     "walkSpeed": 5.5,
@@ -231,7 +232,7 @@
         "speed": 7,
         "lob": true,
         "explodeRadius": 1.8,
-        "art": "bottle"
+        "art": "thrower_bottle"
       },
       "fx": "bottle"
     },

@@ -34,7 +34,7 @@ export class WorldScene extends Phaser.Scene {
   preload() {
     this.load.spritesheet('dust', hooks.fxUrl('puff'), { frameWidth: 40, frameHeight: 28 }); // 걷거나 달릴 때 뒤로 남는 먼지
     for (const s of SPRITES) {
-      for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : []), ...(sprites[s]?.ult ? ['ult'] : [])]) {
+      for (const m of [...Object.keys(SPRITE.motions), ...(sprites[s]?.die ? ['die'] : []), ...(sprites[s]?.ult ? ['ult'] : []), ...(sprites[s]?.morph ? ['morph'] : [])]) {
         this.load.spritesheet(`${s}-${m}`, hooks.spriteUrl(s, m), { frameWidth: SPRITE.cell, frameHeight: SPRITE.cell });
       }
     }
@@ -68,6 +68,7 @@ export class WorldScene extends Phaser.Scene {
     for (const s of SPRITES) {
       const n = sprites[s]?.idle ? sprites[s] : null; // 없으면 blue(constants의 프레임 수)
       if (sprites[s]?.ult) this.anims.create({ key: `${s}-ult`, frames: this.anims.generateFrameNumbers(`${s}-ult`, { start: 0, end: sprites[s].ult - 1 }), frameRate: s === 'shiba' ? 9 : 16, repeat: -1 }); // 채널링 궁극기 모션
+      if (sprites[s]?.morph) this.anims.create({ key: `${s}-morph`, frames: this.anims.generateFrameNumbers(`${s}-morph`, { start: 0, end: sprites[s].morph - 1 }), frameRate: 12, repeat: 0 }); // 병아리 → 불꽃 → 피닉스 변신
       if (sprites[s]?.die) this.anims.create({ key: `${s}-die`, frames: this.anims.generateFrameNumbers(`${s}-die`, { start: 0, end: sprites[s].die - 1 }), frameRate: 9, repeat: 0 });
       SPRITE.attackSteps.forEach((st, i) => {
         // 새 스프라이트의 공격은 한 동작(0번은 준비 자세)이라 단계마다 1~끝을 그 시간에 맞춰 재생
@@ -356,6 +357,7 @@ export class WorldScene extends Phaser.Scene {
       const dies = p.st && sprites[p.s]?.die; // 기절하면 죽음 모션을 한 번 재생하고 누운 채로 둠
       const chan = p.ch && sprites[p.s]?.ult; // 채널링 궁극기 중엔 전용 모션을 계속 재생
       if (dies) { if (!v.dead) { v.dead = true; v.sprite.play(`${p.s}-die`); } }
+      else if (p.mo && sprites[p.s]?.morph) { v.dead = false; v.sprite.play(`${p.s}-morph`, true); }
       else if (chan) { v.dead = false; v.sprite.play(`${p.s}-ult`, true); }
       else { v.dead = false; if (now >= v.punchUntil) v.sprite.play(`${p.s}-${p.st ? 'idle' : p.a}`, true); }
 

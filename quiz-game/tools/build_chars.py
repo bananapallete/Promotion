@@ -72,6 +72,10 @@ def split(a, n, grid):
     per = n // len(rows)
     assert len(rows) == 2, f"줄 {len(rows)}개"
     for y0, y1 in rows:
+        if os.environ.get("EQUAL"):  # 프레임이 서로 붙어 있으면(활 등) 칸을 똑같이 나눈다
+            W = m.shape[1] / per
+            out += [(y0, y1, round(i * W), round((i + 1) * W) - 1) for i in range(per)]
+            continue
         runs = bs._runs(m[y0:y1 + 1].any(axis=0))
         cores = sorted(sorted(runs, key=lambda r: r[0] - r[1])[:per])
         spans = [list(r) for r in cores]

@@ -1,10 +1,12 @@
 {
+ "archer": 55,
  "blue": 19,
  "bomber": 19,
  "brawler": 24,
  "cat": 21,
  "chick": 134,
  "chicken": 114,
+ "egg": 159,
  "elf": 29,
  "frog": 100,
  "girl_long": 28,
@@ -14,9 +16,11 @@
  "knight": 0,
  "labrador": 67,
  "orc": 26,
+ "phoenix": 63,
  "pig": 86,
  "princess": 20,
  "puppy": 28,
  "shiba": 72,
+ "thrower": 7,
  "witch": 0
 }

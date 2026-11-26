@@ -3,7 +3,7 @@ import sprites from '../shared/sprites.json';
 import { RUN_DRAIN, SPRITE } from '../shared/constants.js';
 import { HEART_PALETTE, heartRows, SHOE_PALETTE, SHOE_ROWS, SWORD_ROWS } from '../shared/itemPixels.js';
 
-const TABS = [['all', '전체'], ['rec', '추천'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리']];
+const TABS = [['all', '전체'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리']];
 const ROLE_NAME = { melee: '근접', tank: '탱커', speed: '스피드', ranged: '원거리' };
 const BLUE = { idle: 4, walk: 7, run: 7, combo: 8, die: 6 }; // sprites.json에 없는 기본 캐릭터
 const CELL = 256;
@@ -88,7 +88,7 @@ export function mountPicker(root, chars, opts) {
   let value = opts.selected && chars[opts.selected] ? opts.selected : ids[0], filter = 'all';
   root.classList.add('pk');
   root.innerHTML = `<div class="pk-hero"><div class="pk-stage"><video muted loop playsinline autoplay preload="auto"></video></div><div class="pk-info"></div><div class="pk-abil"></div></div>
-    <div class="pk-bar"><div class="pk-tabs">${TABS.map(([k, n]) => `<button type="button" data-t="${k}" class="${k === 'all' ? 'on' : ''}">${n}</button>`).join('')}</div><button type="button" class="pk-rnd" data-r>랜덤</button></div>
+    <div class="pk-bar"><div class="pk-tabs">${TABS.map(([k, n]) => `<button type="button" data-t="${k}" class="${k === 'all' ? 'on' : ''}">${n}</button>`).join('')}</div></div>
     <div class="pk-tiles"></div>`;
   const stage = root.querySelector('.pk-stage'), vid = stage.querySelector('video'), info = root.querySelector('.pk-info'), abil = root.querySelector('.pk-abil'), tiles = root.querySelector('.pk-tiles');
 
@@ -99,7 +99,7 @@ export function mountPicker(root, chars, opts) {
     return imgs.get(k);
   };
   const fillIcons = (el) => el.querySelectorAll('[data-icon]').forEach((s) => { if (!s.firstChild) s.append(icon(s.dataset.icon)); });
-  const shown = () => ids.filter((id) => filter === 'all' || (filter === 'rec' ? chars[id].rec : chars[id].role === filter));
+  const shown = () => ids.filter((id) => filter === 'all' || chars[id].role === filter);
 
   const anims = []; // 카드 애니메이션 { canvas, g, sprite, off, last }
   function renderHero() {
@@ -139,7 +139,6 @@ export function mountPicker(root, chars, opts) {
   root.addEventListener('click', (e) => {
     const tab = e.target.closest('[data-t]');
     if (tab) { filter = tab.dataset.t; root.querySelectorAll('[data-t]').forEach((b) => b.classList.toggle('on', b === tab)); renderTiles(); return; }
-    if (e.target.closest('[data-r]')) { const v = shown(); api.setValue(v[Math.floor(Math.random() * v.length)]); return; }
     const t = e.target.closest('.pk-tile');
     if (t) api.setValue(t.dataset.id);
   });

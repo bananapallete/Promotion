@@ -7,6 +7,7 @@ import path from 'node:path';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const root = path.resolve(import.meta.dirname, '..'), out = path.join(root, 'public/ult'), tmp = path.join(root, '.ult-tmp');
+const MOVE = { princess: [-1, 0], frog: [-1, 0], cat: [1, 0.2], labrador: [-1, 0], girl_short: [-1, 0] }; // 궁극기를 쓰고 걸어 다니는 캐릭터
 const demo = path.resolve(process.argv[2]), only = process.argv.slice(3);
 const ids = Object.keys(JSON.parse(readFileSync(path.join(root, 'server/characters.json'), 'utf8')));
 mkdirSync(out, { recursive: true });
@@ -31,6 +32,10 @@ for (const id of ids.filter((i) => !only.length || only.includes(i))) {
   const setup = (Date.now() - t0) / 1000;
   await page.waitForTimeout(500);
   await page.evaluate(() => { const g = window.__game, m = g.players.get('me'); m.ult = m.cfg.ult.need; g.ult('me', null); });
+  if (MOVE[id]) await page.evaluate(([dx, dy]) => { // 움직이면서 쓰는 궁극기는 걸어가며 시연 (1.6초마다 방향을 뒤집어 상대와 오가는 모습)
+    const g = window.__game; let k = 1; g.setInput('me', { mx: dx, my: dy, run: false });
+    setInterval(() => { k = -k; g.setInput('me', { mx: dx * k, my: dy * k, run: false }); }, 1600);
+  }, MOVE[id]);
   await page.waitForTimeout(id === 'chick' ? 5200 : 4200);
   await ctx.close();
   const src = path.join(tmp, readdirSync(tmp)[0]);
