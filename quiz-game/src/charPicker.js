@@ -10,23 +10,23 @@ const CELL = 256;
 
 const CSS = `
 .pk{--cream:#e8d0a9;--cream-hi:#f6e6c8;--wood:#b27c53;--wood-dk:#7a4e32;--text:#5a3a24;--leaf:#b4d36a;--leaf-dk:#6e9a3a;--navy:#14122b;--rose:#b34a5c;--empty:#7f9298;color:var(--text);display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
-.pk .pk-hero{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px;background:var(--cream-hi);border:3px solid #d9a63a;border-radius:12px;box-shadow:0 4px 0 #c18a1f,inset 0 0 0 3px #fff7}
-.pk .pk-stage{position:relative;aspect-ratio:16/9;border-radius:10px;border:3px solid var(--leaf-dk);background:#2b4d2a;overflow:hidden}
+.pk .pk-hero{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);grid-template-areas:"s i" "a a";gap:6px 8px;padding:7px;background:var(--cream-hi);border:3px solid #d9a63a;border-radius:12px;box-shadow:0 4px 0 #c18a1f,inset 0 0 0 3px #fff7}
+.pk .pk-stage{grid-area:s;position:relative;aspect-ratio:4/3;border-radius:10px;border:2px solid var(--leaf-dk);background:#2b4d2a;overflow:hidden}
 .pk .pk-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.pk .pk-info{min-width:0;display:grid;gap:5px;align-content:start}
-.pk .pk-nm{font-size:22px;font-weight:900;line-height:1.05}
-.pk .pk-pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:900;color:#fff;border:2px solid var(--navy);text-shadow:0 1px 0 #0006;margin-right:4px}
+.pk .pk-info{grid-area:i;min-width:0;display:grid;gap:3px;align-content:center}
+.pk .pk-nm{font-size:18px;font-weight:900;line-height:1.05}
+.pk .pk-pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:10px;font-weight:900;color:#fff;border:2px solid var(--navy);text-shadow:0 1px 0 #0006;margin-right:3px}
 .pk .pk-pill.melee{background:#e0702a}.pk .pk-pill.tank{background:#4a86d9}.pk .pk-pill.speed{background:#4fae55}.pk .pk-pill.ranged{background:#9a62d6}.pk .pk-pill.pk-rec{background:#f0a000}
-.pk .pk-bars{display:grid;gap:4px;font-size:12px;font-weight:700}
-.pk .pk-stat{display:flex;align-items:center;justify-content:space-between;white-space:nowrap}
-.pk .pk-stat div{display:flex;align-items:center;gap:6px}
-.pk canvas.pk-ic{width:18px;height:18px;image-rendering:pixelated;flex:none}
+.pk .pk-bars{display:grid;gap:3px;font-size:11px;font-weight:700}
+.pk .pk-stat{display:flex;align-items:center;justify-content:flex-start;gap:4px;white-space:nowrap}
+.pk .pk-stat div{display:flex;align-items:center;gap:3px}
+.pk canvas.pk-ic{width:14px;height:14px;image-rendering:pixelated;flex:none}
 .pk .pk-pips{display:inline-flex;gap:2px;flex:none}
-.pk .pk-pips i{width:9px;height:9px;flex:none;background:var(--empty);border:1.5px solid var(--navy)}
+.pk .pk-pips i{width:8px;height:8px;flex:none;background:var(--empty);border:1.5px solid var(--navy)}
 .pk .pk-pips.hp i.on{background:var(--rose);box-shadow:inset 0 2px 0 #e9a0ab88}.pk .pk-pips.atk i.on{background:#e0902a;box-shadow:inset 0 2px 0 #ffd98a88}.pk .pk-pips.spd i.on{background:#3b82f6;box-shadow:inset 0 2px 0 #a5d0ff88}
-.pk .pk-abil{grid-column:1/-1;display:grid;gap:5px;margin-top:2px}
-.pk .pk-abil div{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:center;background:#fff8e4;border:2px solid #e0c98a;border-radius:6px;padding:5px 8px;font-size:12.5px;line-height:1.3}
-.pk .pk-abil i{font-style:normal;font-size:12px;font-weight:900;color:#fff;text-align:center;border-radius:4px;border:2px solid var(--navy);padding:1px 0}
+.pk .pk-abil{grid-area:a;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pk .pk-abil div{display:grid;grid-template-columns:1fr;gap:2px;justify-items:center;text-align:center;background:#fff8e4;border:2px solid #e0c98a;border-radius:6px;padding:3px;font-size:10.5px;line-height:1.2}
+.pk .pk-abil i{font-style:normal;font-size:10px;font-weight:900;color:#fff;text-align:center;border-radius:4px;border:2px solid var(--navy);padding:0 6px}
 .pk .pk-abil .k1 i{background:#e0702a}.pk .pk-abil .k2 i{background:#4a86d9}.pk .pk-abil .k3 i{background:#9a62d6}
 .pk .pk-bar{display:flex;gap:5px;align-items:center}
 .pk .pk-tabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
