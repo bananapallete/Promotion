@@ -745,7 +745,8 @@
       "speed": 11,
       "range": 24,
       "width": 3.6,
-      "root": 0.8
+      "root": 0.8,
+      "carry": 0.3
     }
   },
   "labrador": {

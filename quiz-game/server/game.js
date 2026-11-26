@@ -391,7 +391,7 @@ export class Game {
         if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
         q.hit.add(o.id);
         if (q.ult) ultHit(this, o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art); else this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
-        if (q.root) { o.rootUntil = Math.max(o.rootUntil, this.t + q.root); if (q.carried) q.carried.set(o.id, this.t + q.root); }
+        if (q.root) { o.rootUntil = Math.max(o.rootUntil, this.t + q.root); if (q.carried) q.carried.set(o.id, this.t + (q.carry ?? q.root)); }
         if (!q.pierce) { gone = true; break; }
       }
       if (gone) this.projectiles.delete(q.id);
