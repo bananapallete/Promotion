@@ -575,7 +575,7 @@ test('체력 기준은 50 (파란티), 모든 캐릭터는 30~90', () => {
   for (const c of Object.values(chars)) assert.ok(c.hp >= 30 && c.hp <= 90, c.name);
 });
 
-test('귀상어 돌진: 3칸 달려가 처음 닿은 상대를 날리고 멈춘다. 쿨타임 6초', () => {
+test('귀상어 돌진: 3칸 달려가 처음 닿은 상대를 날리고 멈춘다. 쿨타임 4초', () => {
   const { g, A, B } = duo('hammerhead', 'blue');
   g.setInput('a', { mx: 1, my: 0, run: false });
   g.skill('a');

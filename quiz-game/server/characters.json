@@ -269,7 +269,7 @@
       "type": "dash",
       "distance": 3,
       "duration": 0.25,
-      "cooldown": 5,
+      "cooldown": 3,
       "hitDmg": 3,
       "hitKnock": 1.0
     },
@@ -444,7 +444,7 @@
       "type": "dash",
       "distance": 2.5,
       "duration": 0.25,
-      "cooldown": 8,
+      "cooldown": 5,
       "hitDmg": 4,
       "hitKnock": 2.0
     },
@@ -608,7 +608,7 @@
       "type": "dash",
       "distance": 2.5,
       "duration": 0.25,
-      "cooldown": 7,
+      "cooldown": 4.5,
       "hitDmg": 3,
       "hitKnock": 1.8
     },
@@ -705,7 +705,7 @@
       "type": "dash",
       "distance": 3,
       "duration": 0.25,
-      "cooldown": 6,
+      "cooldown": 4,
       "hitDmg": 3,
       "hitKnock": 1.5
     },
@@ -852,7 +852,7 @@
       "type": "dash",
       "distance": 3.5,
       "duration": 0.25,
-      "cooldown": 5,
+      "cooldown": 3,
       "hitDmg": 3,
       "hitKnock": 1.2
     },
@@ -968,7 +968,7 @@
       "type": "dash",
       "distance": 4,
       "duration": 0.3,
-      "cooldown": 6,
+      "cooldown": 4,
       "hitDmg": 5,
       "hitKnock": 2.5
     },
