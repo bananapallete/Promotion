@@ -2,6 +2,7 @@ import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
 import { addBtnIcons, setBtnLabel } from './btnIcons.js';
 import { ultNeedsAim } from '../shared/ultAim.js';
+import { renderTopRank } from './topRank.js';
 import { dragAim } from './aimDrag.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
@@ -145,13 +146,8 @@ addEventListener('keydown', (e) => {
 addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); });
 
 
-// 탄창 표시: 가득 찬 칸은 밝게, 장전 중인 칸은 차오르게, 공격 버튼은 탄이 없으면 흐리게
+// 공격 버튼은 탄이 없으면 흐리게 (탄창 게이지는 머리 위 내 바에만)
 function showAmmo(p) {
-  const box = document.getElementById('ammo');
-  if (!p.mam) { box.hidden = true; return; }
-  box.hidden = false;
-  if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
-  [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
   document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 0.7 : 0.3;
 }
 
@@ -168,6 +164,7 @@ socket.on('state', (s) => {
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
   $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
+  renderTopRank($('#toprank'), s.lb || [], me.token);
   const left = s.left > 0 ? ` ${Math.ceil(s.left)}` : '';
   $('#phase').textContent = ((phaseText[s.phase] || '') + left).trim();
   $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';

@@ -46,13 +46,10 @@
 #pad::before { content: ''; position: absolute; left: 50%; top: 50%; width: 50%; height: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px dashed #ffffff55; pointer-events: none; }
   #stick { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: #ffffffa0; }
   .abtn { position: fixed; border-radius: 50%; border: 3px solid #ffffff60; color: #fff; font-weight: 800; touch-action: none; display: grid; place-items: center; cursor: pointer; }
-  #btnAtk { right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
-  #btnRun { right: calc(max(56px, 13vw) + 14px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
+  #btnAtk { right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px); width: 100px; height: 100px; font-size: 20px; background: #ff6b6baa; }
+  #btnRun { right: calc(max(10px, env(safe-area-inset-right, 0px)) + 14px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 36px + 112px); width: 72px; height: 72px; font-size: 15px; background: #4cc2ffaa; }
   #btnRun.on { background: var(--accent); transform: scale(.94); }
-  #ammo { position: fixed; right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 18px); width: 100px; display: flex; gap: 4px; pointer-events: none; }
-  #ammo[hidden] { display: none; }
-  #ammo i { --f: 0; flex: 1; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), #0008 0); box-shadow: 0 0 0 1.5px #ffffff55 inset; }
-  #aim, #aimU { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
+        #aim, #aimU { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 
   #gear { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; z-index: 20; }
   #panel { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); width: min(340px, calc(100vw - 100px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); border-radius: 14px; padding: 12px 14px; z-index: 20; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
@@ -93,9 +90,8 @@
   .bar.run::after { display: none; }
   .abtn { border: 4px solid var(--navy); box-shadow: 0 5px 0 #0007, inset 0 0 0 3px #ffffff40; }
   #btnAtk { background: #d9606f; } #btnRun { background: #5aa7ff; }
-  #ammo i { height: 10px; border-radius: 2px; border: 2px solid var(--navy); box-shadow: none; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), var(--empty) 0); }
-  #stick { border: 3px solid var(--navy); background: var(--cream-hi); }
-  #btnUlt { right: calc(max(56px, 13vw) + 112px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 46px); width: 76px; height: 76px; font-size: 14px; background: linear-gradient(to top, #ffd54a calc(var(--f, 0) * 100%), #6a4fb0 0); color: #fff; text-shadow: 0 0 3px var(--navy), 0 0 3px var(--navy); }
+    #stick { border: 3px solid var(--navy); background: var(--cream-hi); }
+  #btnUlt { right: calc(max(10px, env(safe-area-inset-right, 0px)) + 112px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 46px); width: 76px; height: 76px; font-size: 14px; background: linear-gradient(to top, #ffd54a calc(var(--f, 0) * 100%), #6a4fb0 0); color: #fff; text-shadow: 0 0 3px var(--navy), 0 0 3px var(--navy); }
   #btnUlt.ready { animation: ultpulse .7s ease-in-out infinite alternate; }
   @keyframes ultpulse { from { box-shadow: 0 5px 0 #0007, 0 0 0 0 #ffd54a99; } to { box-shadow: 0 5px 0 #0007, 0 0 18px 6px #ffd54acc; } }
   .abtn { opacity: .7; align-content: center; gap: 2px; }
@@ -120,12 +116,20 @@
   #pickgo:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #4d7226; }
   #charbtn { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); top: max(8px, env(safe-area-inset-top, 0px)); z-index: 20; padding: 11px 16px; border: 3px solid var(--wood); border-radius: 8px; background: var(--cream); color: var(--text); font: 700 14px system-ui, 'Noto Sans KR', sans-serif; box-shadow: 0 3px 0 var(--wood-dk); cursor: pointer; }
   #charbtn:active { transform: translateY(3px); box-shadow: none; }
+  .abtn { border: 0 !important; box-shadow: 0 4px 10px #0005 !important; } /* 버튼 테두리 없음 */
+  #toprank { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); top: 58px; z-index: 15; display: grid; gap: 3px; pointer-events: none; }
+  #toprank div { display: grid; grid-template-columns: 16px minmax(0, 8em) auto; gap: 6px; align-items: baseline; padding: 3px 9px; font-size: 12px; font-weight: 800; color: #5a3a24; background: #f6e6c8cc; border-radius: 99px; }
+  #toprank div:first-child b { color: #d98a00; }
+  #toprank div.me { background: #b4d36acc; }
+  #toprank span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #toprank i { font-style: normal; font-variant-numeric: tabular-nums; }
 </style>
 
 <div id="deathMsg" hidden></div>
 <div id="nick" hidden><div class="mbox"><input id="nickin" type="text" maxlength="10" placeholder="닉네임" autocomplete="off" enterkeyhint="done"><button id="nickgo" type="button">확인</button></div></div>
 <div id="pick"><div class="box"><div id="pickroot"></div><button id="pickgo" type="button">시작</button></div></div>
 <button id="charbtn" type="button">캐릭터 변경</button>
+<div id="toprank"></div>
 <div id="stage">
   <div id="game"></div>
   <div id="hud">
@@ -149,7 +153,6 @@
 <button id="btnRun" class="abtn" type="button">달리기</button>
 <button id="btnUlt" class="abtn" type="button">궁극기<span id="aimU"></span></button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
-<div id="ammo" hidden></div>
 
 <button id="gear" type="button" aria-label="테스트 패널">⚙</button>
 <button id="uiToggle" type="button" aria-label="상단 UI 숨기기">UI</button>

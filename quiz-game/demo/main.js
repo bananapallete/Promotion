@@ -4,6 +4,7 @@ import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
 import { addBtnIcons, setBtnLabel } from '../src/btnIcons.js';
 import { ultNeedsAim } from '../shared/ultAim.js';
+import { renderTopRank } from '../src/topRank.js';
 import { dragAim } from '../src/aimDrag.js';
 import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
@@ -90,6 +91,7 @@ function hud(s) {
     $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
     $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;
     $('#score').textContent = `🪙${p.cn} ${fmtScore(p.sc)}`;
+    renderTopRank($('#toprank'), s.players.map((x) => ({ id: x.id, name: x.n, score: x.sc })).sort((a, b) => b.score - a.score), ME);
     $('#flag').textContent = p.st ? '기절' : p.inv ? '무적' : '';
   }
   const counting = s.phase === PHASE.READING || s.phase === PHASE.MOVING;
@@ -113,14 +115,9 @@ function hud(s) {
 }
 
 
-// 탄창 표시: 가득 찬 칸은 밝게, 장전 중인 칸은 차오르게, 공격 버튼은 탄이 없으면 흐리게
+// 공격 버튼은 탄이 없으면 흐리게 (탄창 게이지는 머리 위 내 바에만)
 function showAmmo(p) {
   const ub = document.getElementById('btnUlt'); ub.style.setProperty('--f', p.ul); ub.classList.toggle('ready', !!p.ur);
-  const box = document.getElementById('ammo');
-  if (!p.mam) { box.hidden = true; return; }
-  box.hidden = false;
-  if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
-  [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
   document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 0.7 : 0.3;
 }
 

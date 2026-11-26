@@ -420,7 +420,7 @@ export class WorldScene extends Phaser.Scene {
         }
         if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + GG; } // 대쉬 쿨타임 / 달리기 게이지
       }
-      v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
+      v.name.setPosition(bx, by - 8).setDepth(v.y + 1).setAlpha(me || p.id === this.lockId ? 1 : 0.35); // 다른 사람 이름은 흐리게, 내가 조준한 상대만 또렷하게
       v.status.setText('').setPosition(bx, by - 32).setDepth(v.y + 1); // 상태이상 글자는 쓰지 않음
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
       const bk = Math.max(0, 1 - (now - v.bump) / 250);
