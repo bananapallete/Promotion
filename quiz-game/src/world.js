@@ -5,6 +5,7 @@ import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
+import { FXD } from './pixel.js';
 import { burstFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
 import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
@@ -116,7 +117,7 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: glow, outerStrength: { from: 16, to: 4 }, duration: 260, ease: 'Cubic.easeOut',
         onComplete: () => { if (v.glow === glow) v.pulse = this.tweens.add({ targets: glow, outerStrength: { from: 2.5, to: 5 }, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }); } });
     }
-    const ring = this.add.graphics().setDepth(5200);
+    const ring = this.add.graphics().setDepth(FXD);
     this.tweens.addCounter({ from: 0, to: 1, duration: 300, ease: 'Cubic.easeOut', onUpdate: (tw) => {
       const k = tw.getValue();
       ring.clear().lineStyle(5 - 2 * k, 0xffffff, 1 - 0.5 * k).strokeCircle(v.x, v.y, (2.4 - 1.6 * k) * BU);
@@ -283,7 +284,7 @@ export class WorldScene extends Phaser.Scene {
       if (e.kind === 'proj') { muzzleFx(this, e, v, BU); return; } // 투사체 공격은 날아가는 모습이 효과
       if (e.kind === 'ranged') { // 개구리 혀: 굵은 분홍 직선 + 끝 동그라미
         const x0 = v.x, y0 = v.y - 0.55 * BU, len = e.len * BU;
-        const line = this.add.graphics().setDepth(5000);
+        const line = this.add.graphics().setDepth(FXD);
         line.lineStyle(9, 0xff6f91, 1).lineBetween(x0, y0, x0 + e.dx * len, y0 + e.dy * len);
         line.fillStyle(0xff6f91, 1).fillCircle(x0 + e.dx * len, y0 + e.dy * len, 10);
         this.tweens.add({ targets: line, alpha: 0, duration: 140, onComplete: () => line.destroy() });
@@ -296,7 +297,7 @@ export class WorldScene extends Phaser.Scene {
       // 화면 흔들림은 크리티컬이 터졌을 때만, 그리고 내가 때리거나 맞은 것만 (봇끼리의 크리티컬마다 흔들리면 정신없어서)
       if (crit && this.focusId && (e.id === this.focusId || e.by === this.focusId)) this.cameras.main.shake(130, 0.006);
       hitFx(this, e, BU);
-      const ring = this.add.circle(e.x * BU, e.y * BU - 0.6 * BU, 8, 0xffffff, 0.9).setDepth(5500);
+      const ring = this.add.circle(e.x * BU, e.y * BU - 0.6 * BU, 8, 0xffffff, 0.9).setDepth(FXD);
       this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 220, onComplete: () => ring.destroy() });
     } else if (e.e === 'dash' && v) {
       if (e.kind === 'hop') v.hopUntil = now + 350;

@@ -2,6 +2,7 @@
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
+import { addBtnIcons, setBtnLabel } from '../src/btnIcons.js';
 import { dragAim } from '../src/aimDrag.js';
 import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
@@ -14,6 +15,7 @@ const fxUrls = import.meta.glob('../public/fx/*.png', { eager: true, query: '?ur
 hooks.fxUrl = (n) => fxUrls[`../public/fx/${n}.png`];
 
 const $ = (s) => document.querySelector(s);
+addBtnIcons();
 const ME = 'me';
 window.__game = null; // 테스트용 접근
 
@@ -118,7 +120,7 @@ function showAmmo(p) {
   box.hidden = false;
   if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
   [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
-  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 1 : 0.45;
+  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 0.7 : 0.3;
 }
 
 // ---------- 조작 ----------
@@ -158,7 +160,7 @@ zone.addEventListener('pointercancel', padEnd);
 
 const runBtn = $('#btnRun');
 const skillType = () => game.players.get(ME)?.cfg.skill?.type || 'run';
-const syncSkill = () => { runBtn.textContent = skillType() === 'dash' ? '대쉬' : '달리기'; };
+const syncSkill = () => { setBtnLabel(runBtn, skillType() === 'dash' ? '대쉬' : '달리기'); };
 const setRun = (v) => { input.run = v; runBtn.classList.toggle('on', v); sendInput(); };
 // 스킬 버튼: 달리기는 누르고 있는 동안, 대쉬는 탭하면 한 번
 runBtn.addEventListener('pointerdown', (e) => {

@@ -1,7 +1,8 @@
 // 궁극기·폭발 도트 이펙트. 이미지 파일 없이 코드로 도트를 찍어 Phaser 텍스처로 만든다 (도트 1개 = 화면 3px, 4x4 디더링).
 import Phaser from 'phaser';
 
-export const DOT = 3;
+import { FXD, PX } from './pixel.js';
+export const DOT = PX;
 const NAVY = [20, 18, 43];
 const rgb = (h) => [(h >> 16) & 255, (h >> 8) & 255, h & 255];
 const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
@@ -55,14 +56,14 @@ function explosionTex(scene, kind, Rd, f) {
 export function explosion(scene, x, y, R, kind, BU) {
   const Rd = Math.max(8, Math.round((R * BU) / DOT)), imgs = [];
   for (let f = 0; f < EXP_N; f++) explosionTex(scene, kind, Rd, f);
-  const sp = scene.add.image(x, y, `ux-${kind}-${Rd}-0`).setScale(DOT).setDepth(5400);
+  const sp = scene.add.image(x, y, `ux-${kind}-${Rd}-0`).setScale(DOT).setDepth(FXD);
   let f = 0;
   const timer = scene.time.addEvent({ delay: 62, repeat: EXP_N - 1, callback: () => { sp.setTexture(`ux-${kind}-${Rd}-${f}`); f++; if (f >= EXP_N) { timer.remove(); scene.tweens.add({ targets: sp, alpha: 0, duration: 120, onComplete: () => sp.destroy() }); } } });
   // 불똥: 작은 네모가 튀어 오름
   const pal = palOf(kind);
   for (let i = 0; i < 14; i++) {
     const ang = Math.random() * 6.283, d = R * BU * (0.5 + Math.random() * 0.8), col = pal[2 + (i % 3)];
-    const e = scene.add.rectangle(x, y, DOT * 2, DOT * 2, Phaser.Display.Color.GetColor(col[0], col[1], col[2])).setDepth(5402);
+    const e = scene.add.rectangle(x, y, DOT * 2, DOT * 2, Phaser.Display.Color.GetColor(col[0], col[1], col[2])).setDepth(FXD);
     scene.tweens.add({ targets: e, x: x + Math.cos(ang) * d, y: y + Math.sin(ang) * d * 0.7 - 24, alpha: 0, duration: 420 + Math.random() * 300, ease: 'Cubic.easeOut', onComplete: () => e.destroy() });
   }
   // 그을음 자국 (디더링 원)
@@ -135,7 +136,7 @@ export function meteorFall(scene, e, BU) {
   const art = e.art === 'egg' ? 'egg' : e.art === 'orb' ? 'orb' : 'fire';
   meteorTex(scene, art, 0); meteorTex(scene, art, 1);
   const x = e.x * BU, y = e.y * BU, egg = art === 'egg';
-  const sp = scene.add.image(x - (egg ? 0 : 5 * BU), y - 8 * BU, `ux-met-${art}-0`).setScale(DOT).setDepth(6000);
+  const sp = scene.add.image(x - (egg ? 0 : 5 * BU), y - 8 * BU, `ux-met-${art}-0`).setScale(DOT).setDepth(FXD);
   if (!egg) sp.setOrigin(17 / 26, 17 / 26); else sp.setOrigin(0.5, 14 / 22);
   const flick = scene.time.addEvent({ delay: 70, loop: true, callback: () => sp.setTexture(`ux-met-${art}-${sp.texture.key.endsWith('0') ? 1 : 0}`) });
   scene.tweens.add({ targets: sp, x, y, duration: e.sec * 1000, ease: 'Quad.easeIn', onComplete: () => { flick.remove(); sp.destroy(); } });
@@ -173,7 +174,7 @@ function ringTex(scene, Rd, f, kind, n) {
   });
 }
 const RING_N = 5;
-function ringAnim(scene, x, y, R, kind, BU, depth = 4996) {
+function ringAnim(scene, x, y, R, kind, BU, depth = FXD) {
   const Rd = Math.max(8, Math.round((R * BU) / DOT));
   for (let f = 0; f < RING_N; f++) ringTex(scene, Rd, f, kind, RING_N);
   const sp = scene.add.image(x, y, `ux-ring-${kind}-${Rd}-0`).setScale(DOT).setDepth(depth);
@@ -194,10 +195,10 @@ export function quake(scene, e, BU) {
   const sp = scene.add.image(x, y, crackTex(scene, Rd, (Math.floor(Math.random() * 3) + 1))).setScale(DOT).setDepth(-47);
   scene.tweens.add({ targets: sp, alpha: 0, delay: 900, duration: 700, onComplete: () => sp.destroy() });
   ringAnim(scene, x, y, e.r, 'quake', BU);
-  ringAnim(scene, x, y, e.r * 0.65, 'quake', BU, 4997);
+  ringAnim(scene, x, y, e.r * 0.65, 'quake', BU, FXD);
   for (let i = 0; i < 12; i++) { // 땅에서 튀어 오르는 돌
     const ang = Math.random() * 6.283, d = e.r * BU * (0.15 + Math.random() * 0.8), px = x + Math.cos(ang) * d, py = y + Math.sin(ang) * d * 0.8;
-    const r = scene.add.image(px, py, debrisTex(scene, i % 2)).setScale(DOT).setDepth(py + 2000);
+    const r = scene.add.image(px, py, debrisTex(scene, i % 2)).setScale(DOT).setDepth(FXD);
     scene.tweens.add({ targets: r, y: py - 26 - Math.random() * 40, duration: 260 + Math.random() * 120, ease: 'Quad.easeOut', yoyo: true, onComplete: () => scene.tweens.add({ targets: r, alpha: 0, duration: 220, onComplete: () => r.destroy() }) });
   }
   if (scene.focusId) scene.cameras.main.shake(260, 0.006);
@@ -256,7 +257,7 @@ export class UltZoneLayer {
     for (let i = 0; i < n; i++) {
       const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * z.r * bu * 0.92;
       const x = z.x * bu + Math.cos(a) * r, y = z.y * bu + Math.sin(a) * r * 0.9;
-      const sp = s.add.image(x, y, mud ? 'ux-mud-0' : fire ? 'ux-flame-0' : 'ux-rain-0').setScale(DOT * (fire ? 0.9 : 1)).setOrigin(0.5, 1).setDepth(y);
+      const sp = s.add.image(x, y, mud ? 'ux-mud-0' : fire ? 'ux-flame-0' : 'ux-rain-0').setScale(DOT).setOrigin(0.5, 1).setDepth(FXD);
       items.push({ sp, x, y, ph: Math.random() }); parts.push(sp);
     }
     const v = { id: z.id, z, base, items, parts, fire, mud };
@@ -294,7 +295,7 @@ export function auraTick(scene, v, now, BU) { // 강화 중인 캐릭터: 발밑
   v.aura.setPosition(v.x, v.y - 2).setAlpha(0.65 + 0.3 * Math.sin(now / 150)).setVisible(true);
   if (now > (v.sparkAt || 0)) {
     v.sparkAt = now + 90;
-    const s = scene.add.image(v.x + (Math.random() - 0.5) * 0.9 * BU, v.y - Math.random() * 0.5 * BU, sparkTex(scene)).setScale(DOT * 0.9).setDepth(v.y + 3);
+    const s = scene.add.image(v.x + (Math.random() - 0.5) * 0.9 * BU, v.y - Math.random() * 0.5 * BU, sparkTex(scene)).setScale(DOT).setDepth(FXD);
     scene.tweens.add({ targets: s, y: s.y - 1.1 * BU, alpha: 0, duration: 520, ease: 'Cubic.easeOut', onComplete: () => s.destroy() });
   }
 }
@@ -310,17 +311,17 @@ export function speedLines(scene, e, BU) {
   const key = lineTex(scene, vertical), dist = e.dist ?? 5;
   for (let i = 0; i < 9; i++) {
     const t = i / 8, px = e.x * BU + e.dx * t * dist * BU * 0.9 + (vertical ? (Math.random() - 0.5) * 1.1 * BU : 0), py = e.y * BU + e.dy * t * dist * BU * 0.9 + (vertical ? 0 : (Math.random() - 0.5) * 0.9 * BU) - 0.4 * BU;
-    const s = scene.add.image(px, py, key).setScale(DOT).setDepth(py + 1).setAlpha(0).setFlipX(e.dx < 0 && !vertical);
+    const s = scene.add.image(px, py, key).setScale(DOT).setDepth(FXD).setAlpha(0).setFlipX(e.dx < 0 && !vertical);
     scene.tweens.add({ targets: s, alpha: 0.95, duration: 90, delay: t * 260, yoyo: true, hold: 60, onComplete: () => s.destroy() });
   }
 }
 
 // ---------- 혀 올가미 · 번개 순간이동 ----------
-function drawLoop(scene, ms, draw, depth = 5000) {
+function drawLoop(scene, ms, draw, depth = FXD) {
   const g = scene.add.graphics().setDepth(depth);
   scene.tweens.addCounter({ from: 0, to: 1, duration: ms, onUpdate: (tw) => { g.clear(); draw(g, tw.getValue()); }, onComplete: () => g.destroy() });
 }
-const sq = (g, x, y, s, c, a = 1) => g.fillStyle(c, a).fillRect(Math.round((x - s / 2) / 2) * 2, Math.round((y - s / 2) / 2) * 2, s, s);
+const sq = (g, x, y, s, c, a = 1) => { const n = Math.max(1, Math.round(s / PX)) * PX; g.fillStyle(c, a).fillRect(Math.round((x - n / 2) / PX) * PX, Math.round((y - n / 2) / PX) * PX, n, n); }; // 이펙트 도트는 모두 PX 격자, 큰 덩이는 PX 여러 칸
 const dotLine = (g, x0, y0, x1, y1, s, c, a = 1, step = 6) => { const n = Math.max(1, Math.floor(Math.hypot(x1 - x0, y1 - y0) / step)); for (let i = 0; i <= n; i++) sq(g, x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n, s, c, a); };
 export function tongues(scene, e, BU) { // 개구리 혀가 뻗어 나가 붙잡고 끌고 옴
   const ox = e.x * BU, oy = e.y * BU - 0.5 * BU;
@@ -388,7 +389,7 @@ export class WallLayer {
     const len = (horizLong ? w.hy : w.hx) * 2 * bu, n = Math.max(2, Math.round(len / (12 * DOT))), parts = [], rows = [];
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n - 0.5, x = w.x * bu + (horizLong ? 0 : t * len), y = w.y * bu + (horizLong ? t * len : 0) + 7 * DOT;
-      const sp = s.add.image(x, y - 30, key).setScale(DOT).setOrigin(0.5, 1).setDepth(y).setAlpha(0);
+      const sp = s.add.image(x, y - 30, key).setScale(DOT).setOrigin(0.5, 1).setDepth(FXD).setAlpha(0);
       s.tweens.add({ targets: sp, y, alpha: 1, duration: 220, delay: i * 40, ease: 'Back.easeOut' }); // 땅에서 솟아남
       parts.push(sp); rows.push(sp);
     }
@@ -407,7 +408,7 @@ export function burnTick(scene, v, now, BU) {
   if (now < (v.burnAt || 0)) return;
   v.burnAt = now + 110;
   [0, 1, 2, 3].forEach((f) => flameTex(scene, f));
-  const f = scene.add.image(v.x + (Math.random() - 0.5) * 0.7 * BU, v.y - Math.random() * 0.9 * BU, `ux-flame-${Math.floor(Math.random() * 4)}`).setScale(DOT * 0.55).setOrigin(0.5, 1).setDepth(v.y + 4);
+  const f = scene.add.image(v.x + (Math.random() - 0.5) * 0.7 * BU, v.y - Math.random() * 0.9 * BU, `ux-flame-${Math.floor(Math.random() * 4)}`).setScale(DOT).setOrigin(0.5, 1).setDepth(FXD);
   scene.tweens.add({ targets: f, y: f.y - 0.5 * BU, alpha: 0, duration: 380, onComplete: () => f.destroy() });
 }
 export function mudBubbleTex(scene, f) {
@@ -426,7 +427,7 @@ export function orcDust(scene, e, v, BU, mine) {
     const d = R * (0.2 + band * 0.25), lat = (Math.random() - 0.5) * 2 * d * Math.tan(half) * 0.8;
     const x = v.x + Math.cos(ang) * d - Math.sin(ang) * lat, y = v.y + Math.sin(ang) * d + Math.cos(ang) * lat;
     scene.time.delayedCall(band * 60 + k * 25, () => {
-      const s = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(1.8 + band * 0.5).setDepth(y + 5).setFlipX(e.dx < 0).setAlpha(0.92);
+      const s = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(1.8 + band * 0.5).setDepth(FXD).setFlipX(e.dx < 0).setAlpha(0.92);
       s.play('dust'); s.once('animationcomplete', () => s.destroy());
       scene.tweens.add({ targets: s, y: y - 18, duration: 420 });
     });
@@ -449,14 +450,14 @@ export function dashFx(scene, e, v, BU) {
   for (let i = 0; i < 4; i++) { // 잔상: 지나간 자리에 색을 입힌 캐릭터가 남았다 사라짐
     scene.time.delayedCall(i * 55, () => {
       const [gx, gy] = at(i * 0.22);
-      const gh = scene.add.image(gx, gy, sp.texture.key, sp.frame.name).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX).setTint(c.tint).setAlpha(0.55).setDepth(gy - 1);
+      const gh = scene.add.image(gx, gy, sp.texture.key, sp.frame.name).setOrigin(sp.originX, sp.originY).setScale(sp.scaleX, sp.scaleY).setFlipX(sp.flipX).setTint(c.tint).setAlpha(0.55).setDepth(FXD);
       scene.tweens.add({ targets: gh, alpha: 0, duration: 260, onComplete: () => gh.destroy() });
     });
   }
-  const puffAt = (x, y, s, tint) => { const p = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(s).setDepth(y + 5).setAlpha(0.9); if (tint) p.setTint(tint); p.play('dust'); p.once('animationcomplete', () => p.destroy()); };
+  const puffAt = (x, y, s, tint) => { const p = scene.add.sprite(x, y - 2, 'dust').setOrigin(0.5, 1).setScale(s).setDepth(FXD).setAlpha(0.9); if (tint) p.setTint(tint); p.play('dust'); p.once('animationcomplete', () => p.destroy()); };
   puffAt(v.x, v.y, 1.3, id === 'pig' ? 0xa88860 : 0);
   const [ex, ey] = at(1); scene.time.delayedCall(260, () => puffAt(ex, ey, 1.6, id === 'pig' ? 0xa88860 : 0));
-  const sparks = (n, size, up) => { for (let i = 0; i < n; i++) { const [px, py] = at(Math.random()), col = c.cols[i % c.cols.length]; const r = scene.add.rectangle(px + (Math.random() - 0.5) * 20, py - 6 - Math.random() * 20, size, size, col).setDepth(py + 3); scene.tweens.add({ targets: r, y: r.y + (up ? -26 : 10 + Math.random() * 12), alpha: 0, duration: 300 + Math.random() * 200, delay: Math.random() * 200, onComplete: () => r.destroy() }); } };
+  const sparks = (n, size, up) => { for (let i = 0; i < n; i++) { const [px, py] = at(Math.random()), col = c.cols[i % c.cols.length]; const r = scene.add.rectangle(px + (Math.random() - 0.5) * 20, py - 6 - Math.random() * 20, size, size, col).setDepth(FXD); scene.tweens.add({ targets: r, y: r.y + (up ? -26 : 10 + Math.random() * 12), alpha: 0, duration: 300 + Math.random() * 200, delay: Math.random() * 200, onComplete: () => r.destroy() }); } };
   if (id === 'girl_long' || id === 'brawler') speedLines(scene, { x: v.x / BU, y: v.y / BU, dx: e.dx, dy: e.dy, dist: e.dist }, BU);
   if (id === 'brawler') { shockRing(scene, { x: v.x / BU, y: v.y / BU, r: 1.1 }, BU); sparks(8, 6, false); }
   if (id === 'knight') sparks(14, 4, false);                                       // 갑옷이 긁히며 튀는 불꽃
@@ -464,7 +465,7 @@ export function dashFx(scene, e, v, BU) {
   if (id === 'girl_long') sparks(8, 5, true);
   if (id === 'shiba') for (let i = 0; i < 6; i++) { // 꼬리 불꽃이 길게 남음
     [0, 1, 2, 3].forEach((f) => flameTex(scene, f)); const [fx, fy] = at(i / 6);
-    scene.time.delayedCall(i * 40, () => { const f = scene.add.image(fx, fy - 8, `ux-flame-${i % 4}`).setScale(DOT * 0.7).setOrigin(0.5, 1).setDepth(fy + 4); scene.tweens.add({ targets: f, y: f.y - 14, alpha: 0, duration: 380, onComplete: () => f.destroy() }); });
+    scene.time.delayedCall(i * 40, () => { const f = scene.add.image(fx, fy - 8, `ux-flame-${i % 4}`).setScale(DOT).setOrigin(0.5, 1).setDepth(FXD); scene.tweens.add({ targets: f, y: f.y - 14, alpha: 0, duration: 380, onComplete: () => f.destroy() }); });
   }
   if (id === 'pig') for (let i = 0; i < 6; i++) { const [px, py] = at(i / 6); scene.time.delayedCall(i * 40, () => puffAt(px, py, 1.2 + Math.random() * 0.5, 0xa88860)); sparks(1, 7, true); }
 }
@@ -482,7 +483,7 @@ export function fireRing(scene, e, BU) {
   [0, 1, 2, 3].forEach((f) => flameTex(scene, f));
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2, x = e.x * BU + Math.cos(a) * e.r * BU * 0.85, y = e.y * BU + Math.sin(a) * e.r * BU * 0.85;
-    const f = scene.add.image(x, y, `ux-flame-${i % 4}`).setScale(DOT * 0.8).setOrigin(0.5, 1).setDepth(y + 4);
+    const f = scene.add.image(x, y, `ux-flame-${i % 4}`).setScale(DOT).setOrigin(0.5, 1).setDepth(FXD);
     scene.tweens.add({ targets: f, y: y - 18, alpha: 0, duration: 420, delay: i * 12, onComplete: () => f.destroy() });
   }
 }
@@ -491,7 +492,7 @@ export function fireRing(scene, e, BU) {
 export function heartTick(scene, v, now, BU) {
   if (now < (v.heartAt || 0)) return;
   v.heartAt = now + 260;
-  const h = scene.add.image(v.x + (Math.random() - 0.5) * 0.8 * BU, v.y - 1.6 * BU, 'item-heart').setScale(DOT * 0.55).setDepth(v.y + 6);
+  const h = scene.add.image(v.x + (Math.random() - 0.5) * 0.8 * BU, v.y - 1.6 * BU, 'item-heart').setScale(DOT).setDepth(FXD);
   scene.tweens.add({ targets: h, y: h.y - 0.9 * BU, alpha: 0, duration: 700, onComplete: () => h.destroy() });
 }
 
@@ -502,7 +503,7 @@ export function orbitTick(scene, v, now, BU) {
   if (!v.orbit || v.orbit.length !== ob.n) { v.orbit?.forEach((s) => s.destroy()); v.orbit = Array.from({ length: ob.n }, () => scene.add.image(0, 0, 'pj-star').setScale(DOT)); }
   if (ob.a !== v.obLast) { v.obLast = ob.a; v.obAt = now; }
   const a0 = ob.a + (ob.w * (now - v.obAt)) / 1000;
-  v.orbit.forEach((s, i) => { const a = a0 + (i / ob.n) * Math.PI * 2, y = v.y + Math.sin(a) * ob.r * BU; s.setPosition(v.x + Math.cos(a) * ob.r * BU, y - 0.5 * BU).setRotation(now / 80).setDepth(y + 3); });
+  v.orbit.forEach((s, i) => { const a = a0 + (i / ob.n) * Math.PI * 2, y = v.y + Math.sin(a) * ob.r * BU; s.setPosition(v.x + Math.cos(a) * ob.r * BU, y - 0.5 * BU).setRotation(now / 80).setDepth(FXD); });
 }
 
 // ---------- 저격: 조준선 → 굵은 빔 ----------
@@ -519,13 +520,13 @@ export function beamFx(scene, e, BU) {
     const k = 1 - u;
     dotLine(g, x0, y0, x1, y1, w * 0.7 * k + 8, 0x14122b, 1, 8); dotLine(g, x0, y0, x1, y1, w * 0.5 * k + 4, 0x5ad8ff, 1, 8); dotLine(g, x0, y0, x1, y1, w * 0.22 * k + 2, 0xffffff, 1, 8);
     for (let i = 0; i < 8; i++) { const t = (i + u) / 8; sq(g, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t + Math.sin(i * 3 + u * 9) * 18 * k, 6, 0xffffff, k); }
-  }, 6100);
+  }, FXD);
   if (scene.focusId === e.id) scene.cameras.main.shake(120, 0.004);
 }
 
 // ---------- 혀 올가미: 개구리와 묶인 적을 잇는 혀 (매 프레임 다시 그림) ----------
 export function tetherLines(scene, now) {
-  const g = scene.tetherGfx || (scene.tetherGfx = scene.add.graphics().setDepth(5001));
+  const g = scene.tetherGfx || (scene.tetherGfx = scene.add.graphics().setDepth(FXD));
   g.clear();
   for (const v of scene.views.values()) {
     const f = v.p.tt ? scene.views.get(v.p.tt) : null;
@@ -533,10 +534,10 @@ export function tetherLines(scene, now) {
     const x0 = f.x, y0 = f.y - 0.5 * 48, x1 = v.x, y1 = v.y - 0.5 * 48, n = Math.max(2, Math.floor(Math.hypot(x1 - x0, y1 - y0) / 8));
     for (let i = 0; i <= n; i++) { // 도트 혀가 살짝 출렁임
       const t = i / n, w = Math.sin(t * 9 + now / 90) * 3 * Math.sin(t * Math.PI), px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t + w;
-      g.fillStyle(0x14122b, 1).fillRect(Math.round((px - 5) / 2) * 2, Math.round((py - 5) / 2) * 2, 10, 10);
-      g.fillStyle(0xff6f91, 1).fillRect(Math.round((px - 3) / 2) * 2, Math.round((py - 3) / 2) * 2, 6, 6);
+      g.fillStyle(0x14122b, 1).fillRect(Math.round((px - 4.5) / PX) * PX, Math.round((py - 4.5) / PX) * PX, 9, 9);
+      g.fillStyle(0xff6f91, 1).fillRect(Math.round((px - 3) / PX) * PX, Math.round((py - 3) / PX) * PX, 6, 6);
     }
-    g.fillStyle(0x14122b, 1).fillRect(x1 - 8, y1 - 8, 16, 16).fillStyle(0xff6f91, 1).fillRect(x1 - 5, y1 - 5, 10, 10); // 붙잡힌 쪽 끝
+    g.fillStyle(0x14122b, 1).fillRect(x1 - 7.5, y1 - 7.5, 15, 15).fillStyle(0xff6f91, 1).fillRect(x1 - 4.5, y1 - 4.5, 9, 9); // 붙잡힌 쪽 끝
   }
 }
 
@@ -559,7 +560,7 @@ export function phoenixBlast(scene, e, BU) {
       const px = x + Math.cos(p.a) * r, py = y + Math.sin(p.a) * r - (p.ember ? 36 * t * t : 0), sz = p.s * (1 - t * 0.6);
       sq(g, px, py, Math.max(4, sz), BLAST[Math.min(4, Math.floor(t * 4.5))], 1 - t * 0.7);
     }
-  }, 5200);
+  }, FXD);
 }
 
 /** 변신 중 표시: 발밑 폭발 범위(연한 면) + 같은 크기로 3초 동안 차오르는 붉은 면 + 머리 위 카운트다운. p.pr 반경(칸), p.pu 진행(0~1), p.ub 남은 초 */
@@ -573,7 +574,7 @@ export function phoenixTick(scene, v, p, BU, pixText) {
   f.base.setTexture(rangeTex(scene, Rd)).setTint(0xff6a4a).setAlpha(0.2).setPosition(v.x, v.y).setVisible(true);
   f.fill.setTexture(rangeTex(scene, Math.max(2, Math.round((Rd * step) / FILL_STEPS)))).setTint(0xe0301e).setAlpha(0.38).setPosition(v.x, v.y).setVisible(true);
   const n = String(Math.max(1, Math.ceil(p.ub)));
-  if (f.n !== n) { f.n = n; f.cd?.destroy(); f.cd = pixText(scene, 0, 0, n, '#ffd54a').setDepth(7000).setScale(1.8); }
+  if (f.n !== n) { f.n = n; f.cd?.destroy(); f.cd = pixText(scene, 0, 0, n, '#ffd54a', PX * 2).setDepth(7000); }
   f.cd.setPosition(v.x, v.y - 2.8 * BU).setVisible(true);
 }
 
@@ -588,7 +589,7 @@ function orbTex(scene) {
   });
 }
 export function bhThrow(scene, e, BU) {
-  const sp = scene.add.image(e.x0 * BU, e.y0 * BU - 0.6 * BU, orbTex(scene)).setScale(DOT).setDepth(6000);
+  const sp = scene.add.image(e.x0 * BU, e.y0 * BU - 0.6 * BU, orbTex(scene)).setScale(DOT).setDepth(FXD);
   scene.tweens.addCounter({ from: 0, to: 1, duration: e.sec * 1000, onUpdate: (tw) => { const u = tw.getValue(); sp.setPosition(lerp2(e.x0 * BU, e.x * BU, u), lerp2(e.y0 * BU - 0.6 * BU, e.y * BU, u) - Math.sin(Math.PI * u) * 2.2 * BU).setAngle(u * 360); }, onComplete: () => sp.destroy() });
 }
 const lerp2 = (a, b, t) => a + (b - a) * t;
@@ -605,7 +606,7 @@ export function bhHole(scene, e, BU) {
     for (const b of bits) { const f = ((b.r - t * 0.7) % 1 + 1) % 1, r = R * f * grow; sq(g, x + Math.cos(b.a + t * 4 * (1 - f)) * r, y + Math.sin(b.a + t * 4 * (1 - f)) * r * 0.82, b.s, VOID[4 - Math.min(2, Math.floor(f * 3))], 0.9 * grow); }
     const core = (0.55 + 0.25 * grow + 0.1 * Math.sin(t * 22)) * BU; // 검은 중심
     for (let gy = -core; gy <= core; gy += 6) for (let gx = -core; gx <= core; gx += 6) { const d = Math.hypot(gx, gy) / core; if (d <= 1) sq(g, x + gx, y + gy * 0.82, 6, d > 0.8 ? VOID[2] : VOID[0], 1); }
-  }, 4000);
+  }, FXD);
   scene.time.delayedCall(e.sec * 1000, () => base.destroy());
 }
 export function bhBlast(scene, e, BU) {
@@ -615,5 +616,5 @@ export function bhBlast(scene, e, BU) {
     const t = (u - 0.2) / 0.8, e3 = easeOut(t);
     for (let i = 0; i < 36; i++) { const a = (i / 36) * 6.283, r = R * e3; sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82, 14 * (1 - t) + 4, VOID[Math.min(4, 4 - Math.floor(t * 4))], 1 - t); } // 퍼지는 고리
     for (const p of parts) { const r = R * p.sp * e3 * 1.1; sq(g, x + Math.cos(p.a) * r, y + Math.sin(p.a) * r * 0.82, p.s * (1 - t * 0.7), VOID[Math.min(4, 4 - Math.floor(t * 4))], 1 - t * 0.8); }
-  }, 5200);
+  }, FXD);
 }

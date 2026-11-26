@@ -1,9 +1,11 @@
 import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
+import { addBtnIcons, setBtnLabel } from './btnIcons.js';
 import { dragAim } from './aimDrag.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
+addBtnIcons();
 const socket = io();
 const LS = 'quiz_player';
 const load = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } };
@@ -23,7 +25,7 @@ function join(data) {
   socket.emit('join', data, (res) => {
     if (!res?.ok) { $('#err').textContent = res?.error || '입장 실패'; showJoin(); return; }
     me = { token: res.token, name: res.name, charId: res.charId, skill: res.cfg?.skill?.type || 'run' };
-    runBtn.textContent = me.skill === 'dash' ? '대쉬' : '달리기';
+    setBtnLabel(runBtn, me.skill === 'dash' ? '대쉬' : '달리기');
     save(me);
     $('#join-ui').hidden = true;
     $('#game-ui').hidden = false;
@@ -149,7 +151,7 @@ function showAmmo(p) {
   box.hidden = false;
   if (box.children.length !== p.mam) box.innerHTML = '<i></i>'.repeat(p.mam);
   [...box.children].forEach((el, i) => el.style.setProperty('--f', i < p.am ? 1 : i === p.am ? p.amf : 0));
-  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 1 : 0.45;
+  document.getElementById('btnAtk').style.opacity = p.am >= 1 ? 0.7 : 0.3;
 }
 
 // ---------- 상태 표시 ----------

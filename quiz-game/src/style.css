@@ -154,4 +154,11 @@ td, th, .qrow { border-bottom-color: #7a4e3233; }
 #btnUlt { right: calc(max(56px, 13vw) + 124px); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 46px); width: 82px; height: 82px; font-size: 15px; background: linear-gradient(to top, #ffd54a calc(var(--f, 0) * 100%), #6a4fb0 0); color: #fff; text-shadow: 0 0 3px var(--navy), 0 0 3px var(--navy); }
 #btnUlt.ready { animation: ultpulse .7s ease-in-out infinite alternate; }
 @keyframes ultpulse { from { box-shadow: 0 5px 0 #0007, 0 0 0 0 #ffd54a99; } to { box-shadow: 0 5px 0 #0007, 0 0 18px 6px #ffd54acc; } }
+
+.abtn { opacity: .7; align-content: center; gap: 2px; }
+.abtn .bico { width: 26px; height: 26px; image-rendering: pixelated; pointer-events: none; filter: drop-shadow(0 1px 0 #0006); }
+#btnUlt.ready { opacity: .95; animation: none; }
+#btnUlt.ready::after, #btnUlt.ready::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 3px solid #ffe27a; pointer-events: none; opacity: 0; animation: ultwave 2s ease-out infinite; } /* 2초마다 퍼지는 빛 파장 */
+#btnUlt.ready::before { animation-delay: .3s; border-color: #fff3b0; }
+@keyframes ultwave { 0% { transform: scale(1); opacity: .95; } 70% { opacity: .25; } 100% { transform: scale(2); opacity: 0; } }
 #pad { border: 3px solid #ffffff55; }

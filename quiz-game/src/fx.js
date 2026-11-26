@@ -1,15 +1,16 @@
 // 공격·피격 이펙트: 도트(네모)로 그려서 캐릭터와 같은 느낌. 근접은 항상 '실제 맞는 범위'(부채꼴)를 먼저 보여 준다.
-const D = 4; // 도트 크기 (화면 px)
-const snap = (v) => Math.round(v / 2) * 2;
-const dot = (g, x, y, s, c, a = 1) => g.fillStyle(c, a).fillRect(snap(x - s / 2), snap(y - s / 2), s, s);
+import { FXD, PX } from './pixel.js';
+const D = PX; // 도트 크기 (화면 px) — 모든 이펙트가 같은 크기, 큰 덩이는 이 도트를 여러 칸 모아서
+const snap = (v) => Math.round(v / PX) * PX;
+const dot = (g, x, y, s, c, a = 1) => { const n = Math.max(1, Math.round(s / PX)) * PX; g.fillStyle(c, a).fillRect(snap(x - n / 2), snap(y - n / 2), n, n); };
 const GLYPH = { 0: '01110 10001 10011 10101 11001 10001 01110', 1: '00100 01100 00100 00100 00100 00100 01110', 2: '01110 10001 00001 00010 00100 01000 11111', 3: '11110 00001 00001 01110 00001 00001 11110', 4: '00010 00110 01010 10010 11111 00010 00010', 5: '11111 10000 11110 00001 00001 10001 01110', 6: '00110 01000 10000 11110 10001 10001 01110', 7: '11111 00001 00010 00100 01000 01000 01000', 8: '01110 10001 10001 01110 10001 10001 01110', 9: '01110 10001 10001 01111 00001 00010 01100', '-': '00000 00000 00000 11111 00000 00000 00000', '!': '00100 00100 00100 00100 00100 00000 00100' };
 /** 데미지 숫자: 도트 글리프. 일반·크리 같은 크기, 색만 다름 */
 export function dmgText(scene, x, y, str, crit) { return pixText(scene, x, y, str, crit ? '#ffb020' : '#ff5a4d'); }
-export function pixText(scene, x, y, str, col) {
+export function pixText(scene, x, y, str, col, d = 4) {
   if ([...str].some((ch) => !GLYPH[ch])) { // '…' 등 글리프 없는 글자
     return scene.add.text(x, y, str, { fontFamily: 'sans-serif', fontSize: '34px', fontStyle: '900', color: col, stroke: '#14122b', strokeThickness: 9 }).setOrigin(0.5).setDepth(6000).setResolution(2);
   }
-  const key = `dmg:${str}:${col}`, d = 4;
+  const key = `dmg:${str}:${col}:${d}`;
   if (!scene.textures.exists(key)) {
     const cells = [], w = str.length * 6 * d - d + 2 * d, h = 7 * d + 2 * d, cv = scene.textures.createCanvas(key, w, h), cx = cv.getContext();
     [...str].forEach((ch, i) => GLYPH[ch].split(' ').forEach((r, yy) => [...r].forEach((v, xx) => v === '1' && cells.push([d + i * 6 * d + xx * d, d + yy * d]))));
@@ -22,7 +23,7 @@ export function pixText(scene, x, y, str, col) {
 const lerp = (a, b, t) => a + (b - a) * t;
 
 /** 0→1로 흐르는 시간 동안 draw(g, u)를 매 프레임 다시 그린다 */
-function play(scene, ms, draw, depth = 5000) {
+function play(scene, ms, draw, depth = FXD) {
   const g = scene.add.graphics().setDepth(depth);
   scene.tweens.addCounter({ from: 0, to: 1, duration: ms, onUpdate: (tw) => { g.clear(); draw(g, tw.getValue()); }, onComplete: () => g.destroy() });
 }
@@ -66,7 +67,7 @@ export function meleeFx(scene, e, v, BU) {
   const px = cx + Math.cos(ang) * R * 0.8, py = cy - 0.45 * BU + Math.sin(ang) * R * 0.8; // 타격 지점 (가슴 높이)
   const T = { thrust: 220, smash: 380, stomp: 420, bite: 240, claw: 260, paw: 320, crescent: 260, shock: big ? 380 : 260, bump: 240, sweep: 300, flurry: big ? 340 : 240 }[e.fx] ?? (big ? 320 : 220);
   const LINGER = 150; // 공격이 끝난 뒤에도 범위 잔상이 남는 시간 (ms)
-  play(scene, T + LINGER, (g, u) => { const t = u * (T + LINGER); footprint(g, cx, cy, R, ang, half, c, t < T ? 1 : 0.6 - 0.25 * ((t - T) / LINGER), lw); }, 4990); // 맞는 범위: 공격 내내 + 끝난 뒤 0.15초
+  play(scene, T + LINGER, (g, u) => { const t = u * (T + LINGER); footprint(g, cx, cy, R, ang, half, c, t < T ? 1 : 0.6 - 0.25 * ((t - T) / LINGER), lw); }, FXD); // 맞는 범위: 공격 내내 + 끝난 뒤 0.15초
   const slash = (g, u, w, a0, a1, col = c) => arcDots(g, cx, cy - 0.45 * BU, R * (0.55 + 0.4 * u), lerp(a0, a1, u) - 0.5, lerp(a0, a1, u) + 0.5, w, col, 1 - u * 0.7);
   switch (e.fx) {
     case 'thrust': // 일직선 찌르기
@@ -164,7 +165,7 @@ export function burstFx(scene, e, BU) {
     g.fillStyle(c, 0.5 * (1 - u)).fillCircle(x, y, R * (0.3 + 0.7 * k));
     g.fillStyle(0xffffff, 0.35 * (1 - u)).fillCircle(x, y, R * (0.15 + 0.5 * k));
     burst(g, x, y - 0.3 * BU, R * 0.95, 14, 10, c, u);
-  }, 4995);
+  }, FXD);
 }
 
 /** 폭발 예고: 시간이 갈수록 차오르는 붉은 면 */
@@ -180,7 +181,7 @@ export function warnFx(scene, e, BU) {
 export function rushFx(scene, e, v, BU) {
   play(scene, 450, (g, u) => {
     for (let i = 0; i < 8; i++) dot(g, e.x * BU - e.dx * i * 0.5 * BU, e.y * BU - e.dy * i * 0.5 * BU - 6 - 8 * u * (i % 3), 10 * (1 - u), 0xffffff, 0.8 * (1 - u));
-  }, 4000);
+  }, FXD);
 }
 
 /** 원거리 발사 순간 번쩍임 */
@@ -202,5 +203,5 @@ export function hitFx(scene, e, BU) {
   play(scene, e.crit ? 420 : 300, (g, u) => {
     for (let i = 0; i < n; i++) { const t = rot + (i / n) * 6.283, r = (0.35 + 0.35 * ((i * 7) % 3) / 2) * BU * u; dot(g, x + Math.cos(t) * r, y + Math.sin(t) * r + 14 * u * u, e.crit ? 8 : 6, cols[i % cols.length], 1 - u); }
     if (e.guard) arcDots(g, x, y, 0.5 * BU, -2.2, 2.2, 6, 0x8ec5ff, 1 - u); // 방패로 막음
-  }, 5600);
+  }, FXD);
 }

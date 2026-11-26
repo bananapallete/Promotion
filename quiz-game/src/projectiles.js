@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 import { PROJ_ART } from '../shared/pixelProjectiles.js';
 import { explosion, waveTex } from './ultFx.js';
 
-const SCALE = 3;
+import { FXD, PX } from './pixel.js';
+const SCALE = PX;
 
 export class ProjectileLayer {
   constructor(scene, bu) {
@@ -52,7 +53,6 @@ export class ProjectileLayer {
       if (q.k === 'b') {
         x = q.x + q.vx * dt; y = q.y + q.vy * dt; z = 0.7;
         ang = q.a === 'arrow' || q.a === 'wave' ? Math.atan2(q.vy, q.vx) : q.a === 'star' ? now / 60 : 0;
-        if (q.a === 'orb') v.sprite.setScale(SCALE * (1 + 0.12 * Math.sin(now / 70)));
       } else { // 던지기: 출발점에서 착탄점으로 직선 이동 + 포물선 높이
         const u = Math.min(1, q.u + dt / q.T);
         x = q.sx + (q.tx - q.sx) * u; y = q.sy + (q.ty - q.sy) * u;
@@ -63,7 +63,7 @@ export class ProjectileLayer {
           .fillStyle(0xff5a1f, 0.1 + 0.08 * pulse).fillCircle(q.tx * bu, q.ty * bu, q.r * bu)
           .lineStyle(3, 0xff7a1a, 0.55 + 0.35 * pulse).strokeCircle(q.tx * bu, q.ty * bu, q.r * bu);
       }
-      v.sprite.setPosition(x * bu, y * bu - z * bu).setRotation(ang).setDepth(y * bu + 3);
+      v.sprite.setPosition(x * bu, y * bu - z * bu).setRotation(ang).setDepth(FXD);
       v.shadow.setPosition(x * bu, y * bu).setAlpha(0.3 * (1 - Math.min(0.6, (z - 0.5) * 0.3)));
     }
   }
