@@ -1022,6 +1022,17 @@ test('피닉스(병아리): 3초간 받는 피해 60% 감소, 뒤에 자폭해 �
   assert.equal(g.snapshot().players.find((p) => p.id === 'a').s, 'chick');
 });
 
+test('블랙홀(마녀): 지정한 곳에 떨어져 2초간 적을 끌어당긴 뒤 터진다', () => {
+  const { g, A, B } = duo('witch', 'blue');
+  A.x = 10; A.y = 10; B.x = 14.5; B.y = 10; A.ult = A.cfg.ult.need; g.events = [];
+  g.ult('a', { x: 1, y: 0, m: 1 }); // 오른쪽 6칸(=16)이 중심
+  run(g, 0.45); const d0 = Math.abs(B.x - 16);
+  run(g, 1.2); assert.ok(Math.abs(B.x - 16) < d0 - 1, '중심 쪽으로 끌려옴');
+  const hp = B.hp; run(g, 1.2);
+  assert.ok(g.events.some((e) => e.e === 'bhBlast'), '2초 뒤 폭발');
+  assert.ok(B.hp < hp, '폭발 피해');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
@@ -1107,7 +1118,7 @@ test('궁극기 barrage·meteor·zone: 투사체 n발, 예고 후 폭발, 바닥
   A.ult = A.cfg.ult.need; g.ult('a', null);
   run(g, 1);
   assert.ok(g.projectiles.size + g.events.length >= 1);
-  const { g: g2, A: W, B: T } = duo('witch', 'blue');
+  const { g: g2, A: W, B: T } = duo('chicken', 'blue');
   W.x = 10; W.y = 10; T.x = 13; T.y = 10; W.ult = W.cfg.ult.need; g2.ult('a', null);
   const ev = []; for (let i = 0; i < 400; i++) { g2.update(0.016); ev.push(...g2.events); }
   assert.ok(ev.some((e) => e.e === 'warn'), '예고');

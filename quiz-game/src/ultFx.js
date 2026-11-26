@@ -539,3 +539,81 @@ export function tetherLines(scene, now) {
     g.fillStyle(0x14122b, 1).fillRect(x1 - 8, y1 - 8, 16, 16).fillStyle(0xff6f91, 1).fillRect(x1 - 5, y1 - 5, 10, 10); // 붙잡힌 쪽 끝
   }
 }
+
+// ---------- 피닉스: 자폭 불꽃 / 머리 위 카운트다운 / 폭발 범위 표시 ----------
+const BLAST = [0xfff3b0, 0xffd54a, 0xff9a3c, 0xe0502a, 0x7a2a1a]; // 밝은 불씨 → 어두운 재
+/** 폭발: 안쪽부터 번지는 디더링 불덩이 + 바깥으로 퍼지는 불꽃 덩이 고리 + 튀는 불똥 */
+export function phoenixBlast(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU - 0.3 * BU, R = e.r * BU, parts = [];
+  for (let i = 0; i < 46; i++) parts.push({ a: (i / 46) * 6.283 + Math.random() * 0.2, sp: 0.55 + Math.random() * 0.45, s: 10 + Math.random() * 14, ph: Math.random() * 0.2 }); // 불꽃 덩이
+  for (let i = 0; i < 26; i++) parts.push({ a: Math.random() * 6.283, sp: 0.2 + Math.random() * 0.8, s: 4 + Math.random() * 4, ph: Math.random() * 0.3, ember: true }); // 불똥
+  drawLoop(scene, 900, (g, u) => {
+    const grow = easeOut(Math.min(1, u / 0.5)), fade = Math.max(0, 1 - Math.max(0, u - 0.45) / 0.55), core = R * 0.9 * grow;
+    for (let gy = -core; gy <= core; gy += 8) for (let gx = -core; gx <= core; gx += 8) { // 불덩이 면
+      const d = Math.hypot(gx, gy) / Math.max(1, core); if (d > 1) continue;
+      if (bay(Math.round(gx / 8) + 20, Math.round(gy / 8) + 20) > (1 - d * 0.8) * fade + 0.05) continue;
+      sq(g, x + gx, y + gy, 8, BLAST[Math.min(4, Math.floor(d * 3 + u * 2))], 0.95);
+    }
+    for (const p of parts) {
+      const t = Math.max(0, Math.min(1, (u - p.ph) / (1 - p.ph))), r = R * p.sp * easeOut(t) * (p.ember ? 1.1 : 0.95);
+      const px = x + Math.cos(p.a) * r, py = y + Math.sin(p.a) * r - (p.ember ? 36 * t * t : 0), sz = p.s * (1 - t * 0.6);
+      sq(g, px, py, Math.max(4, sz), BLAST[Math.min(4, Math.floor(t * 4.5))], 1 - t * 0.7);
+    }
+  }, 5200);
+}
+
+/** 변신 중 표시: 발밑 폭발 범위(연한 면) + 같은 크기로 3초 동안 차오르는 붉은 면 + 머리 위 카운트다운. p.pr 반경(칸), p.pu 진행(0~1), p.ub 남은 초 */
+const FILL_STEPS = 16;
+export function phoenixTick(scene, v, p, BU, pixText) {
+  const on = !!p.pr && !p.st;
+  if (!on) { if (v.phx) { v.phx.base.setVisible(false); v.phx.fill.setVisible(false); v.phx.cd?.setVisible(false); } return; }
+  const Rd = Math.max(6, Math.round((p.pr * BU) / DOT));
+  if (!v.phx) v.phx = { base: scene.add.image(0, 0, rangeTex(scene, Rd)).setScale(DOT).setDepth(-43), fill: scene.add.image(0, 0, rangeTex(scene, Rd)).setScale(DOT).setDepth(-42), cd: null, n: '' };
+  const f = v.phx, step = Math.max(1, Math.min(FILL_STEPS, Math.ceil(p.pu * FILL_STEPS)));
+  f.base.setTexture(rangeTex(scene, Rd)).setTint(0xff6a4a).setAlpha(0.2).setPosition(v.x, v.y).setVisible(true);
+  f.fill.setTexture(rangeTex(scene, Math.max(2, Math.round((Rd * step) / FILL_STEPS)))).setTint(0xe0301e).setAlpha(0.38).setPosition(v.x, v.y).setVisible(true);
+  const n = String(Math.max(1, Math.ceil(p.ub)));
+  if (f.n !== n) { f.n = n; f.cd?.destroy(); f.cd = pixText(scene, 0, 0, n, '#ffd54a').setDepth(7000).setScale(1.8); }
+  f.cd.setPosition(v.x, v.y - 2.8 * BU).setVisible(true);
+}
+
+// ---------- 블랙홀: 던지는 검은 공 → 소용돌이(끌어당김) → 붕괴 폭발 ----------
+const VOID = [0x0e0620, 0x2a1250, 0x5a2a9a, 0x9a5ae0, 0xd8b0ff]; // 어두운 → 밝은 보라
+function orbTex(scene) {
+  return tex(scene, 'ux-bh-orb', 22, 22, (put, w, h) => {
+    const get = (x, y) => (x + 0.5 - 11) ** 2 + (y + 0.5 - 11) ** 2 <= 8.6 ** 2;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (get(x, y)) { const d = Math.hypot(x + 0.5 - 11, y + 0.5 - 11) / 8.6; put(x, y, d > 0.8 ? [154, 90, 224] : d > 0.55 ? [90, 42, 154] : [14, 6, 32]); }
+    put(7, 6, [216, 176, 255]); put(8, 6, [216, 176, 255]); put(7, 7, [216, 176, 255]);
+    ink(put, w, h, get);
+  });
+}
+export function bhThrow(scene, e, BU) {
+  const sp = scene.add.image(e.x0 * BU, e.y0 * BU - 0.6 * BU, orbTex(scene)).setScale(DOT).setDepth(6000);
+  scene.tweens.addCounter({ from: 0, to: 1, duration: e.sec * 1000, onUpdate: (tw) => { const u = tw.getValue(); sp.setPosition(lerp2(e.x0 * BU, e.x * BU, u), lerp2(e.y0 * BU - 0.6 * BU, e.y * BU, u) - Math.sin(Math.PI * u) * 2.2 * BU).setAngle(u * 360); }, onComplete: () => sp.destroy() });
+}
+const lerp2 = (a, b, t) => a + (b - a) * t;
+export function bhHole(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU, Rd = Math.max(6, Math.round(R / DOT));
+  const base = scene.add.image(x, y, rangeTex(scene, Rd)).setScale(DOT).setDepth(-43).setTint(0x6a3aa0).setAlpha(0.16);
+  const bits = Array.from({ length: 30 }, () => ({ a: Math.random() * 6.283, r: Math.random(), s: 4 + Math.random() * 4 })); // 빨려 드는 조각
+  drawLoop(scene, e.sec * 1000, (g, u) => {
+    const t = u * e.sec, grow = Math.min(1, u / 0.12);
+    for (let arm = 0; arm < 3; arm++) for (let k = 1; k <= 16; k++) { // 나선 팔
+      const f = k / 16, a = arm * 2.094 + t * 5 - f * 3.4, r = R * f * grow;
+      sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82, 6 + (1 - f) * 8, VOID[Math.min(3, Math.floor((1 - f) * 3.2))], 0.35 + 0.5 * (1 - f));
+    }
+    for (const b of bits) { const f = ((b.r - t * 0.7) % 1 + 1) % 1, r = R * f * grow; sq(g, x + Math.cos(b.a + t * 4 * (1 - f)) * r, y + Math.sin(b.a + t * 4 * (1 - f)) * r * 0.82, b.s, VOID[4 - Math.min(2, Math.floor(f * 3))], 0.9 * grow); }
+    const core = (0.55 + 0.25 * grow + 0.1 * Math.sin(t * 22)) * BU; // 검은 중심
+    for (let gy = -core; gy <= core; gy += 6) for (let gx = -core; gx <= core; gx += 6) { const d = Math.hypot(gx, gy) / core; if (d <= 1) sq(g, x + gx, y + gy * 0.82, 6, d > 0.8 ? VOID[2] : VOID[0], 1); }
+  }, 4000);
+  scene.time.delayedCall(e.sec * 1000, () => base.destroy());
+}
+export function bhBlast(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU, parts = Array.from({ length: 40 }, () => ({ a: Math.random() * 6.283, sp: 0.4 + Math.random() * 0.6, s: 6 + Math.random() * 10 }));
+  drawLoop(scene, 700, (g, u) => {
+    if (u < 0.2) { const k = 1 - u / 0.2; for (let gy = -1; gy <= 1; gy += 0.5) for (let gx = -1; gx <= 1; gx += 0.5) if (Math.hypot(gx, gy) <= 1) sq(g, x + gx * R * 0.6 * k, y + gy * R * 0.6 * k * 0.82, 8, VOID[Math.hypot(gx, gy) < 0.5 ? 0 : 2], 1); return; } // 붕괴
+    const t = (u - 0.2) / 0.8, e3 = easeOut(t);
+    for (let i = 0; i < 36; i++) { const a = (i / 36) * 6.283, r = R * e3; sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82, 14 * (1 - t) + 4, VOID[Math.min(4, 4 - Math.floor(t * 4))], 1 - t); } // 퍼지는 고리
+    for (const p of parts) { const r = R * p.sp * e3 * 1.1; sq(g, x + Math.cos(p.a) * r, y + Math.sin(p.a) * r * 0.82, p.s * (1 - t * 0.7), VOID[Math.min(4, 4 - Math.floor(t * 4))], 1 - t * 0.8); }
+  }, 5200);
+}

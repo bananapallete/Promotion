@@ -5,7 +5,7 @@
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -75,6 +75,27 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  blackhole(g, p, u, dx, dy, near) { // 지정한 곳에 검은 공을 던짐 → 땅에 닿으면 블랙홀: sec초 동안 반경 안 적을 끌어당기다가 터진다
+    const c = center(g, p, u, dx, dy, near), fly = u.fly ?? 0.5, dt = 0.05;
+    g.events.push({ e: 'bhThrow', x0: r2(p.x), y0: r2(p.y), x: r2(c.x), y: r2(c.y), sec: fly });
+    later(g, fly, () => {
+      g.events.push({ e: 'bhOpen', x: r2(c.x), y: r2(c.y), r: u.radius, sec: u.sec });
+      for (let i = 1; i * dt <= u.sec + 1e-6; i++) {
+        later(g, i * dt, () => {
+          for (const o of g._enemies(p)) {
+            const d = Math.hypot(c.x - o.x, c.y - o.y);
+            if (o.stunned || d > u.radius + o.cfg.radius || d < 0.05) continue;
+            const s = Math.min(d, u.pull * dt); o.x += ((c.x - o.x) / d) * s; o.y += ((c.y - o.y) / d) * s; g._clamp(o);
+          }
+        });
+      }
+      later(g, u.sec, () => {
+        g.events.push({ e: 'bhBlast', x: r2(c.x), y: r2(c.y), r: u.blast });
+        hitArea(g, p, c.x, c.y, u.blast, u.dmg, u.knock ?? 0, 'void');
+      });
+    });
   },
 
   flurry(g, p, u, dx, dy) { // 난타 전진: sec초 동안 앞으로 걸어가며(스틱으로 방향 조절) gap마다 전방 직선을 주먹으로 때림

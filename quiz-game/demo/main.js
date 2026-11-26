@@ -55,8 +55,8 @@ scene.onFrame = (sc, dt) => {
     const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
     const dead = !!v.p.st; deadT = Math.max(0, Math.min(1, deadT + (dead ? dt : -dt) / 500));
     const de = deadT < 0.5 ? 4 * deadT ** 3 : 1 - (-2 * deadT + 2) ** 3 / 2;
-    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom()) * (1 + 0.45 * de)); // 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
-    document.body.classList.toggle('dead', dead);
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
+    document.body.classList.toggle('dead', dead && v.p.s !== 'egg'); // 알이 된 동안엔 흑백 대신 컬러로(폭발 연출)
     deathMsg.hidden = !dead; if (dead) deathMsg.textContent = `${Math.ceil(v.p.rv)}초 뒤 부활합니다`;
     cam.centerOn(v.x, v.y - 30);
   } else {

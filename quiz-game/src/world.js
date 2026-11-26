@@ -5,8 +5,8 @@ import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
-import { burstFx, dmgText, hitFx, meleeFx, muzzleFx } from './fx.js';
-import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
+import { burstFx, dmgText, hitFx, pixText, meleeFx, muzzleFx } from './fx.js';
+import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, bhBlast, bhHole, bhThrow, phoenixBlast, phoenixTick, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, OBJ_PAD, objectTexture, TILE } from './mapArt.js';
@@ -246,6 +246,12 @@ export class WorldScene extends Phaser.Scene {
     if (e.e === 'ult' && v) {
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'bhThrow') {
+      bhThrow(this, e, BU);
+    } else if (e.e === 'bhOpen') {
+      bhHole(this, e, BU);
+    } else if (e.e === 'bhBlast') {
+      bhBlast(this, e, BU);
     } else if (e.e === 'tetherStart') {
       shockRing(this, { x: e.x, y: e.y, r: 2 }, BU, 'pink');
     } else if (e.e === 'charm') {
@@ -264,7 +270,7 @@ export class WorldScene extends Phaser.Scene {
       hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
       if (e.r) rangeDisc(this, e.x, e.y, e.r, BU);
-      if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
+      if (e.fx === 'phoenix') phoenixBlast(this, e, BU); else if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
       warnFx(this, e, BU);
       meteorFall(this, e, BU);
@@ -361,6 +367,8 @@ export class WorldScene extends Phaser.Scene {
       v.sprite.setAlpha(p.sl ? (p.id === this.focusId ? 0.35 : 0.12) : p.inv ? 0.45 + 0.35 * Math.sin(now / 70) : 1); // 은신 / 무적 깜빡임
 
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
+      phoenixTick(this, v, p, BU, pixText);
+      if (p.id === this.focusId) this._redTint = p.pr && !p.st ? p.pu : 0; // 내가 피닉스면 화면이 점점 붉어짐
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;
       const bw = 1.9 * BU * sz * (me ? 0.8 : 1), bh = Math.round(14 * sz * (me ? 0.7 : 1)), bd = 2; // 내 바: 가로 20%·세로 30% 줄임
       // 머리 위 UI는 캐릭터의 실제 머리 꼭대기 위에 쌓는다 (내 게이지가 아래로 늘어나도 캐릭터를 가리지 않게 전체를 위로 올림)
@@ -398,6 +406,9 @@ export class WorldScene extends Phaser.Scene {
     this.items.update(now);
     this.proj.update(now);
     this._drawAim(now);
+    if (!this.redRect) this.redRect = this.add.rectangle(0, 0, 8000, 8000, 0xff2010, 0).setDepth(9000);
+    const cam = this.cameras.main; this.redA = (this.redA || 0) + (((this._redTint || 0) * 0.45) - (this.redA || 0)) * 0.2;
+    this.redRect.setPosition(cam.midPoint.x, cam.midPoint.y).setAlpha(this.redA).setVisible(this.redA > 0.005);
     this.onFrame?.(this, delta);
   }
 }
