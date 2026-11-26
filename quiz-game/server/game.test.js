@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Game } from './game.js';
-import { CRIT, PHASE, RUN_DRAIN } from '../shared/constants.js';
+import { CRIT, PHASE, RUN_DRAIN, ULT_CHARGE } from '../shared/constants.js';
+const HUMAN_MUL = ULT_CHARGE.humanMul; ULT_CHARGE.humanMul = 1; // 규칙 테스트는 배수 없이(배포용 값), 배수는 아래 전용 테스트에서 확인
 
 CRIT.chance = 0; // 테스트는 정확한 피해 숫자를 확인하므로 크리티컬은 꺼둔다 (크리티컬 테스트에서만 켬)
 
@@ -1111,7 +1112,7 @@ test('무대 펼치기(크림슨 디바): 제자리에서 5초 춤추며 무대 
   g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null); const hp = B.hp, x0 = A.x;
   run(g, 1.8); assert.equal(B.hp, hp, '무대 등장(2초) 동안은 피해 없음');
   run(g, 2.8); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
-  assert.ok(Math.abs(A.x - x0) < 0.3, '춤추는 동안 제자리');
+  assert.ok(A.x - x0 > 0.3 && A.x - x0 < 2.2, `춤추는 동안 이동속도 10% (${(A.x - x0).toFixed(2)}칸)`);
   run(g, 3);
   const total = hp - B.hp; assert.ok(total >= 28 && total <= 40, `5초 합계 ${total}`);
   assert.equal(C.hp, C.cfg.hp, '무대 밖은 안 맞음');
@@ -1183,6 +1184,15 @@ test('시트에서 만든 문제 목록에 현실 퀴즈가 있어도 그대로 
   const g = new Game(chars, [{ type: 'ox', text: 'a', answer: 'O', time: 10 }, { type: 'real', text: '줄다리기', answer: null, time: 0 }, { type: 'ox', text: 'b', answer: 'X', time: 10, mode: '팀' }]);
   assert.deepEqual(g.questions.map((q) => q.mode), ['개인', '현실', '팀']);
   assert.ok(g.ask(2)); assert.equal(g.phase, PHASE.REAL);
+});
+
+test('테스트용 충전 배수: 사람만 궁극기 충전이 2배(자동·타격 모두), 봇은 그대로', () => {
+  ULT_CHARGE.humanMul = HUMAN_MUL;
+  try {
+    const g = new Game(chars, quizzes), a = g.join({ token: 'a', name: 'A', charId: 'blue' }), bot = g.addBot('idle', 'blue');
+    const b = g.players.get(bot.id ?? bot); a.ult = 0; b.ult = 0; for (let i = 0; i < 30; i++) g.update(1 / 30);
+    assert.ok(a.ult > 0 && Math.abs(a.ult / b.ult - HUMAN_MUL) < 0.05, `자동 충전 비 ${a.ult / b.ult}`);
+  } finally { ULT_CHARGE.humanMul = 1; }
 });
 
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {

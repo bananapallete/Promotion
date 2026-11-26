@@ -21,7 +21,7 @@ export const COIN = {
   dropOnNoAnswer: true, // 무응답도 틀린 것으로 보고 떨어뜨림
 };
 // 궁극기 충전: 때린 피해만큼(궁극기로 때린 건 절반), 맞은 피해의 절반, 가만히 있어도 초당 3%, 탱커는 맞을 때마다 2% 더
-export const ULT_CHARGE = { ultHit: 0.5, auto: 0.03, tankHit: 0.02, ultCap: 0.05 }; // ultCap: 궁극기 한 번으로 채울 수 있는 최대량(게이지의 5%, 여러 명을 맞춰도 합쳐서)
+export const ULT_CHARGE = { ultHit: 0.5, auto: 0.03, tankHit: 0.02, ultCap: 0.05, humanMul: 2 }; // humanMul: 배포 전 테스트용 — 사람(봇 제외)의 궁극기 충전 속도·양 배수 (배포 때 1로). ultCap: 궁극기 한 번으로 채울 수 있는 최대량(게이지의 5%, 여러 명을 맞춰도 합쳐서)
 
 // 달리기 게이지는 이 배수로 빨리 닳는다 (대쉬 캐릭터는 게이지가 없어서 균형을 맞추기 위함)
 export const RUN_DRAIN = 1.4;

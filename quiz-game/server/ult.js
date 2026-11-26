@@ -14,6 +14,7 @@ export const buffOf = (g, p) => (p.buff && g.t < p.buff.until ? p.buff : null);
 
 export function charge(p, amount) {
   const u = p.cfg?.ult;
+  if (u && amount > 0 && !p.isBot) amount *= ULT_CHARGE.humanMul; // 테스트용: 사람만 충전 배수
   if (u && amount > 0) p.ult = Math.min(u.need, (p.ult || 0) + amount);
 }
 
@@ -101,7 +102,7 @@ const RUN = {
   },
 
   stage(g, p, u, dx, dy) { // 무대 펼치기: 제자리에서 sec초 춤추며, 무대(반경) 안 적에게 tick마다 피해 (소수 피해는 모아서 1 이상이 될 때 적용)
-    const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: 0, armor: true }, x = p.x, y = p.y, ry = u.radiusY ?? u.radius; // armor: 춤추는 동안 밀리지 않음
+    const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: u.move ?? 0, armor: true }, x = p.x, y = p.y, ry = u.radiusY ?? u.radius; // armor: 춤추는 동안 밀리지 않음
     p.shield = { until: g.t + intro + u.sec, mul: u.shield ?? 0.5 }; // 받는 피해 감소
     g.events.push({ e: 'stageOpen', id: p.id, x: r2(x), y: r2(y), r: u.radius, ry, sec: u.sec, intro });
     for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {

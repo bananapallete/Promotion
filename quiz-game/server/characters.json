@@ -1193,12 +1193,13 @@
       "type": "stage",
       "sec": 5,
       "tick": 0.05,
-      "radius": 3.4,
+      "radius": 5.1,
       "dmg": 0.35,
       "fx": "note",
-      "radiusY": 1.9,
+      "radiusY": 2.85,
       "intro": 2,
-      "shield": 0.5
+      "shield": 0.5,
+      "move": 0.1
     }
   },
   "nurse": {
