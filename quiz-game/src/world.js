@@ -466,22 +466,32 @@ export class WorldScene extends Phaser.Scene {
   }
 }
 
+// 렌더 해상도: 큰 화면(아이패드 등)은 dpr 그대로 그리면 픽셀 수가 너무 많아 끊긴다 → 총 픽셀 예산 안으로 줄이고, 프레임이 떨어지면 단계적으로 더 낮춘다
+const PIXEL_BUDGET = 2.2e6, MIN_DPR = 1;
+const pickDpr = (parent, cap = 3) => Math.max(MIN_DPR, Math.min(cap, window.devicePixelRatio || 1, Math.sqrt(PIXEL_BUDGET / Math.max(1, parent.clientWidth * parent.clientHeight))));
 export function startWorld(parentId, opts = {}) {
   const scene = new WorldScene();
   let config;
   if (opts.fill) {
-    // 부모 영역을 가득 채우는 모드(폰 세로 화면용). 고해상도 화면에서도 선명하도록 dpr배로 그린다.
+    // 부모 영역을 가득 채우는 모드(폰·태블릿 화면용)
     const parent = document.getElementById(parentId);
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const dpr = pickDpr(parent);
     config = { width: Math.round(parent.clientWidth * dpr), height: Math.round(parent.clientHeight * dpr), scale: { mode: Phaser.Scale.NONE, zoom: 1 / dpr } };
     scene.dpr = dpr;
   } else {
     config = { width: WORLD_W, height: WORLD_H, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } };
   }
-  const game = new Phaser.Game({ type: Phaser.AUTO, parent: parentId, backgroundColor: '#2b4d2a', scene, render: { antialias: true }, ...config });
+  const game = new Phaser.Game({ type: Phaser.AUTO, parent: parentId, backgroundColor: '#2b4d2a', scene, render: { antialias: false, powerPreference: 'high-performance' }, ...config });
   if (opts.fill) {
     const parent = document.getElementById(parentId);
-    addEventListener('resize', () => game.scale.resize(Math.round(parent.clientWidth * scene.dpr), Math.round(parent.clientHeight * scene.dpr)));
+    const apply = () => { game.scale.setZoom(1 / scene.dpr); game.scale.resize(Math.round(parent.clientWidth * scene.dpr), Math.round(parent.clientHeight * scene.dpr)); };
+    addEventListener('resize', () => { scene.dpr = Math.min(scene.dpr, pickDpr(parent)); apply(); });
+    let slow = 0; // 프레임이 2번 연속 40fps 아래면 해상도를 한 단계(0.25) 낮춤
+    setInterval(() => {
+      if (document.hidden || !game.loop || game.loop.actualFps === 0) return;
+      slow = game.loop.actualFps < 40 ? slow + 1 : 0;
+      if (slow >= 2 && scene.dpr > MIN_DPR) { scene.dpr = Math.max(MIN_DPR, scene.dpr - 0.25); slow = 0; apply(); }
+    }, 1500);
   }
   return { game, scene };
 }
