@@ -123,14 +123,19 @@ export class WorldScene extends Phaser.Scene {
     }, onComplete: () => ring.destroy() });
   }
 
-  // 걷거나 달리는 동안 발 뒤로 먼지가 남음 (달리면 더 크고 자주)
+  // 달리면 발 뒤로 먼지, 걸으면 아주 연한 동그란 먼지
   _dust(v, p, now) {
     const dx = v.x - (v.lx ?? v.x); v.lx = v.x;
     const moving = !p.st && (p.a === 'walk' || p.a === 'run') && v.hopUntil <= now;
     if (!moving || now < (v.dustAt || 0)) return;
     const run = p.a === 'run';
-    v.dustAt = now + (run ? 110 : 240);
+    v.dustAt = now + (run ? 110 : 360);
     const back = Math.abs(dx) > 0.3 ? -Math.sign(dx) : -p.f; // 가는 방향의 반대쪽
+    if (!run) { // 걸을 땐 아주 연한 동그란 먼지만 (달리기·대시에서만 기존 먼지)
+      const c = this.add.circle(v.x + back * 0.3 * BU, v.y - 4, 6, 0xffffff, 0.22).setDepth(v.y - 1);
+      this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 420, onComplete: () => c.destroy() });
+      return;
+    }
     const d = this.add.sprite(v.x + back * 0.42 * BU, v.y - 2, 'dust').setOrigin(0.5, 1).setScale((run ? 1.5 : 1) * (p.zs || 1) * 1.1).setFlipX(back < 0).setAlpha(0.9).setDepth(v.y - 1);
     d.play('dust');
     d.once('animationcomplete', () => d.destroy());
