@@ -1160,6 +1160,7 @@ test('보물 탐지: 래브라도 여럿이 겹쳐 써도 동전이 늘거나 �
     if (t % 5 === 0) { const p = labs[(t / 5) % labs.length]; p.ult = p.cfg.ult.need; g.ult(p.id, null); }
     g.update(1 / 30);
     for (const e of g.events) if (e.e === 'coinGet') { assert.ok(!seen.has(e.id), `동전 ${e.id} 중복 습득`); seen.add(e.id); }
+    g.events = []; // 스냅샷을 만들지 않으니 직접 비움
     assert.equal(labs.reduce((s, p) => s + p.coins, 0) + g.coins.size, total, '동전 합계 유지');
   }
 });
