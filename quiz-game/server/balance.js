@@ -13,7 +13,7 @@ export function shotsOf(c, sec = FIGHT_SEC) {
 export function dpsOf(c) {
   const a = c.attack;
   const comboMul = a.combo ? (2 + (a.combo[2].dmg ?? 1)) / 3 : 1;
-  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * (1 + (a.critBonus ?? 0) * 0.5) * shotsOf(c) / FIGHT_SEC;
+  const basic = ((a.dmgMin + a.dmgMax) / 2) * comboMul * (1 + (a.critBonus ?? 0) * 0.5) * shotsOf(c) * (a.burst?.n ?? 1) / FIGHT_SEC; // 연타형은 탄창 하나에 n번
   const hit = a.projectile ? HIT[a.projectile.art] ?? 0.8 : a.fx === 'tongue' ? 0.95 : a.lineW ? 0.85 : 1; // 직선 주먹은 부채꼴보다 맞히기 어렵다
   const skill = c.skill?.hitDmg ? c.skill.hitDmg / c.skill.cooldown : 0;
   return { basic, dps: basic * hit * (a.multi ? AREA : 1) + skill };

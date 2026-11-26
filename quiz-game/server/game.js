@@ -298,6 +298,7 @@ export class Game {
     if (this.t < p.nextAttackAt || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
     if (p.running && !a.canAttackWhileRunning) return;
 
+    if (a.burst) p.comboStep = 0; // 연타형: 한 번 누르면 항상 1타부터 n타까지
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
     const { combo, step, m, range, arc, multi, line } = this._comboState(p);
     const { dx, dy, near } = this._aimDir(p, aim, range);
@@ -305,7 +306,7 @@ export class Game {
     p.nextAttackAt = this.t + a.interval / (buffOf(this, p)?.atk ?? 1);
     p.ammoF -= 1;
     // 공격 모션이 재생되는 동안 (이동 속도 감소가 적용되는 시간)
-    p.attackUntil = this.t + (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000;
+    p.attackUntil = this.t + (a.burst ? a.burst.gap + 0.1 : (SPRITE.attackSteps[step]?.ms ?? ATTACK_ANIM_SEC * 1000) / 1000);
     p.lastAttackAt = this.t;
     p.comboStep = combo ? (step + 1) % combo.length : 0;
 
@@ -320,13 +321,22 @@ export class Game {
       this.events.push({ e: 'windup', id: p.id, dx: r2(dx), dy: r2(dy), range: r2(range), arc, sec: a.windup, fx: a.fx });
       return;
     }
-    this._strike(p, range, dx, dy, m, step, arc, multi, line);
+    this._strike(p, range, dx, dy, m, step, arc, multi, line, !!a.burst);
+    for (let i = 1; i < (a.burst?.n ?? 1); i++) { // 나머지 타격: 탄창은 더 안 쓰고 gap 간격으로 이어서
+      this.tasks.push({ at: this.t + i * a.burst.gap, fn: () => {
+        if (p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel) return;
+        const s = this._comboState(p), d = this._aimDir(p, aim, s.range);
+        if (Math.abs(d.dx) > 0.15) p.face = d.dx > 0 ? 1 : -1;
+        p.attackUntil = this.t + a.burst.gap + 0.1; p.lastAttackAt = this.t; p.comboStep = (s.step + 1) % s.combo.length;
+        this._strike(p, s.range, d.dx, d.dy, s.m, s.step, s.arc, s.multi, s.line, true);
+      } });
+    }
   }
 
-  _strike(p, range, dx, dy, m, step, arc, multi, line) {
+  _strike(p, range, dx, dy, m, step, arc, multi, line, fast = false) {
     const a = p.cfg.attack;
     const hits = this._pickTargets(p, range, dx, dy, arc, line);
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc, lineW: line, step, range: r2(range), len: r2(hits[0] && !(multi && a.type === 'ranged') ? hits[0].dist : range) });
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc, lineW: line, fast, step, range: r2(range), len: r2(hits[0] && !(multi && a.type === 'ranged') ? hits[0].dist : range) });
     for (const h of multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
   }
 

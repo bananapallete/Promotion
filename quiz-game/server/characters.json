@@ -458,9 +458,13 @@
     },
     "attack": {
       "type": "melee",
-      "dmgMin": 6,
-      "dmgMax": 6,
-      "interval": 0.55,
+      "dmgMin": 4,
+      "dmgMax": 4,
+      "interval": 0.9,
+      "burst": {
+        "n": 3,
+        "gap": 0.14
+      },
       "range": 1.7,
       "knockback": 0,
       "canAttackWhileRunning": true,
@@ -490,7 +494,7 @@
     "scale": 1.1,
     "ammo": {
       "max": 3,
-      "reload": 1.65
+      "reload": 6.5
     },
     "role": "tank",
     "atkInfo": "3연타, 충격파",

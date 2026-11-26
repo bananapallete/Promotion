@@ -1040,6 +1040,17 @@ test('엘프 궁극기: 가만히 있어도 15초면 가득 차고, 피해는 �
   assert.ok(A.cfg.ult.dmg <= 10 && A.cfg.ult.range >= 18);
 });
 
+test('격투가 평타: 탄창 1개로 3연타(잽·잽·강타)가 빠르게 이어진다', () => {
+  const { g, A, B } = duo('brawler', 'blue');
+  A.x = 10; A.y = 10; B.x = 11.2; B.y = 10; B.invUntil = 0; const ammo = A.ammoF, hp = B.hp; g.events = [];
+  g.attack('a', { x: 1, y: 0 }); run(g, 0.5);
+  assert.ok(Math.abs(ammo - A.ammoF - 1) < 0.2, '탄창은 1개만 씀');
+  const atks = g.events.filter((e) => e.e === 'atk' && e.id === 'a');
+  assert.deepEqual(atks.map((e) => e.step), [0, 1, 2], '3번 타격, 1타부터 순서대로');
+  assert.ok(atks.every((e) => e.fast));
+  assert.equal(hp - B.hp, 4 + 4 + 8, '4+4+8');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;

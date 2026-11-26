@@ -280,8 +280,9 @@ export class WorldScene extends Phaser.Scene {
       v.windup = { from: now, until: now + e.sec * 1000, dx: e.dx, dy: e.dy, range: e.range, arc: e.arc };
     } else if (e.e === 'atk' && v) {
       const step = Math.min(e.step || 0, SPRITE.attackSteps.length - 1);
-      v.sprite.play(`${v.p.s}-atk${step}`, false);
-      v.punchUntil = now + SPRITE.attackSteps[step].ms;
+      const sp = e.fast ? 2.2 : 1; // 연타(3연타)는 빠르게 재생
+      v.sprite.play(`${v.p.s}-atk${step}`, false); v.sprite.anims.timeScale = sp;
+      v.punchUntil = now + SPRITE.attackSteps[step].ms / sp;
       if (e.kind === 'proj') { muzzleFx(this, e, v, BU); return; } // 투사체 공격은 날아가는 모습이 효과
       if (e.kind === 'ranged') { // 개구리 혀: 굵은 분홍 직선 + 끝 동그라미
         const x0 = v.x, y0 = v.y - 0.55 * BU, len = e.len * BU;
