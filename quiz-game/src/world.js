@@ -273,7 +273,7 @@ export class WorldScene extends Phaser.Scene {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
       const crit = !!e.crit;
       const t = dmgText(this, e.x * BU, e.y * BU - 2.9 * BU, e.dmg > 0 ? `${crit ? '' : '-'}${e.dmg}${crit ? '!' : ''}` : '…', crit);
-      this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: crit ? 900 : 650, onComplete: () => t.destroy() });
+      this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: 300, onComplete: () => t.destroy() });
       // 화면 흔들림은 크리티컬이 터졌을 때만, 그리고 내가 때리거나 맞은 것만 (봇끼리의 크리티컬마다 흔들리면 정신없어서)
       if (crit && this.focusId && (e.id === this.focusId || e.by === this.focusId)) this.cameras.main.shake(130, 0.006);
       hitFx(this, e, BU);
