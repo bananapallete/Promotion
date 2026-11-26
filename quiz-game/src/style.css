@@ -168,3 +168,11 @@ td, th, .qrow { border-bottom-color: #7a4e3233; }
 #toprank i { font-style: normal; font-variant-numeric: tabular-nums; }
 #hudbar, #phase, #result { display: none !important; } /* 상단 UI(quizTop)로 대체 */
 body.screen #banner, body.screen #timer, body.screen #reveal, body.screen #rank, body.screen #lb { display: none !important; } /* 새 퀴즈 UI(screenUi)로 대체 */
+
+/* 버튼 배치 통일: 공격(104) 기준, 간격 12px. 궁극기는 공격 왼쪽, 달리기는 공격 위(가운데 맞춤). 글자 14px, 아이콘·글자 간격 같게 */
+:root { --bR: max(10px, env(safe-area-inset-right, 0px)); --bB: max(24px, env(safe-area-inset-bottom, 0px)); --bg: 12px; }
+#btnAtk { width: 104px; height: 104px; right: var(--bR); bottom: var(--bB); }
+#btnUlt { width: 80px; height: 80px; right: calc(var(--bR) + 104px + var(--bg)); bottom: var(--bB); }
+#btnRun { width: 72px; height: 72px; right: calc(var(--bR) + 16px); bottom: calc(var(--bB) + 104px + var(--bg)); }
+.abtn { padding: 0; font-size: 14px; line-height: 1; gap: 4px; }
+#btnAtk { font-size: 16px; }
