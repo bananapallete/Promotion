@@ -65,6 +65,8 @@ function drawFrame(now, z) {
     const sz = Math.round(d); g.fillRect(x + (CELL - sz) / 2, y + (CELL - sz) / 2, sz, sz);
   }
 }
+const PROJ_ULT = ['snipe', 'wave', 'barrage', 'boomerang']; // 멀리 쏘는 궁극기
+let ultDir = null;
 let ultAt = -1e9; // 내가 궁극기를 쓴 시각 (카메라 줌인용)
 const ultZoom = () => { // 0.15초에 확 들어갔다가 0.75초 유지, 0.5초에 걸쳐 돌아옴 → 0~1
   const t = (performance.now() - ultAt) / 1000, e = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
@@ -76,15 +78,15 @@ scene.onFrame = (sc, dt) => {
   const w = sc.scale.width, h = sc.scale.height;
   if (follow && v) {
     // 세로 화면은 폭 16.5칸, 가로 화면은 폭 24칸이 보이도록 (1칸 = 몸 폭 1개)
-    runT = Math.max(0, Math.min(1, runT + (v.p.a === 'run' ? dt : -dt) / 400));
+    runT = Math.max(0, Math.min(1, runT + (v.p.a === 'run' && game.players.get(ME)?.cfg.skill?.type !== 'dash' ? dt : -dt) / 400)); // 대쉬 캐릭터는 대쉬 때 카메라 줌 변화 없음
     const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
     const dead = !!v.p.st; deadT = Math.max(0, Math.min(1, deadT + (dead ? dt : -dt) / 500));
     const de = deadT < 0.5 ? 4 * deadT ** 3 : 1 - (-2 * deadT + 2) ** 3 / 2;
     { const z = ultZoom(); frameCv.style.opacity = z > 0.01 ? 1 : 0; drawFrame(performance.now(), z); }
-    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.5 * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + (ultDir ? 0.15 : 0.5) * ultZoom()) * (1 + (v.p.s === 'egg' ? 1.5 : 0.45) * de)); // 알이 되면 크게 줌인. 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
     document.body.classList.toggle('dead', dead && v.p.s !== 'egg'); // 알이 된 동안엔 흑백 대신 컬러로(폭발 연출)
     deathMsg.hidden = !dead; if (dead) deathMsg.textContent = `${Math.ceil(v.p.rv)}초 뒤 부활합니다`;
-    cam.centerOn(v.x, v.y - 30);
+    { const uz = ultDir ? ultZoom() : 0; cam.centerOn(v.x + (ultDir ? ultDir.dx * 2.2 * BU * uz : 0), v.y - 30 + (ultDir ? ultDir.dy * 2.2 * BU * uz : 0)); } // 투사체형 궁극기: 발사 방향으로 살짝 당겨 보여 줌
   } else {
     cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));
     cam.centerOn(WORLD_W / 2, WORLD_H / 2);
@@ -95,7 +97,7 @@ const phaseText = { [PHASE.LOBBY]: '', [PHASE.READING]: '읽기', [PHASE.MOVING]
 setInterval(() => {
   const s = { ...game.snapshot(), lb: game.leaderboard() };
   scene.applyState(s);
-  if (s.ev.some((e) => e.e === 'ult' && e.id === ME)) ultAt = performance.now();
+  { const e = s.ev.find((e) => e.e === 'ult' && e.id === ME); if (e) { ultAt = performance.now(); ultDir = PROJ_ULT.includes(e.t) ? { dx: e.dx, dy: e.dy } : null; } }
   hud(s);
   // 조준 표시: 공격 버튼을 드래그 중이면 그 방향(직접 조준), 아니면 자동 조준 대상
   const dragLen = Math.hypot(atkVec.x, atkVec.y);
