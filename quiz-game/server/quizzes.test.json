@@ -1,4 +1,0 @@
-[
-  { "type": "ox", "text": "1번 문제의 정답은 O입니다", "answer": "O", "time": 15 },
-  { "type": "choice", "text": "2번 문제의 정답은 4번입니다", "options": ["1번", "2번", "3번", "4번"], "answer": 4, "time": 15 }
-]
