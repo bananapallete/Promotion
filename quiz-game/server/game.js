@@ -598,7 +598,7 @@ export class Game {
       this._step(p, dt);
     }
     this._collide(active);
-    for (const p of active) if (p.cfg.ult && !p.stunned) charge(p, p.cfg.ult.need * ULT_CHARGE.auto * dt); // 가만히 있어도 초당 3%
+    for (const p of active) if (p.cfg.ult && !p.stunned) charge(p, p.cfg.ult.need * (p.cfg.ult.chargeSec ? 1 / p.cfg.ult.chargeSec : ULT_CHARGE.auto) * dt); // 가만히 있어도 초당 3% (chargeSec가 있으면 그 시간에 가득)
     this._updateCoins(dt, active);
     this._updateItems(dt, active);
     this._updateProjectiles(dt);

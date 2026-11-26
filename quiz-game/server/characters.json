@@ -148,11 +148,12 @@
     "ult": {
       "name": "저격",
       "need": 100,
+      "chargeSec": 15,
       "type": "snipe",
-      "aim": 1.2,
-      "range": 14,
-      "width": 1,
-      "dmg": 18
+      "aim": 0.8,
+      "range": 18,
+      "width": 1.2,
+      "dmg": 8
     }
   },
   "witch": {

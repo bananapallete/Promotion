@@ -1033,6 +1033,13 @@ test('블랙홀(마녀): 지정한 곳에 떨어져 2초간 적을 끌어당긴 
   assert.ok(B.hp < hp, '폭발 피해');
 });
 
+test('엘프 궁극기: 가만히 있어도 15초면 가득 차고, 피해는 낮고 사거리가 길다', () => {
+  const { g, A } = duo('elf', 'blue');
+  A.ult = 0; run(g, 14); assert.ok(A.ult < A.cfg.ult.need, '14초엔 아직');
+  run(g, 1.2); assert.ok(A.ult >= A.cfg.ult.need, '15초면 가득');
+  assert.ok(A.cfg.ult.dmg <= 10 && A.cfg.ult.range >= 18);
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
@@ -1108,7 +1115,7 @@ test('저격(엘프): 조준하는 동안 못 움직이고, 뒤에 일직선 관
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 5; A.y = 10; B.x = 9; B.y = 10; C.x = 14; C.y = 10.3;
   A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });
-  g.setInput('a', { mx: 0, my: 1, run: false }); const y0 = A.y; run(g, 1);
+  g.setInput('a', { mx: 0, my: 1, run: false }); const y0 = A.y; run(g, 0.5);
   assert.ok(Math.abs(A.y - y0) < 0.2, '조준 중 못 움직임');
   assert.equal(B.hp, B.cfg.hp, '아직 안 쐈음');
   run(g, 0.4);
