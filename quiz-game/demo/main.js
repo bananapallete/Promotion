@@ -212,19 +212,16 @@ addEventListener('keyup', (e) => { keys.delete(e.key.toLowerCase()); keyMove(); 
 // 상단 UI 숨기기/보이기
 $('#uiToggle').addEventListener('click', () => document.body.classList.toggle('hideui'));
 
-// 캐릭터 바(상단): 탭하면 바로 바뀜
-$('#charbar').innerHTML = charIds.map((id, i) => `<button type="button" data-id="${id}" class="${i ? '' : 'sel'}"><i style="background:${characters[id].tint || '#4a7bd1'}"></i>${characters[id].name}</button>`).join('');
+// 캐릭터 변경: 상단 버튼 하나 → 선택 창
 function pickChar(id) {
   const p = game.players.get(ME);
   p.charId = id; p.cfg = characters[id]; p.dash = null; game._refill(p); syncSkill();
   if (p.cfg.ult) p.ult = p.cfg.ult.need; // 궁극기 체험: 시작·캐릭터 변경 때마다 게이지를 가득 채움
-  document.querySelectorAll('#charbar button').forEach((b) => b.classList.toggle('sel', b.dataset.id === id));
-  document.querySelector(`#charbar button[data-id="${id}"]`).scrollIntoView({ inline: 'center', block: 'nearest' });
 }
-$('#charbar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pickChar(b.dataset.id); });
+$('#charbtn').addEventListener('click', () => { picker.setValue(game.players.get(ME).charId); $('#pick').hidden = false; });
 // 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
 const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, selected: charIds[0] });
-$('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; });
+$('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; $('#pickgo').textContent = '선택'; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });

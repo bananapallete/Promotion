@@ -79,7 +79,7 @@ export class Game {
     if (charId === 'random') { const ids = Object.keys(this.characters); charId = ids[Math.floor(Math.random() * ids.length)]; }
     if (!this.characters[charId]) charId = Object.keys(this.characters)[0];
     const id = `bot-${++this.botSeq}`;
-    return this._spawn({ id, name: `더미${this.botSeq}`, charId, isBot: true, botMode: mode });
+    return this._spawn({ id, name: this.characters[charId].name, charId, isBot: true, botMode: mode });
   }
 
   clearBots() {
