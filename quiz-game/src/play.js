@@ -1,3 +1,4 @@
+import './noZoom.js';
 import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
 import { addBtnIcons, setBtnLabel } from './btnIcons.js';

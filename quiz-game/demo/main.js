@@ -1,4 +1,5 @@
 // 서버 없는 솔로 데모: 서버와 같은 game.js 규칙을 브라우저에서 직접 돌린다.
+import '../src/noZoom.js';
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
