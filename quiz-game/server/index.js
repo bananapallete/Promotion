@@ -67,6 +67,8 @@ io.on('connection', (socket) => {
   socket.on('input', (i) => { if (socket.data.pid) game.setInput(socket.data.pid, i); });
   socket.on('attack', (aim) => { if (socket.data.pid) game.attack(socket.data.pid, aim); });
   socket.on('ult', (aim) => { if (socket.data.pid) game.ult(socket.data.pid, aim); });
+  socket.on('char', (charId, ack) => { ack?.(socket.data.pid ? { ok: game.setChar(socket.data.pid, String(charId)) } : { ok: false }); });
+  socket.on('aimq', (aim, ack) => { ack?.(socket.data.pid ? game.aimPreview(socket.data.pid, aim) : null); }); // 조준 표시용 (공격은 하지 않음)
   socket.on('skill', () => { if (socket.data.pid) game.skill(socket.data.pid); });
 
   socket.on('screen:join', () => socket.join('screens'));

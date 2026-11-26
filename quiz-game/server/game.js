@@ -80,6 +80,13 @@ export class Game {
     return [...this.players.values()].filter((p) => !p.isBot);
   }
 
+  /** 캐릭터 변경(참가자 본인): 체력·게이지를 새 캐릭터로 채움 */
+  setChar(id, charId) {
+    const p = this.players.get(id);
+    if (!p || p.isBot || !this.characters[charId]) return false;
+    p.charId = charId; p.cfg = this.characters[charId]; p.dash = null; p.baseCfg = null; this._refill(p); return true;
+  }
+
   setConnected(id, connected) {
     const p = this.players.get(id);
     if (p) p.connected = connected;
