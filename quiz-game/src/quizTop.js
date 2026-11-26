@@ -19,6 +19,9 @@ const CSS = `
 #qtop .tm .ring{width:13vh;height:13vh;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c,#f2c230) calc(var(--p,0)*1%),#14122b44 0);border:3px solid #14122b;position:relative}
 #qtop .tm .ring::before{content:"";position:absolute;inset:18%;background:#f6e6c8;border-radius:50%}
 #qtop .tm b{position:relative;font-size:5.5vh;font-weight:900;color:#14122b}
+#qnt{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:30;max-width:84vw;background:#14122bf0;color:#fff;border:3px solid #ffd54a;border-radius:14px;padding:12px 16px;font-weight:900;font-size:calc(2vw + 12px);text-align:center;word-break:keep-all;pointer-events:none}#qnt[hidden]{display:none}
+#qx2{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:48px;z-index:30;background:#e5483c;color:#fff;border:3px solid #14122b;border-radius:10px;padding:2px 9px;font-weight:900;font-size:14px;pointer-events:none}#qx2[hidden]{display:none}
+#qfz{position:fixed;inset:0;z-index:60;background:#14122baa;color:#fff;display:grid;place-items:center;font-weight:900;font-size:26px;pointer-events:none}#qfz[hidden]{display:none}
 #qbig{position:fixed;inset:0;z-index:70;background:#14122bcc;display:grid;place-items:center}#qbig[hidden]{display:none}
 #qbig img{max-width:80vw;max-height:80vh;border:4px solid #14122b;border-radius:16px;background:#fff}
 `;
@@ -31,6 +34,7 @@ export function mountQuizTop() {
     el.innerHTML = '<div class="tg"><i></i></div><div class="row"><div id="toprank"></div><div class="q"><span class="no"></span><p></p><div class="th" hidden></div></div><div class="tm"><div class="ring"><b></b></div></div></div>';
     document.body.append(el);
     const big = document.createElement('div'); big.id = 'qbig'; big.hidden = true; big.innerHTML = '<img alt="">'; document.body.append(big);
+    for (const [id, tx] of [['qnt', ''], ['qx2', '점수 ×2'], ['qfz', '잠시 멈춤']]) { const d = document.createElement('div'); d.id = id; d.hidden = true; d.textContent = tx; document.body.append(d); }
     big.addEventListener('click', () => { big.hidden = true; });
     el.querySelector('.th').addEventListener('click', () => { const u = el.querySelector('.th').dataset.url; if (u) { big.querySelector('img').src = u; big.hidden = false; } });
   }
@@ -39,6 +43,7 @@ export function mountQuizTop() {
 
 /** s: 서버 상태, rows: [{id,name,score}] 점수순, meId: 내 id */
 export function renderQuizTop(el, s, rows, meId) {
+  const nt = document.getElementById('qnt'); if (nt) { nt.hidden = !s.nt; if (s.nt) nt.textContent = s.nt; document.getElementById('qx2').hidden = s.x2 !== 2; document.getElementById('qfz').hidden = !s.fz; }
   renderTopRank(el.querySelector('#toprank'), rows, meId);
   const q = s.q, show = !!q && s.phase !== PHASE.LOBBY, qb = el.querySelector('.q'), tm = el.querySelector('.tm'), tg = el.querySelector('.tg');
   qb.hidden = !show; tm.hidden = !show; tg.style.visibility = show ? 'visible' : 'hidden';

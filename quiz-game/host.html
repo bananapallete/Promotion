@@ -69,6 +69,12 @@
         <div class="card"><div class="row2"><div><div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="pill" id="c-no">-</span><span class="pill" id="c-mode">-</span></div><div class="qt" id="c-text">문제를 출제하세요</div></div><div class="th" id="c-img" hidden></div></div>
           <div class="t2"><span style="font-weight:900">제한시간</span><div class="tbar"><i id="c-bar"></i></div></div></div>
         <div class="ctl"><button class="btn go" id="ask">▶ 출제</button><button class="btn sky" id="gather2">⇆ 맵으로 이동</button><button class="btn gold" id="end">✓ 정답 공개</button><button class="btn" id="rank">🏆 등수 공개</button></div>
+        <div class="card"><h3>진행 <em id="tools-state"></em></h3>
+          <div class="ctl" style="grid-template-columns:repeat(5,1fr)"><button class="btn sm" id="t-pause">⏸ 일시정지</button><button class="btn sm" id="t-m10">−10초</button><button class="btn sm" id="t-p10">＋10초</button><button class="btn sm" id="t-undo">↶ 점수 되돌리기</button><button class="btn sm" id="t-x2">×2 라운드</button></div>
+          <div class="ctl" style="grid-template-columns:repeat(5,1fr)"><button class="btn sm" id="q-prev">◀ 이전 문제</button><button class="btn sm" id="q-next">다음 문제 ▶</button><button class="btn sm" id="q-cancel">출제 취소</button><button class="btn sm gold" id="c-rain">🪙 동전 비</button><button class="btn sm red" id="t-freeze">■ 비상 정지</button></div>
+          <div style="display:flex;gap:6px"><b style="align-self:center">화면</b><button class="btn sm" data-screen="title">타이틀</button><button class="btn sm" data-screen="quiz">퀴즈</button><button class="btn sm" data-screen="map">맵</button><button class="btn sm" data-screen="rank">순위</button></div>
+          <div style="display:grid;grid-template-columns:1fr 70px auto;gap:6px"><input class="inp" id="nt-text" maxlength="80" placeholder="전체 공지 (빔프로젝터·폰에 표시)"><input class="inp" id="nt-sec" type="number" value="8" min="2" max="30"><button class="btn sm go" id="nt-go" style="font-size:14px">공지</button></div>
+        </div>
         <div class="card" id="distbox"><h3>실시간 응답 <em id="d-n"></em></h3><div id="dist" style="display:grid;gap:6px"></div></div>
         <div class="card" id="realbox" hidden><h3>현실 퀴즈 점수 <em>입력 → 확인 → 공개하기</em></h3><div class="real" id="real"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap" id="realteams"></div>
@@ -78,7 +84,7 @@
       <div class="col">
         <h3>참가자 <em id="p-teams"></em></h3>
         <div style="display:grid;grid-template-columns:70px 1fr;gap:8px"><input class="inp" id="t-n" type="number" min="0" max="8" value="3" /><button class="btn go sm" id="t-auto" style="font-size:15px">팀 자동 구성 (0 = 해제)</button></div>
-        <div class="pl h"><span>#</span><span>이름</span><span>팀</span><span>점수</span><span style="text-align:right">수정</span></div>
+        <div class="pl h" style="grid-template-columns:24px 1fr 62px 56px 80px"><span>#</span><span>이름 (눌러서 수정)</span><span>팀</span><span>점수</span><span style="text-align:right">수정·퇴장</span></div>
         <div id="plist" style="display:grid;gap:5px"></div>
         <div id="tt" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>

@@ -1208,6 +1208,21 @@ test('샌드백: 가만히 선 봇과, 가까이 오면 때리고 구역을 벗�
   a.x = 5; a.y = 5; g.ask(1); run(g, 20); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '문제 중에도 제자리');
 });
 
+test('진행자 도구: 타이머 일시정지·±시간, 점수 되돌리기·2배 라운드, 공지, 화면 전환, 이름 수정·퇴장, 비상 정지, 동전 비', () => {
+  const g = new Game(chars, quizzes); const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  g.ask(1); run(g, 4); const left = g.phaseEnd - g.t; g.pauseTimer(true); run(g, 3); assert.ok(Math.abs((g.phaseEnd - g.t) - left) < 0.2, '일시정지 중엔 시간이 안 줆');
+  g.pauseTimer(false); g.addTime(10); assert.ok(g.phaseEnd - g.t > left + 9, '+10초');
+  g.setMultiplier(2); g.endQuestion(); const gain = a.score; g.setMultiplier(1);
+  g.adjust('a', 5); const s1 = a.score; assert.ok(g.undoScore()); assert.equal(a.score, s1 - 5, '마지막 점수 수정 되돌림');
+  assert.equal(g.snapshot().x2, 1); g.setMultiplier(2); assert.equal(g.snapshot().x2, 2); g.setMultiplier(1); void gain;
+  g.announce('잠시 쉬어요', 5); assert.equal(g.snapshot().nt, '잠시 쉬어요'); run(g, 6); assert.equal(g.snapshot().nt, null, '공지는 시간이 지나면 사라짐');
+  assert.ok(g.setScreen('map')); assert.equal(g.snapshot().sm, 'map'); assert.ok(g.setScreen('rank')); assert.equal(g.snapshot().rank, true);
+  assert.ok(g.rename('a', '새이름')); assert.equal(a.name, '새이름');
+  g.setFrozen(true); const t0 = g.t; run(g, 2); assert.equal(g.t, t0, '비상 정지 중엔 시간이 멈춤'); g.setFrozen(false);
+  g.coins.clear(); g.coinRain(10, 2); run(g, 3); assert.ok(g.coins.size >= 9, `동전 비 ${g.coins.size}`);
+  assert.ok(g.kick('a')); assert.equal(g.players.has('a'), false);
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;

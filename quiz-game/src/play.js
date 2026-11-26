@@ -273,5 +273,6 @@ socket.on('connect', () => {
   else if (savedName()) { $('#nick').hidden = true; openPicker('join'); }
   else { $('#pick').hidden = true; $('#nick').hidden = false; setTimeout(() => nickIn.focus(), 50); }
 });
+socket.on('kicked', () => { save(null); me = null; ME = null; $('#conn').hidden = false; $('#conn').textContent = '진행자가 내보냈어요'; });
 socket.on('disconnect', () => { $('#conn').hidden = false; $('#conn').textContent = '연결 끊김 · 다시 연결 중…'; });
 window.__world = scene;

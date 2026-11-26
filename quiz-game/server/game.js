@@ -42,6 +42,7 @@ export class Game {
     this.itemClock = 0;
     this.coinsSpawned = 0; // 지금까지 생성한 동전 수 (습득된 것 포함)
     this.showRank = false; // 빔프로젝터에 순위표를 띄울지
+    this.timerPaused = false; this.frozen = false; this.multiplier = 1; this.notice = null; this.screenMode = 'quiz'; this.scoreLog = []; // 진행자 기능
     this.locked = null; // 시간이 끝난 시점에 굳어진 판정 (정답 공개 때 점수에 반영)
     this.realPending = new Map(); // 현실 퀴즈: 진행자가 입력한 점수 id → 점수
     this.realConfirmed = false;
@@ -141,7 +142,7 @@ export class Game {
     if (!q) return false;
     this.question = q;
     this.reveal = null; this.locked = null; this.realPending = new Map(); this.realConfirmed = false;
-    this.showRank = false;
+    this.showRank = false; this.screenMode = 'quiz'; this.timerPaused = false;
     this.phase = q.type === 'real' ? PHASE.REAL : PHASE.READING;
     this.phaseEnd = this.t + READ_SEC;
     this._log(`문제 ${q.id} 출제`);
@@ -178,7 +179,31 @@ export class Game {
   adjust(id, delta) {
     const p = this.players.get(id), n = Number(delta);
     if (!p || !Number.isFinite(n)) return false;
-    p.score = Math.round((p.score + n) * 10) / 10; this._log(`${p.name} ${n > 0 ? '+' : ''}${n}`); return true;
+    p.score = Math.round((p.score + n) * 10) / 10; this._log(`${p.name} ${n > 0 ? '+' : ''}${n}`); this._pushUndo(`${p.name} ${n > 0 ? '+' : ''}${n}`, [[p.id, n]]); return true;
+  }
+
+  // ---------- 진행자 도구 ----------
+  _pushUndo(label, deltas) { if (deltas.length) { this.scoreLog.push({ label, deltas }); if (this.scoreLog.length > 30) this.scoreLog.shift(); } }
+  /** 가장 최근 점수 변경(수정·정답 공개·현실 퀴즈 공개)을 되돌린다. 떨어뜨린 동전은 되돌리지 않음 */
+  undoScore() {
+    const e = this.scoreLog.pop(); if (!e) return false;
+    for (const [id, d] of e.deltas) { const p = this.players.get(id); if (p) p.score = Math.round((p.score - d) * 10) / 10; }
+    this._log(`되돌림: ${e.label}`); return true;
+  }
+  pauseTimer(on) { this.timerPaused = !!on; this._log(on ? '타이머 일시정지' : '타이머 재개'); return true; }
+  addTime(sec) { if (this.phase !== PHASE.READING && this.phase !== PHASE.MOVING) return false; this.phaseEnd = Math.max(this.t + 1, this.phaseEnd + Number(sec) || 0); return true; }
+  setFrozen(on) { this.frozen = !!on; this._log(on ? '비상 정지' : '정지 해제'); return true; }
+  setMultiplier(n) { this.multiplier = Number(n) === 2 ? 2 : 1; this._log(this.multiplier === 2 ? '점수 2배 라운드' : '점수 2배 해제'); return true; }
+  announce(text, sec = 8) { const t = String(text || '').slice(0, 80).trim(); this.notice = t ? { text: t, until: this.t + Math.min(30, Math.max(2, Number(sec) || 8)) } : null; if (t) this._log(`공지: ${t}`); return true; }
+  setScreen(mode) { if (!['title', 'quiz', 'map', 'rank'].includes(mode)) return false; this.screenMode = mode; this.showRank = mode === 'rank'; return true; }
+  rename(id, name) { const p = this.players.get(id), n = String(name || '').trim().slice(0, 10); if (!p || !n) return false; p.name = n; return true; }
+  kick(id) { const p = this.players.get(id); if (!p || p.isBot) return false; this.players.delete(id); this._log(`${p.name} 퇴장`); return true; }
+  /** 출제를 취소하고 대기실로 (점수 변화 없음) */
+  cancelQuestion() { this.phase = PHASE.LOBBY; this.question = null; this.reveal = null; this.locked = null; this.realPending = new Map(); this.timerPaused = false; this._log('출제 취소'); return true; }
+  /** 동전 비: n개를 sec초에 걸쳐 맵 곳곳에 떨어뜨림 (기본 동전 한도와 별개) */
+  coinRain(n = 24, sec = 4) {
+    for (let i = 0; i < n; i++) this.tasks.push({ at: this.t + (i / n) * sec, fn: () => { this.coinsSpawned = Math.max(0, this.coinsSpawned - 1); this.spawnCoin(); } });
+    this._log('동전 비'); return true;
   }
 
   /** 팀 구성: n팀으로 접속자를 무작위로 균형 있게 나눔 (n=0이면 해제) */
@@ -205,7 +230,8 @@ export class Game {
   realConfirm() { if (this.phase !== PHASE.REAL) return false; this.realConfirmed = true; return true; }
   realReveal() {
     if (this.phase !== PHASE.REAL || !this.realConfirmed) return false;
-    const results = [...this.realPending].map(([id, gain]) => { const p = this.players.get(id); p.score = Math.round((p.score + gain) * 10) / 10; return { id, name: p.name, team: p.team || 0, gain, correct: gain > 0 }; }).sort((a, b) => b.gain - a.gain);
+    const results = [...this.realPending].map(([id, gain]) => { const p = this.players.get(id), g = gain * this.multiplier; p.score = Math.round((p.score + g) * 10) / 10; return { id, name: p.name, team: p.team || 0, gain: g, correct: g > 0 }; }).sort((a, b) => b.gain - a.gain);
+    this._pushUndo('현실 퀴즈 점수', results.map((r) => [r.id, r.gain]));
     this._log(`현실 퀴즈 공개 (${results.length}명)`);
     this.reveal = { answer: null, real: true, results }; this.phase = PHASE.REVEAL; return true;
   }
@@ -273,11 +299,11 @@ export class Game {
   }
 
   _applyLocked() {
-    const q = this.question, { ranked, dist } = this.locked;
+    const q = this.question, { ranked, dist } = this.locked, undo = [];
     const results = ranked.map((r) => {
       const bonus = r.correct && r.rank <= BONUS.length ? BONUS[r.rank - 1] : 0;
-      const gain = r.correct ? BASE_POINT + bonus : 0;
-      r.p.score += gain;
+      const gain = r.correct ? (BASE_POINT + bonus) * this.multiplier : 0;
+      r.p.score += gain; if (gain) undo.push([r.p.id, gain]);
       const dropped = !r.correct && (r.zone != null || COIN.dropOnNoAnswer) ? this._dropCoins(r.p) : 0;
       return { id: r.p.id, name: r.p.name, team: r.p.team || 0, zone: r.zone, correct: r.correct, rank: r.correct ? r.rank : null, gain, dropped };
     });
@@ -285,7 +311,7 @@ export class Game {
       if (p.isBot && p.botMode !== 'idle' && !p.home && p.connected && zoneAt(q.type, p.x, p.y) !== q.answer) this._dropCoins(p);
     }
     this.reveal = { answer: q.answer, results, dist };
-    this.locked = null;
+    this.locked = null; this._pushUndo(`문제 ${q.id} 점수`, undo);
     this._log(`문제 ${q.id} 정답 공개`);
     this.phase = PHASE.REVEAL;
   }
@@ -713,7 +739,9 @@ export class Game {
 
   // ---------- 매 틱 ----------
   update(dt) {
+    if (this.frozen) return; // 비상 정지: 모든 것이 멈춤
     this.t += dt;
+    if (this.timerPaused && (this.phase === PHASE.READING || this.phase === PHASE.MOVING)) this.phaseEnd += dt; // 타이머 일시정지
 
     if (this.phase === PHASE.READING && this.t >= this.phaseEnd) this._startMoving();
     else if (this.phase === PHASE.MOVING && this.t >= this.phaseEnd) { this._lock(); this.phase = PHASE.HOLD; } // 시간이 끝나도 바로 공개하지 않고 진행자를 기다린다
@@ -995,7 +1023,7 @@ export class Game {
       left: this.phase === PHASE.READING || this.phase === PHASE.MOVING ? r2(Math.max(0, this.phaseEnd - this.t)) : 0,
       q,
       reveal: this.reveal,
-      rank: this.showRank,
+      rank: this.showRank, sm: this.screenMode, x2: this.multiplier, tp: this.timerPaused ? 1 : 0, fz: this.frozen ? 1 : 0, nt: this.notice && this.t < this.notice.until ? this.notice.text : null, ud: this.scoreLog.length,
       dist: this.phase === PHASE.MOVING || this.phase === PHASE.HOLD ? this._liveDist() : null,
       teams: this._teamTotals(),
       real: this.phase === PHASE.REAL ? { pending: [...this.realPending].map(([id, pts]) => ({ id, pts })), confirmed: this.realConfirmed } : null,

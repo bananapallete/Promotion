@@ -75,12 +75,37 @@ $('#realrev').addEventListener('click', () => emit('host:realReveal'));
 $('#real').addEventListener('change', (e) => { const i = e.target.closest('[data-real]'); if (i) emit('host:realSet', { id: i.dataset.real, pts: Number(i.value) || 0 }); });
 $('#realteams').addEventListener('click', (e) => { const b = e.target.closest('[data-rt]'); if (b) { const pts = Number(prompt(`${b.dataset.rt}팀 전원에게 줄 점수`, '1')); if (pts) emit('host:realTeam', { team: Number(b.dataset.rt), pts }); } });
 
+// 진행 도구
+$('#t-pause').addEventListener('click', () => emit('host:pause', { on: !st?.tp }));
+$('#t-m10').addEventListener('click', () => emit('host:addTime', { sec: -10 }));
+$('#t-p10').addEventListener('click', () => emit('host:addTime', { sec: 10 }));
+$('#t-undo').addEventListener('click', () => emit('host:undo'));
+$('#t-x2').addEventListener('click', () => emit('host:x2', { on: st?.x2 !== 2 }));
+$('#t-freeze').addEventListener('click', () => emit('host:freeze', { on: !st?.fz }));
+$('#c-rain').addEventListener('click', () => emit('host:coinRain', { n: 24 }));
+$('#q-cancel').addEventListener('click', () => { if (confirm('출제를 취소하고 대기실로 돌아갈까요? (점수 변화 없음)')) emit('host:cancel'); });
+const step = (d) => { const ids = info.questions.map((q) => q.id); const i = ids.indexOf(askId ?? curId); askId = ids[Math.min(ids.length - 1, Math.max(0, (i < 0 ? 0 : i) + d))]; renderCurrent(); renderQuestions(); };
+$('#q-next').addEventListener('click', () => step(1));
+$('#q-prev').addEventListener('click', () => step(-1));
+document.querySelectorAll('[data-screen]').forEach((b) => b.addEventListener('click', () => emit('host:screen', { mode: b.dataset.screen })));
+$('#nt-go').addEventListener('click', () => { emit('host:announce', { text: $('#nt-text').value, sec: Number($('#nt-sec').value) }); });
+$('#nt-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#nt-go').click(); });
+$('#plist').addEventListener('click', (e) => {
+  const n = e.target.closest('[data-name]'), k = e.target.closest('[data-kick]');
+  if (n) { const v = prompt('새 이름', n.dataset.nm); if (v) emit('host:rename', { id: n.dataset.name, name: v }); }
+  if (k && confirm(`${k.dataset.nm} 님을 내보낼까요?`)) emit('host:kick', { id: k.dataset.kick });
+});
+
 let humans = [], lastKey = '', realKey = '';
 socket.on('state', (s) => {
   st = s; rankOn = !!s.rank;
   humans = s.players.filter((p) => !p.b);
   $('#s-players').textContent = `${humans.length}명 접속`; $('#s-phase').textContent = phaseName[s.phase] || '-'; $('#s-left').textContent = s.left > 0 ? `⏱ ${Math.ceil(s.left)}초` : '-';
   $('#rank').classList.toggle('on', rankOn); $('#rank').textContent = rankOn ? '🏆 등수 숨기기' : '🏆 등수 공개';
+  $('#t-pause').classList.toggle('on', !!s.tp); $('#t-pause').textContent = s.tp ? '▶ 재개' : '⏸ 일시정지';
+  $('#t-x2').classList.toggle('on', s.x2 === 2); $('#t-freeze').textContent = s.fz ? '▶ 정지 해제' : '■ 비상 정지'; $('#t-undo').disabled = !s.ud;
+  document.querySelectorAll('[data-screen]').forEach((b) => b.classList.toggle('on', b.dataset.screen === s.sm));
+  $('#tools-state').textContent = [s.tp ? '타이머 정지됨' : '', s.x2 === 2 ? '점수 ×2' : '', s.fz ? '비상 정지 중' : ''].filter(Boolean).join(' · ');
   if (s.q && s.phase !== PHASE.LOBBY) curId = s.q.id; else if (s.phase === PHASE.LOBBY) curId = null;
   if (s.phase === PHASE.REVEAL && s.q) doneIds.add(s.q.id);
   $('#end').disabled = !(s.phase === PHASE.READING || s.phase === PHASE.MOVING || s.phase === PHASE.HOLD);
@@ -104,7 +129,7 @@ socket.on('state', (s) => {
   const lb = [...humans].sort((a, b) => b.sc - a.sc), key = JSON.stringify([lb.map((p) => [p.id, p.n, p.tm, p.sc, p.cn]), s.teams]);
   if (key !== lastKey) {
     lastKey = key; const tc = s.teams?.length || 0;
-    $('#plist').innerHTML = lb.map((p, i) => `<div class="pl"><span>${i + 1}</span><span>${esc(p.n)} <small style="opacity:.6">🪙${p.cn}</small></span><select data-team="${p.id}">${['—', ...Array.from({ length: Math.max(tc, 3) }, (_, k) => `${k + 1}`)].map((t, k) => `<option value="${k}" ${p.tm === k ? 'selected' : ''}>${t}</option>`).join('')}</select><span>${fmtScore(p.sc)}</span><div class="stp"><b class="m" data-id="${p.id}" data-adj="-1">−</b><b class="p" data-id="${p.id}" data-adj="1">＋</b></div></div>`).join('') || '<div style="opacity:.6">접속한 참가자가 없어요</div>';
+    $('#plist').innerHTML = lb.map((p, i) => `<div class="pl"><span>${i + 1}</span><span data-name="${p.id}" data-nm="${esc(p.n)}" style="cursor:pointer">${esc(p.n)} <small style="opacity:.6">🪙${p.cn}</small></span><select data-team="${p.id}">${['—', ...Array.from({ length: Math.max(tc, 3) }, (_, k) => `${k + 1}`)].map((t, k) => `<option value="${k}" ${p.tm === k ? 'selected' : ''}>${t}</option>`).join('')}</select><span>${fmtScore(p.sc)}</span><div class="stp"><b class="m" data-id="${p.id}" data-adj="-1">−</b><b class="p" data-id="${p.id}" data-adj="1">＋</b><b data-kick="${p.id}" data-nm="${esc(p.n)}" title="퇴장">✕</b></div></div>`).join('') || '<div style="opacity:.6">접속한 참가자가 없어요</div>';
     $('#tt').innerHTML = (s.teams || []).map((t) => `<span class="pill" style="background:${TEAMC[t.t]}99">${t.t}팀 ${fmtScore(t.score)}</span>`).join('');
     $('#p-teams').textContent = tc ? `${tc}팀` : '팀 없음';
     $('#aw-who').innerHTML = `${(s.teams || []).map((t) => `<option value="t:${t.t}">${t.t}팀 전원</option>`).join('')}${lb.map((p) => `<option value="${p.id}">${esc(p.n)}</option>`).join('')}`;

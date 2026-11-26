@@ -102,6 +102,17 @@ io.on('connection', (socket) => {
   host('host:setMode', (d) => ({ ok: game.setQuestionMode(Number(d?.id), d?.mode) }));
   host('host:realSet', (d) => ({ ok: d?.team ? game.realTeam(d.team, d?.pts) : game.realSet(String(d?.id), d?.pts) }));
   host('host:realTeam', (d) => ({ ok: game.realTeam(d?.team, d?.pts) }));
+  host('host:undo', () => ({ ok: game.undoScore() }));
+  host('host:pause', (d) => ({ ok: game.pauseTimer(d?.on) }));
+  host('host:addTime', (d) => ({ ok: game.addTime(d?.sec) }));
+  host('host:freeze', (d) => ({ ok: game.setFrozen(d?.on) }));
+  host('host:x2', (d) => ({ ok: game.setMultiplier(d?.on ? 2 : 1) }));
+  host('host:announce', (d) => ({ ok: game.announce(d?.text, d?.sec) }));
+  host('host:screen', (d) => ({ ok: game.setScreen(d?.mode) }));
+  host('host:rename', (d) => ({ ok: game.rename(String(d?.id), d?.name) }));
+  host('host:kick', (d) => { const id = String(d?.id), ok = game.kick(id); for (const s of io.sockets.sockets.values()) if (s.data.pid === id) { s.emit('kicked'); s.disconnect(true); } return { ok }; });
+  host('host:cancel', () => ({ ok: game.cancelQuestion() }));
+  host('host:coinRain', (d) => ({ ok: game.coinRain(Number(d?.n) || 24) }));
   host('host:realConfirm', () => ({ ok: game.realConfirm() }));
   host('host:realReveal', () => ({ ok: game.realReveal() }));
   host('host:spawnCoin', () => { game.spawnCoin(); });
