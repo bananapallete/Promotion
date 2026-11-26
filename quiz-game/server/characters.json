@@ -586,7 +586,7 @@
       "multi": true,
       "projectile": {
         "speed": 11,
-        "radius": 0.35,
+        "radius": 0.85,
         "pierce": true,
         "art": "boomerang",
         "boomerang": {
@@ -611,7 +611,7 @@
       "dmg": 4,
       "speed": 11,
       "range": 5,
-      "radius": 0.35,
+      "radius": 0.85,
       "wait": 0.5
     }
   },
