@@ -260,7 +260,7 @@ export class Game {
 
   /** 대기실 왼쪽 아군 봇: 가만히 서 있고 체력이 반쯤 깎여 있어서 힐·버프·방어 스킬을 시험해 볼 수 있다 (사람과 같은 편) */
   addAllies(only) {
-    const ids = only || Object.keys(this.characters);
+    const ids = only || ['blue']; // 아군 봇은 기본 남성(파란티)
     for (const [x, y] of [[3, 5], [4, 9], [3, 13], [4, 17]]) {
       const p = this.addBot('idle', ids[Math.floor(Math.random() * ids.length)]);
       p.name = '아군'; p.x = x; p.y = y; p.home = { x, y }; p.ally = true; p.hp = Math.ceil(p.cfg.hp * 0.5);
@@ -269,7 +269,7 @@ export class Game {
 
   /** 대기실 우측 샌드백: 가만히 서 있는 봇(idle)과, 가까이 오면 때리고 구역을 벗어나면 제자리로 돌아가는 봇(guard) */
   addSandbags(only) {
-    const ids = only || Object.keys(this.characters).filter((c) => this.characters[c].attack.type === 'melee' || this.characters[c].role !== 'support');
+    const ids = only || ['knight']; // 샌드백(적군 봇)은 기사
     const spots = [['idle', 35, 4], ['idle', 36, 8], ['idle', 35, 12], ['idle', 36, 16], ['idle', 35, 19], ['guard', 31, 6], ['guard', 32, 11], ['guard', 31, 16], ['guard', 37, 11]];
     for (const [mode, x, y] of spots) {
       const p = this.addBot(mode, ids[Math.floor(Math.random() * ids.length)]);
