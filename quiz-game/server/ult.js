@@ -26,6 +26,8 @@ export function useUlt(g, p, aim) {
   RUN[u.type](g, p, u, dx, dy, near);
 }
 
+/** 궁극기로 때린 피해는 충전량이 절반 (game._applyHit이 ultDepth를 본다) */
+export const hit = (g, ...a) => { g.ultDepth++; try { g._applyHit(...a); } finally { g.ultDepth--; } };
 const later = (g, delay, fn) => (delay <= 0 ? fn() : g.tasks.push({ at: g.t + delay, fn }));
 
 /** 조준 중심: 가까운 상대(사거리 안) → 없으면 앞쪽 */
@@ -41,7 +43,7 @@ function hitArea(g, owner, x, y, r, dmg, knock, fx, root, after) {
     const d = Math.hypot(o.x - x, o.y - y);
     if (d > r + o.cfg.radius) continue;
     const nx = d > 1e-6 ? (o.x - x) / d : 1, ny = d > 1e-6 ? (o.y - y) / d : 0;
-    g._applyHit(o, owner, dmg, knock, nx, ny, fx);
+    hit(g, o, owner, dmg, knock, nx, ny, fx);
     if (root) o.rootUntil = Math.max(o.rootUntil, g.t + root);
     after?.(o);
   }
@@ -103,7 +105,7 @@ const RUN = {
         g.events.push({ e: 'atk', id: p.id, dx: r2(ax), dy: r2(ay), kind: 'melee', fx: 'smash', arc: u.arc, step: 2, range: h.range, len: h.range });
         for (const o of g._enemies(p)) {
           const vx = o.x - p.x, vy = o.y - p.y, d = Math.hypot(vx, vy);
-          if (d <= h.range && d > 0 && (vx * ax + vy * ay) / d >= cos) g._applyHit(o, p, h.dmg, 0, ax, ay, 'smash');
+          if (d <= h.range && d > 0 && (vx * ax + vy * ay) / d >= cos) hit(g, o, p, h.dmg, 0, ax, ay, 'smash');
         }
       });
     }
@@ -128,7 +130,7 @@ const RUN = {
       g.events.push({ e: 'beam', id: p.id, x: r2(p.x), y: r2(p.y), dx: r2(ax), dy: r2(ay), range: u.range, width: u.width });
       for (const o of g._enemies(p)) {
         const vx = o.x - p.x, vy = o.y - p.y, along = vx * ax + vy * ay, perp = Math.abs(vx * ay - vy * ax);
-        if (along > 0 && along <= u.range && perp <= u.width / 2 + o.cfg.radius) g._applyHit(o, p, u.dmg, 0, ax, ay, 'arrow');
+        if (along > 0 && along <= u.range && perp <= u.width / 2 + o.cfg.radius) hit(g, o, p, u.dmg, 0, ax, ay, 'arrow');
       }
     });
   },
@@ -141,7 +143,7 @@ const RUN = {
       later(g, u.pattern === 'line' || !u.over ? (i * (u.over ?? 0)) / n : (u.pattern === 'ring' ? Math.floor(i / (n / 2)) * (u.over ?? 0) : 0), () => {
         if (p.stunned) return;
         const vx = Math.cos(a), vy = Math.sin(a), id = ++g.projSeq;
-        g.projectiles.set(id, { id, owner: p.id, art: u.art, dmgMin: u.dmg, dmgMax: u.dmg, knock: u.knock ?? 0.4, kind: 'bolt', x: p.x, y: p.y, dx: vx, dy: vy, vx: vx * u.speed, vy: vy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.radius ?? 0.3, pierce: !!u.pierce, hit: new Set() });
+        g.projectiles.set(id, { id, ult: true, owner: p.id, art: u.art, dmgMin: u.dmg, dmgMax: u.dmg, knock: u.knock ?? 0.4, kind: 'bolt', x: p.x, y: p.y, dx: vx, dy: vy, vx: vx * u.speed, vy: vy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.radius ?? 0.3, pierce: !!u.pierce, hit: new Set() });
       });
     }
   },
@@ -167,7 +169,7 @@ const RUN = {
       const d = Math.hypot(o.x - p.x, o.y - p.y);
       if (d > u.radius || d < 1e-6) continue;
       ts.push({ x: r2(o.x), y: r2(o.y) });
-      g._applyHit(o, p, u.dmg, Math.max(0, d - 1.3), (p.x - o.x) / d, (p.y - o.y) / d, 'tongue');
+      hit(g, o, p, u.dmg, Math.max(0, d - 1.3), (p.x - o.x) / d, (p.y - o.y) / d, 'tongue');
       o.rootUntil = Math.max(o.rootUntil, g.t + u.root);
     }
     g.events.push({ e: 'pull', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, ts });
@@ -175,7 +177,7 @@ const RUN = {
 
   wave(g, p, u, dx, dy) { // 맵을 쓸고 가는 거대한 파도: 폭이 넓은 관통 투사체, 맞으면 묶임
     const id = ++g.projSeq;
-    g.projectiles.set(id, { id, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set() });
+    g.projectiles.set(id, { id, ult: true, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set() });
   },
 
   magnet(g, p, u) { // 맵의 동전을 전부 내가 줍고, 잠깐 빨라짐
@@ -207,7 +209,7 @@ const RUN = {
         const last = i === u.hits - 1;
         g.events.push({ e: 'atk', id: p.id, dx: r2(ax), dy: r2(ay), kind: 'melee', fx: 'punch', arc: 60, step: last ? 2 : i % 2, range: 1.3, len: 1.3 });
         const hits = g._enemies(p).filter((o) => Math.hypot(o.x - p.x, o.y - p.y) <= 1.6 && !o.stunned);
-        for (const o of hits) g._applyHit(o, p, last ? u.finish : u.dmg, 0, ax, ay, 'punch');
+        for (const o of hits) hit(g, o, p, last ? u.finish : u.dmg, 0, ax, ay, 'punch');
       });
     }
   },
@@ -253,7 +255,7 @@ export function updateUlts(g) {
     if (g.t < p.burnUntil && g.t >= p.burnNext && !p.stunned) {
       p.burnNext += 0.5;
       const by = g.players.get(p.burnBy);
-      if (by) g._applyHit(p, by, p.burnDmg ?? 2, 0, 0, 0, 'crescent');
+      if (by) hit(g, p, by, p.burnDmg ?? 2, 0, 0, 0, 'crescent');
     }
   }
   for (const w of [...g.walls.values()]) if (g.t >= w.until) g.walls.delete(w.id);
@@ -267,7 +269,7 @@ export function updateUlts(g) {
       for (const e of g._enemies(p)) {
         if (e.stunned || (o.hit.get(e.id) ?? 0) > g.t || Math.hypot(e.x - sx, e.y - sy) > 0.7 + e.cfg.radius) continue;
         o.hit.set(e.id, g.t + o.gap);
-        g._applyHit(e, p, o.dmg, 0, (e.x - sx) || 1, e.y - sy, 'star');
+        hit(g, e, p, o.dmg, 0, (e.x - sx) || 1, e.y - sy, 'star');
       }
     }
   }

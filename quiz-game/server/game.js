@@ -1,8 +1,8 @@
 // 게임 상태와 규칙. 네트워크(소켓)는 모르고, index.js가 입력을 넣고 snapshot()을 방송한다.
 // 모든 판정(이동, 충돌, 공격, 구역, 점수)은 서버가 한다.
 
-import { blockWalls, buffOf, charge, CHARGE_TAKEN, ultReady, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
-import { RUN_DRAIN, COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
+import { blockWalls, buffOf, charge, CHARGE_TAKEN, hit as ultHit, ultReady, updateUlts, useUlt, wallsSnapshot, zonesSnapshot } from './ult.js';
+import { ULT_CHARGE, RUN_DRAIN, COIN, COMBO_RESET_SEC, CRIT, ITEM, MAP, PHASE, READ_SEC, SPRITE, zoneAt, ZONES } from '../shared/constants.js';
 
 const KNOCK_DECAY = 12; // 밀림 속도 감쇠(1/s). 총 밀림 거리 = 처음 속도 / 감쇠
 const ATTACK_ANIM_SEC = 0.25;
@@ -44,6 +44,7 @@ export class Game {
     this.showRank = false; // 빔프로젝터에 순위표를 띄울지
     this.projectiles = new Map(); // 날아가는 투사체 id → {...}
     this.projSeq = 0;
+    this.ultDepth = 0; // 궁극기에서 나온 피해를 처리하는 동안 1 이상
     this.tasks = []; // 궁극기 예약 실행 [{at, fn}]
     this.zonesU = new Map(); // 궁극기 바닥 범위
     this.zoneSeq = 0;
@@ -381,7 +382,7 @@ export class Game {
         const k = l2 > 0 ? Math.max(0, Math.min(1, ((o.x - px) * sx + (o.y - py) * sy) / l2)) : 0;
         if (Math.hypot(o.x - (px + sx * k), o.y - (py + sy * k)) > q.radius + o.cfg.radius) continue;
         q.hit.add(o.id);
-        this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
+        if (q.ult) ultHit(this, o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art); else this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, q.dx, q.dy, q.art);
         if (q.root) o.rootUntil = Math.max(o.rootUntil, this.t + q.root);
         if (!q.pierce) { gone = true; break; }
       }
@@ -523,8 +524,9 @@ export class Game {
     if (guard) dmg = Math.max(1, Math.round(dmg * (1 - gd)));
     if (target.shield && this.t < target.shield.until && dmg > 0) dmg = Math.max(1, Math.round(dmg * target.shield.mul)); // 진흙 목욕 피해 감소
     if (dmg > 0) {
-      if (attacker.cfg) charge(attacker, dmg);
+      if (attacker.cfg) charge(attacker, dmg * (this.ultDepth > 0 ? ULT_CHARGE.ultHit : 1));
       charge(target, dmg * CHARGE_TAKEN);
+      if (target.cfg.role === 'tank' && target.cfg.ult) charge(target, target.cfg.ult.need * ULT_CHARGE.tankHit); // 탱커는 맞을 때마다 2% 더
       const cm = attacker.cfg?.attack?.charm; // 평타 중첩 매혹(공주): window초 안에 stacks번 맞으면 sec초 매혹
       if (cm) {
         const st = target.charmStack && this.t < target.charmStack.until ? target.charmStack : (target.charmStack = { n: 0, until: 0 });
@@ -581,6 +583,7 @@ export class Game {
       this._step(p, dt);
     }
     this._collide(active);
+    for (const p of active) if (p.cfg.ult && !p.stunned) charge(p, p.cfg.ult.need * ULT_CHARGE.auto * dt); // 가만히 있어도 초당 3%
     this._updateCoins(dt, active);
     this._updateItems(dt, active);
     this._updateProjectiles(dt);

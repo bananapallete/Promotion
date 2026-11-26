@@ -1109,3 +1109,21 @@ test('매혹은 이동 속도 50%: 공주 평타 3번 맞으면 매혹, 5초 안
   A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); run(g, 0.8);
   assert.ok(g.t >= B.charmUntil, '6초 지나 쌓임 초기화');
 });
+
+test('궁극기 충전: 가만히 있어도 초당 3%, 탱커는 맞을 때마다 2% 더, 궁극기로 때린 피해는 충전 절반', () => {
+  const { g, A, B } = duo('blue', 'knight');
+  A.x = 5; A.y = 5; B.x = 30; B.y = 18;
+  A.ult = 0; B.ult = 0; run(g, 10);
+  assert.ok(Math.abs(A.ult - A.cfg.ult.need * 0.3) < 0.5, `10초면 30%: ${A.ult}`);
+  // 탱커(기사)가 평타에 맞음: 피해의 절반 + need의 2%
+  A.x = 10; A.y = 10; B.x = 10.9; B.y = 10; B.invUntil = 0; A.ult = 0; B.ult = 0; B.stunned = false;
+  const before = B.ult; g.attack('a', null);
+  const dealt = B.cfg.hp - B.hp;
+  assert.ok(Math.abs(B.ult - before - (dealt * 0.5 + B.cfg.ult.need * 0.02)) < 0.2, `탱커 충전 ${B.ult}`);
+  assert.ok(Math.abs(A.ult - dealt) < 0.2, '평타로 때리면 피해만큼');
+  // 궁극기로 때린 피해는 절반: 반경 3칸 폭발로 둘을 때리면 (10 × 2) × 0.5 = 10
+  const C = g.join({ token: 'c', name: 'C', charId: 'orc' }); C.x = 10; C.y = 11; C.invUntil = 0; B.invUntil = 0;
+  A.cfg = { ...A.cfg, ult: { name: 't', need: 1000, type: 'burst', radius: 3, dmg: 10, knock: 0 } };
+  A.ult = 1000; g.ult('a', null);
+  assert.ok(Math.abs(A.ult - 10) < 0.01, `궁극기로 때린 충전 ${A.ult}`);
+});
