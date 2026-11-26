@@ -588,9 +588,27 @@ function orbTex(scene) {
     ink(put, w, h, get);
   });
 }
+function bottleTex(scene) { // 화염병: 갈색 유리병 + 주황 불꽃 심지
+  return tex(scene, 'ux-bottle', 14, 24, (put, w, h) => {
+    const glass = (x, y) => (y >= 8 && y < 22 && ((x + 0.5 - 7) / 5) ** 2 + ((y + 0.5 - 15) / 7) ** 2 <= 1) || (y >= 3 && y < 9 && x >= 5 && x < 9);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (glass(x, y)) put(x, y, y > 14 && y < 21 ? [226, 120, 40] : x < 6 ? [150, 100, 60] : [110, 70, 40]);
+    put(5, 11, [255, 230, 170]); put(5, 12, [255, 230, 170]); put(6, 3, [236, 220, 190]);
+    ink(put, w, h, glass);
+    for (const [x, y, c] of [[7, 0, [255, 226, 122]], [6, 1, [255, 154, 60]], [7, 1, [255, 226, 122]], [8, 1, [255, 154, 60]], [7, 2, [224, 80, 42]]]) put(x, y, c);
+  });
+}
+function arrowThrowTex(scene) { // 엘프의 화살: 가로 화살 (진행 방향으로 돌려서 쓴다)
+  return tex(scene, 'ux-athrow', 20, 7, (put) => {
+    for (let x = 2; x < 17; x++) put(x, 3, [180, 130, 70]);
+    for (const [x, y] of [[17, 3], [16, 2], [16, 4], [15, 1], [15, 5], [18, 3]]) put(x, y, [220, 230, 240]);
+    for (const [x, y] of [[0, 1], [1, 2], [0, 5], [1, 4]]) put(x, y, [120, 200, 120]);
+    for (const [x, y] of [[0, 2], [0, 4], [1, 1], [1, 5]]) put(x, y, [90, 170, 100]);
+  });
+}
 export function bhThrow(scene, e, BU) {
-  const sp = scene.add.image(e.x0 * BU, e.y0 * BU - 0.6 * BU, orbTex(scene)).setScale(DOT).setDepth(FXD);
-  scene.tweens.addCounter({ from: 0, to: 1, duration: e.sec * 1000, onUpdate: (tw) => { const u = tw.getValue(); sp.setPosition(lerp2(e.x0 * BU, e.x * BU, u), lerp2(e.y0 * BU - 0.6 * BU, e.y * BU, u) - Math.sin(Math.PI * u) * 2.2 * BU).setAngle(u * 360); }, onComplete: () => sp.destroy() });
+  const sp = scene.add.image(e.x0 * BU, e.y0 * BU - 0.6 * BU, e.art === 'bottle' ? bottleTex(scene) : e.art === 'arrow' ? arrowThrowTex(scene) : orbTex(scene)).setScale(DOT).setDepth(FXD);
+  const toX = e.x * BU - e.x0 * BU;
+  scene.tweens.addCounter({ from: 0, to: 1, duration: e.sec * 1000, onUpdate: (tw) => { const u = tw.getValue(); sp.setPosition(lerp2(e.x0 * BU, e.x * BU, u), lerp2(e.y0 * BU - 0.6 * BU, e.y * BU, u) - Math.sin(Math.PI * u) * 2.2 * BU); if (e.art === 'arrow') sp.setAngle(Math.atan2(-2.2 * BU * Math.PI * Math.cos(Math.PI * u) + (e.y - e.y0) * BU, toX) * 57.3); else sp.setAngle(u * 360); }, onComplete: () => sp.destroy() });
 }
 const lerp2 = (a, b, t) => a + (b - a) * t;
 export function bhHole(scene, e, BU) {

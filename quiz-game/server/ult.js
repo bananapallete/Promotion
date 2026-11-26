@@ -79,7 +79,7 @@ const RUN = {
 
   blackhole(g, p, u, dx, dy, near) { // 지정한 곳에 검은 공을 던짐 → 땅에 닿으면 블랙홀: sec초 동안 반경 안 적을 끌어당기다가 터진다
     const c = center(g, p, u, dx, dy, near), fly = u.fly ?? 0.5, dt = 0.05;
-    g.events.push({ e: 'bhThrow', x0: r2(p.x), y0: r2(p.y), x: r2(c.x), y: r2(c.y), sec: fly });
+    g.events.push({ e: 'bhThrow', x0: r2(p.x), y0: r2(p.y), x: r2(c.x), y: r2(c.y), sec: fly, art: 'void' });
     later(g, fly, () => {
       g.events.push({ e: 'bhOpen', x: r2(c.x), y: r2(c.y), r: u.radius, sec: u.sec });
       for (let i = 1; i * dt <= u.sec + 1e-6; i++) {
@@ -283,8 +283,12 @@ const RUN = {
   },
 
   zone(g, p, u, dx, dy, near) { // 바닥에 지속 피해 범위를 남김
-    const c = center(g, p, u, dx, dy, near), id = ++g.zoneSeq;
-    g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg ?? 0, kind: u.kind, art: u.kind === 'fire' ? 'bottle' : 'arrow', slow: u.slow, heal: u.heal, shield: u.shield });
+    const c = center(g, p, u, dx, dy, near), art = u.kind === 'fire' ? 'bottle' : 'arrow', fly = u.center === 'self' ? 0 : u.fly ?? 0.5; // 멀리 놓는 범위 궁극기는 항상 던져서 떨어뜨린다
+    if (fly) g.events.push({ e: 'bhThrow', x0: r2(p.x), y0: r2(p.y), x: r2(c.x), y: r2(c.y), sec: fly, art });
+    later(g, fly, () => {
+      const id = ++g.zoneSeq;
+      g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg ?? 0, kind: u.kind, art, slow: u.slow, heal: u.heal, shield: u.shield });
+    });
   },
 };
 
