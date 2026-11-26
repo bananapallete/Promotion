@@ -2,6 +2,7 @@
 import { Game } from '../server/game.js';
 import characters from '../server/characters.json';
 import { mountPicker } from '../src/charPicker.js';
+import { dragAim } from '../src/aimDrag.js';
 import { starsOf } from '../server/balance.js';
 import quizzes from '../server/quizzes.test.json';
 import { BU, hooks, startWorld, WORLD_W, WORLD_H } from '../src/world.js';
@@ -74,6 +75,8 @@ setInterval(() => {
   const dragging = atkId !== null && dragLen > 16;
   const info = game.aimPreview(ME, dragging ? { x: atkVec.x / dragLen, y: atkVec.y / dragLen, m: Math.min(1, dragLen / 70) } : null);
   scene.setAim(info && { id: ME, ...info, dragging });
+  const ul = Math.hypot(ultDrag.vec.x, ultDrag.vec.y), cu = game.players.get(ME)?.cfg.ult; // 궁극기를 끌어 조준 중이면 방향·거리 표시
+  scene.setUltAim(ultDrag.active && ul > 16 && cu ? { id: ME, dx: ultDrag.vec.x / ul, dy: ultDrag.vec.y / ul, len: (cu.range ?? cu.dist ?? 6) * Math.min(1, ul / 70) } : null);
 }, 50);
 
 function hud(s) {
@@ -166,7 +169,7 @@ runBtn.addEventListener('pointercancel', () => setRun(false));
 
 // 궁극기: 충전되면 탭 (키보드 K)
 const ultBtn = $('#btnUlt');
-ultBtn.addEventListener('pointerdown', () => game.ult(ME, null));
+const ultDrag = dragAim(ultBtn, $('#aimU'), (a) => game.ult(ME, a)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
 
 // 공격: 탭 = 자동 조준, 드래그 후 놓기 = 그 방향으로 직접 조준
 const atk = $('#btnAtk'), aim = $('#aim');

@@ -137,5 +137,19 @@
   "run": 7,
   "combo": 8,
   "die": 6
+ },
+ "phoenix": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6,
+  "die": 6
+ },
+ "egg": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6,
+  "die": 6
  }
 }

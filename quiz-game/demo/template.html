@@ -51,7 +51,7 @@
   #ammo { position: fixed; right: max(56px, 13vw); bottom: calc(max(28px, env(safe-area-inset-bottom, 0px)) + 18px); width: 100px; display: flex; gap: 4px; pointer-events: none; }
   #ammo[hidden] { display: none; }
   #ammo i { --f: 0; flex: 1; height: 9px; border-radius: 5px; background: linear-gradient(90deg, #ffb020 calc(var(--f) * 100%), #0008 0); box-shadow: 0 0 0 1.5px #ffffff55 inset; }
-  #aim { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
+  #aim, #aimU { position: absolute; left: 50%; top: 50%; width: 0; height: 6px; background: #fff; border-radius: 4px; transform-origin: 0 50%; pointer-events: none; opacity: 0; }
 
   #gear { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink); font-size: 20px; cursor: pointer; z-index: 20; }
   #panel { position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); width: min(340px, calc(100vw - 100px)); max-height: calc(100vh - 16px); overflow: auto; background: var(--panel); border-radius: 14px; padding: 12px 14px; z-index: 20; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
@@ -130,7 +130,7 @@
 <div id="padHint"></div>
 <div id="pad"><div id="stick"></div></div>
 <button id="btnRun" class="abtn" type="button">달리기</button>
-<button id="btnUlt" class="abtn" type="button">궁극기</button>
+<button id="btnUlt" class="abtn" type="button">궁극기<span id="aimU"></span></button>
 <button id="btnAtk" class="abtn" type="button">공격<span id="aim"></span></button>
 <div id="ammo" hidden></div>
 

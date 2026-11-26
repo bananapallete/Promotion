@@ -170,7 +170,7 @@ export class Game {
     p.hp = p.cfg.hp;
     p.runGauge = p.cfg.runGauge;
     p.exhausted = false;
-    p.skillReadyAt = 0; p.ult = 0; p.buff = null; p.rootUntil = 0; p.baseCfg = null; p.channel = null; p.charmUntil = 0; p.orbit = null;
+    p.skillReadyAt = 0; p.ult = 0; p.egg = false; p.buff = null; p.rootUntil = 0; p.baseCfg = null; p.channel = null; p.charmUntil = 0; p.orbit = null;
     p.ammoF = p.cfg.ammo?.max ?? 99;
   }
 
@@ -624,7 +624,7 @@ export class Game {
     }
     if (p.channel && (p.stunned || this.t >= p.channel.until)) { p.channel = null; this.events.push({ e: 'channelEnd', id: p.id }); } // 시전 끝/끊김
     if (p.stunned && this.t >= p.stunUntil) { // 기절 해제 → 체력 회복 + 무적
-      p.stunned = false;
+      p.stunned = false; p.egg = false;
       p.hp = c.hp;
       p.invUntil = this.t + c.invincibleSec;
     }
@@ -819,7 +819,7 @@ export class Game {
     for (const p of this.players.values()) {
       if (!p.connected) continue;
       players.push({
-        id: p.id, n: p.name, c: p.charId, s: buffOf(this, p)?.morph || p.cfg.sprite, b: p.isBot ? 1 : 0,
+        id: p.id, n: p.name, c: p.charId, s: p.stunned && p.egg ? 'egg' : buffOf(this, p)?.morph || p.cfg.sprite, b: p.isBot ? 1 : 0,
         x: r2(p.x), y: r2(p.y), f: p.face,
         hp: p.hp, mhp: p.cfg.hp,
         st: p.stunned ? 1 : 0, inv: this.t < p.invUntil ? 1 : 0,

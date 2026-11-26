@@ -1006,16 +1006,28 @@ test('신난 회전(강아지): 채널링 — 도는 동안 계속 때리고, 0.
   assert.ok(B.cfg.hp - B.hp >= 3 * 6, `여러 번 맞음 ${B.cfg.hp - B.hp}`);
 });
 
-test('진화(병아리): 닭으로 변하고 몸집이 커지며 체력 회복, 끝나면 원래대로', () => {
+test('피닉스(병아리): 3초간 받는 피해 60% 감소, 뒤에 자폭해 주변에 큰 피해, 알이 되어 2초 뒤 부활(동전 유지)', () => {
+  const { g, A, B } = duo('chick', 'blue');
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.coins = 7; A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(g.snapshot().players.find((p) => p.id === 'a').s, 'phoenix', '피닉스 그림');
+  assert.equal(A.shield.mul, 0.4, '받는 피해 60% 감소');
+  const hp = B.hp; run(g, 2.8); assert.equal(B.hp, hp, '3초 전엔 터지지 않음');
+  run(g, 0.5);
+  assert.equal(hp - B.hp, A.cfg.ult.dmg, '주변에 큰 피해');
+  assert.ok(A.stunned && A.hp === 0, '자폭');
+  assert.equal(g.snapshot().players.find((p) => p.id === 'a').s, 'egg', '알로 변신');
+  assert.equal(A.coins, 7, '동전은 잃지 않음');
+  run(g, 2.2);
+  assert.ok(!A.stunned && A.hp === A.cfg.hp, '병아리로 부활');
+  assert.equal(g.snapshot().players.find((p) => p.id === 'a').s, 'chick');
+});
+
+test('궁극기 직접 조준: 드래그 방향·거리대로 중심이 정해진다', () => {
   const { g, A } = duo('chick', 'blue');
-  A.hp = 10; const r0 = A.cfg.radius, base = A.cfg;
-  A.ult = A.cfg.ult.need; g.ult('a', null);
-  assert.ok(A.cfg.radius > r0 * 1.5, '몸집 커짐');
-  const snap = g.snapshot().players.find((p) => p.id === 'a');
-  assert.equal(snap.s, 'chicken', '닭 그림으로 변신 (도트 크기 유지)'); assert.equal(snap.zs, 1);
-  assert.ok(A.hp > 10, '회복');
-  run(g, 5.2);
-  assert.equal(A.cfg, base, '원래 설정으로 복귀');
+  A.x = 10; A.y = 10; A.ult = A.cfg.ult.need; g.events = [];
+  g.ult('a', { x: 0, y: 1, m: 1 });
+  const e = g.events.find((x) => x.e === 'ult');
+  assert.ok(e.dy > 0.9 && Math.abs(e.dx) < 0.1, '아래로 조준');
 });
 
 test('매혹(공주): 범위 안 상대가 공주 쪽으로 걸어오고 공격을 못 한다', () => {

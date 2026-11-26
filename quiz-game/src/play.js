@@ -1,5 +1,6 @@
 import { io } from 'socket.io-client';
 import { mountPicker } from './charPicker.js';
+import { dragAim } from './aimDrag.js';
 import { fmtScore, JOYSTICK_DEADZONE, PHASE } from '../shared/constants.js';
 
 const $ = (s) => document.querySelector(s);
@@ -120,7 +121,7 @@ atk.addEventListener('pointercancel', (e) => atkEnd(e, true));
 
 // 궁극기: 충전되면 탭
 const ultBtn = $('#btnUlt');
-ultBtn.addEventListener('pointerdown', () => socket.emit('ult', null));
+dragAim(ultBtn, $('#aimU'), (a) => socket.emit('ult', a)); // 탭 = 자동, 드래그 후 놓기 = 직접 조준
 
 // 키보드 (PC에서 테스트용): WASD/방향키 이동, Shift 달리기, Space/J 공격
 const keys = new Set();

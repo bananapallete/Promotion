@@ -91,6 +91,7 @@ export class WorldScene extends Phaser.Scene {
   // ---------- 조준 표시 ----------
   /** info: { id, dx, dy, manual, dragging, range, kind, radius, targetId } (null이면 숨김) */
   setAim(info) { this.aim = info; }
+  setUltAim(a) { this.ultAim = a; }
 
   _glowOn(v) {
     if (v.glow || this.sys.game.renderer.type !== Phaser.WEBGL) return; // 글로우는 WebGL에서만
@@ -151,6 +152,12 @@ export class WorldScene extends Phaser.Scene {
   _drawAim(now) {
     const g = this.aimGfx;
     g.clear();
+    const ua = this.ultAim, uv = ua && this.views.get(ua.id);
+    if (uv) { // 궁극기 직접 조준: 방향으로 뻗는 점선과 끝 원
+      const ex = uv.x + ua.dx * ua.len * BU, ey = uv.y + ua.dy * ua.len * BU;
+      for (let i = 1; i <= 12; i++) g.fillStyle(0xffd54a, 0.7).fillRect(Math.round((uv.x + (ex - uv.x) * i / 12) / 2) * 2 - 3, Math.round((uv.y + (ey - uv.y) * i / 12) / 2) * 2 - 3, 6, 6);
+      g.fillStyle(0xffd54a, 0.3).fillCircle(ex, ey, 0.5 * BU);
+    }
     const a = this.aim;
     const me = a && this.views.get(a.id);
     const tid = me && this.views.has(a.targetId) ? a.targetId : null;

@@ -5,7 +5,7 @@
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -20,7 +20,8 @@ export function charge(p, amount) {
 export function useUlt(g, p, aim) {
   const u = p.cfg.ult;
   p.ult = 0;
-  const { dx, dy, near } = g._aimDir(p, aim, u.range ?? 6);
+  const { dx, dy, near, manual } = g._aimDir(p, aim, u.range ?? 6);
+  p.aimM = manual ? Number(aim.m) || null : null; // 직접 조준: 드래그 길이(0~1)로 거리 조절 (center가 읽음)
   if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
   g.events.push({ e: 'ult', id: p.id, name: u.name, t: u.type, x: r2(p.x), y: r2(p.y), dx: r2(dx), dy: r2(dy), r: u.radius ?? 0, sec: u.sec ?? 0, dist: u.dist ?? 0 });
   RUN[u.type](g, p, u, dx, dy, near);
@@ -34,7 +35,7 @@ const later = (g, delay, fn) => (delay <= 0 ? fn() : g.tasks.push({ at: g.t + de
 function center(g, p, u, dx, dy, near) {
   if (u.center === 'self') return { x: p.x, y: p.y };
   if (near) return { x: near.x, y: near.y };
-  const d = (u.range ?? 6) * 0.7;
+  const d = (u.range ?? 6) * (p.aimM ?? 0.7);
   return { x: Math.min(g.map.w - 0.5, Math.max(0.5, p.x + dx * d)), y: Math.min(g.map.h - 0.5, Math.max(0.5, p.y + dy * d)) };
 }
 
@@ -73,6 +74,18 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  phoenix(g, p, u) { // 불새 변신: 받는 피해 감소 → sec초 뒤 주변에 큰 피해를 주고 자폭 → 알이 되어 stunSec 뒤 부활 (동전은 안 잃음)
+    const b = p.buff = { until: g.t + u.sec, spd: u.spd ?? 1, atk: 1, dmg: 1, crit: false, pickup: 1, stealth: false, assassin: 0, morph: 'phoenix' };
+    p.shield = { until: g.t + u.sec, mul: u.shield };
+    later(g, u.sec, () => {
+      if (p.buff !== b || p.stunned) return; // 그 전에 쓰러졌으면 터지지 않음
+      g.events.push({ e: 'burst', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, fx: u.fx });
+      hitArea(g, p, p.x, p.y, u.radius, u.dmg, u.knock ?? 0, u.fx);
+      p.buff = null; p.shield = null; p.egg = true; p.hp = 0; p.stunned = true; p.stunUntil = g.t + p.cfg.stunSec; p.kx = p.ky = 0; // _ko와 달리 동전을 떨구지 않음
+      g.events.push({ e: 'stun', id: p.id });
+    });
   },
 
   channel(g, p, u) { // 서서 시전하는 동안 tick마다 주변을 때림. 느려지고, 기절하면 끊김

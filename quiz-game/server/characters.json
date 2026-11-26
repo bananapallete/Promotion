@@ -1118,16 +1118,16 @@
     "role": "speed",
     "atkInfo": "관통 화살 연사",
     "ult": {
-      "name": "진화",
+      "name": "피닉스",
       "need": 90,
-      "type": "buff",
-      "sec": 5,
-      "dmg": 1.8,
-      "spd": 1.1,
-      "scale": 1.6,
-      "morph": "chicken",
-      "heal": 0.4,
-      "range": 3
+      "type": "phoenix",
+      "sec": 3,
+      "shield": 0.4,
+      "radius": 3.5,
+      "dmg": 45,
+      "knock": 4,
+      "fx": "crescent",
+      "spd": 1.1
     }
   }
 }
