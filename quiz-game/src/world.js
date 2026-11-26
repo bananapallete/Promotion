@@ -5,7 +5,7 @@ import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
-import { burstFx, hitFx, meleeFx, muzzleFx } from './fx.js';
+import { burstFx, dmgText, hitFx, meleeFx, muzzleFx } from './fx.js';
 import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
@@ -272,7 +272,7 @@ export class WorldScene extends Phaser.Scene {
     } else if (e.e === 'hit' && v) {
       v.flashUntil = now + FLASH_MS; // 0.1초 하얗게 번쩍
       const crit = !!e.crit;
-      const t = this.add.text(e.x * BU, e.y * BU - 2.9 * BU, e.dmg > 0 ? `${crit ? '' : '-'}${e.dmg}${crit ? '!' : ''}` : '…', { fontFamily: 'sans-serif', fontSize: crit ? '44px' : '26px', color: crit ? '#ffb020' : '#e74c3c', fontStyle: 'bold', stroke: crit ? '#14122b' : '#ffffff', strokeThickness: crit ? 8 : 5 }).setOrigin(0.5).setDepth(6000);
+      const t = dmgText(this, e.x * BU, e.y * BU - 2.9 * BU, e.dmg > 0 ? `${crit ? '' : '-'}${e.dmg}${crit ? '!' : ''}` : '…', crit);
       this.tweens.add({ targets: t, y: t.y - 36, alpha: 0, duration: crit ? 900 : 650, onComplete: () => t.destroy() });
       // 화면 흔들림은 크리티컬이 터졌을 때만, 그리고 내가 때리거나 맞은 것만 (봇끼리의 크리티컬마다 흔들리면 정신없어서)
       if (crit && this.focusId && (e.id === this.focusId || e.by === this.focusId)) this.cameras.main.shake(130, 0.006);

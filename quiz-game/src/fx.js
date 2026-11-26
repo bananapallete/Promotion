@@ -2,6 +2,23 @@
 const D = 4; // 도트 크기 (화면 px)
 const snap = (v) => Math.round(v / 2) * 2;
 const dot = (g, x, y, s, c, a = 1) => g.fillStyle(c, a).fillRect(snap(x - s / 2), snap(y - s / 2), s, s);
+const GLYPH = { 0: '01110 10001 10011 10101 11001 10001 01110', 1: '00100 01100 00100 00100 00100 00100 01110', 2: '01110 10001 00001 00010 00100 01000 11111', 3: '11110 00001 00001 01110 00001 00001 11110', 4: '00010 00110 01010 10010 11111 00010 00010', 5: '11111 10000 11110 00001 00001 10001 01110', 6: '00110 01000 10000 11110 10001 10001 01110', 7: '11111 00001 00010 00100 01000 01000 01000', 8: '01110 10001 10001 01110 10001 10001 01110', 9: '01110 10001 10001 01111 00001 00010 01100', '-': '00000 00000 00000 11111 00000 00000 00000', '!': '00100 00100 00100 00100 00100 00000 00100' };
+/** 데미지 숫자: 일반·크리 같은 크기, 색만 다름. window.__dmgStyle = 'round'면 둥근체, 기본은 도트 글리프 */
+export function dmgText(scene, x, y, str, crit) {
+  const col = crit ? '#ffb020' : '#ff5a4d';
+  if (window.__dmgStyle === 'round' || [...str].some((ch) => !GLYPH[ch])) {
+    return scene.add.text(x, y, str, { fontFamily: 'ui-rounded, "Arial Rounded MT Bold", sans-serif', fontSize: '34px', fontStyle: '900', color: col, stroke: '#14122b', strokeThickness: 9 }).setOrigin(0.5).setDepth(6000).setResolution(2);
+  }
+  const key = `dmg:${str}:${col}`, d = 4;
+  if (!scene.textures.exists(key)) {
+    const cells = [], w = str.length * 6 * d - d + 2 * d, h = 7 * d + 2 * d, cv = scene.textures.createCanvas(key, w, h), cx = cv.getContext();
+    [...str].forEach((ch, i) => GLYPH[ch].split(' ').forEach((r, yy) => [...r].forEach((v, xx) => v === '1' && cells.push([d + i * 6 * d + xx * d, d + yy * d]))));
+    cx.fillStyle = '#14122b'; cells.forEach(([a, b]) => { for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) cx.fillRect(a + dx * d, b + dy * d, d, d); });
+    cx.fillStyle = col; cells.forEach(([a, b]) => cx.fillRect(a, b, d, d)); cv.refresh();
+  }
+  const im = scene.add.image(x, y, key).setDepth(6000); scene.textures.get(key).setFilter(1);
+  return im;
+}
 const lerp = (a, b, t) => a + (b - a) * t;
 
 /** 0→1로 흐르는 시간 동안 draw(g, u)를 매 프레임 다시 그린다 */
