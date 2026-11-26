@@ -17,7 +17,7 @@ import build_sheets as bs
 
 REF_SIZE = 158  # 기본(blue) 캐릭터 idle의 덩치(면적 제곱근)
 # 실제 크기 비율: 기준(1.0) 대비 화면에 보이는 크기. 줄여도 도트 크기(DOT)는 그대로라서 그림 자체를 더 성긴 도트로 다시 찍는다
-SIZE = {"diva": 0.8, "dv2": 0.8, "chick": 0.38, "chicken": 0.5, "frog": 0.7, "shiba": 0.8, "labrador": 0.9, "pig": 0.9, "hippo": 0.8}
+SIZE = {"diva": 1.0, "dv2": 1.0, "chick": 0.38, "chicken": 0.5, "frog": 0.7, "shiba": 0.8, "labrador": 0.9, "pig": 0.9, "hippo": 0.8}
 DOT = 7  # 셀 안에서 도트 한 개의 크기(px). 파란티 등 기본 캐릭터의 도트 크기와 같다
 MOTIONS = {"idle": 4, "walk": 6, "run": 6, "attack": 6, "die": 6}  # 모션 → 프레임 수 (attack·die는 2줄 x 3칸)
 
@@ -110,6 +110,7 @@ def main(src: Path, out: Path):
             infos = []
             for f in frames:
                 try:
+                    if os.environ.get("FOOT"): raise SystemExit  # 그림자가 없거나 들쭉날쭉한 시트는 가장 아래 점을 발로 본다
                     infos.append(bs.shadow_info(f))
                 except SystemExit:  # 그림자가 없으면 발 위치로 대신함
                     al = f[..., 3] > 128
@@ -138,6 +139,9 @@ def main(src: Path, out: Path):
                     im = im.resize((max(1, round(im.width * sc)), max(1, round(im.height * sc))), Image.NEAREST)
                     sc_eff = sc
                 px, py = bs.ANCHOR[0] - round(cx * sc_eff), bs.ANCHOR[1] - round(by * sc_eff)
+                if py < 0 and os.environ.get("FOOT"):  # 팔을 번쩍 든 것처럼 키가 큰 프레임: 발이 잘리지 않게 이 프레임만 줄여 앵커에 맞춤
+                    k = (im.height + py) / im.height; nw = max(1, round(im.width * k)); im = im.resize((nw, im.height + py), Image.NEAREST)
+                    px, py = bs.ANCHOR[0] - round(cx * sc_eff * k), 0
                 px = min(max(px, 0), bs.CELL - im.width)  # 살짝 벗어난 건 옆으로 밀어 넣음 (쓰러진 자세 등)
                 py = max(py, 0)
                 cell = Image.new("RGBA", (bs.CELL, bs.CELL), (0, 0, 0, 0))
