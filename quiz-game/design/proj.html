@@ -1,0 +1,62 @@
+<!doctype html><meta charset=utf-8><title>빔프로젝터 퀴즈 시안</title><link rel=stylesheet href=design.css>
+<style>
+body{display:grid;grid-template-columns:960px 960px;gap:0;width:1920px;background:#1b3a22}
+.s{width:960px;height:540px;position:relative;overflow:hidden;padding:26px 30px;display:grid;grid-template-rows:auto auto 1fr auto;gap:16px}
+.s::before{content:"";position:absolute;inset:0;opacity:.55}
+.s>*{position:relative}
+.top{display:flex;align-items:center;gap:14px}
+.qn{font:900 30px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--gold);color:#fff;border:4px solid var(--navy);border-radius:14px;padding:8px 16px;text-shadow:0 2px 0 #14122b}
+.top .chip{font-size:20px;padding:4px 14px}
+.timer{margin-left:auto;display:flex;align-items:center;gap:12px}
+.num{font:900 64px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#fff;text-shadow:0 4px 0 var(--navy),0 0 0 var(--navy);-webkit-text-stroke:3px var(--navy);paint-order:stroke fill;min-width:84px;text-align:right}
+.num.low{color:#ff8f84}
+.timebar{--gh:22px}
+.main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;min-height:0}
+.card{background:var(--cream-hi);border-radius:18px;padding:20px 24px;display:grid;align-content:center}
+.card h1{margin:0;font:900 34px/1.3 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;word-break:keep-all}
+.img{background:#fff;border-radius:18px;display:grid;place-items:center;overflow:hidden;padding:8px}
+.img div{width:100%;height:100%;border-radius:10px;background:linear-gradient(135deg,#bfe3ff,#e9f7ff);display:grid;place-items:center;font-size:90px}
+.zones{display:flex;gap:14px}
+.zone{flex:1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 16px;border-radius:14px;font:900 26px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#fff;border:4px solid var(--navy)}
+.zone b{font-size:34px}.zone i{font-style:normal;font-size:20px;opacity:.95}
+.zO{background:#4a86d9}.zX{background:#e5483c}
+.wait{display:grid;place-items:center;gap:10px;text-align:center}
+.wait .big{font:900 64px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#fff;-webkit-text-stroke:4px var(--navy);paint-order:stroke fill}
+.dots span{display:inline-block;width:16px;height:16px;border-radius:4px;background:var(--gold);border:3px solid var(--navy);margin:0 5px;animation:bl 1s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes bl{50%{opacity:.25}}
+.ans{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.ans .a{font:900 150px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--leaf);-webkit-text-stroke:6px var(--navy);paint-order:stroke fill;text-shadow:0 8px 0 var(--navy)}
+.bars{display:grid;gap:10px}.bar{display:grid;grid-template-columns:44px 1fr 56px;align-items:center;gap:10px;font:900 22px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.bar .t{height:30px;background:#14122b33;border:3px solid var(--navy);border-radius:8px;overflow:hidden}.bar .t i{display:block;height:100%}
+.rank{display:grid;gap:10px;align-content:center}
+.row{display:grid;grid-template-columns:54px 1fr auto auto;gap:12px;align-items:center;padding:8px 16px;border-radius:14px;background:var(--cream-hi);border:4px solid var(--navy);font:900 26px/1 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.row .n{font-size:30px;color:#d98a00}.row small{font-size:18px;color:var(--wood-dk)}
+.row.r1{background:#ffe27a}.row.r2{background:#e8eef5}.row.r3{background:#f0c9a0}
+.foot{display:flex;justify-content:space-between;color:#fff;font-weight:800;font-size:15px;opacity:.9;text-shadow:0 2px 0 var(--navy)}
+.tag{position:absolute;right:14px;bottom:10px;background:#14122bcc;color:#fff;padding:4px 10px;border-radius:8px;font-size:13px;z-index:5}
+</style>
+<!-- 1: 진행 중 -->
+<section class="s floor px"><div class=tag>① 진행 중</div>
+ <div class=top><span class=qn>Q3</span><span class="chip c-ind">개인전</span><div class=timer><span class=num>14</span></div></div>
+ <div class="gauge timebar mid"><i style="width:62%"></i></div>
+ <div class=main><div class="card px"><h1>한국의 수도는 서울이다. 맞으면 O, 틀리면 X 구역으로 이동하세요.</h1></div><div class="img px"><div>🗺️</div></div></div>
+ <div class=zones><div class="zone zO"><b>O</b><i>파랑 구역</i></div><div class="zone zX"><b>X</b><i>빨강 구역</i></div></div></section>
+<!-- 2: 시간 종료, 정답 공개 대기 -->
+<section class="s floor px"><div class=tag>② 시간 종료 · 공개 대기</div>
+ <div class=top><span class=qn>Q3</span><span class="chip c-ind">개인전</span><div class=timer><span class="num low">0</span></div></div>
+ <div class="gauge timebar low"><i style="width:0%"></i></div>
+ <div class="main" style="grid-template-columns:1fr"><div class="card px wait"><div class=big>시간 종료</div><div class=dots><span></span><span></span><span></span></div></div></div>
+ <div class=zones><div class="zone zO"><b>O</b><i>11명</i></div><div class="zone zX"><b>X</b><i>9명</i></div></div></section>
+<!-- 3: 정답 공개 -->
+<section class="s floor px"><div class=tag>③ 정답 공개 (관리자가 누름)</div>
+ <div class=top><span class=qn>Q3</span><span class="chip c-ind">개인전</span><div class=timer><span class=chip style="font-size:20px;background:var(--leaf-dk)">정답</span></div></div>
+ <div></div>
+ <div class="main" style="grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)"><div class="card px ans"><div class=a>O</div><div style="font:900 22px/1.3 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif">서울은 대한민국의 수도입니다.</div></div>
+  <div class="card px bars"><div class=bar><b style="color:var(--sky)">O</b><div class=t><i style="width:78%;background:#4a86d9"></i></div><span>14</span></div><div class=bar><b style="color:var(--rose)">X</b><div class=t><i style="width:36%;background:#e5483c"></i></div><span>6</span></div><div class=bar><b>—</b><div class=t><i style="width:8%;background:#8b8b8b"></i></div><span>1</span></div></div></div>
+ <div class=foot><span>정답자 +1점 · 빠른 순 보너스</span><span>다음 문제 대기</span></div></section>
+<!-- 4: 현재 등수 -->
+<section class="s floor px"><div class=tag>④ 현재 등수 (관리자가 누름)</div>
+ <div class=top><span class=qn style="background:var(--violet)">순위</span><div class=timer><span class=chip style="font-size:18px;background:var(--wood-dk)">동전 포함</span></div></div>
+ <div></div>
+ <div class="rank"><div class="row r1"><span class=n>1</span><span>수빈</span><small><span class=coin></span> 7</small><span>23.5</span></div><div class="row r2"><span class=n>2</span><span>민재</span><small><span class=coin></span> 4</small><span>21</span></div><div class="row r3"><span class=n>3</span><span>하윤</span><small><span class=coin></span> 9</small><span>19.5</span></div><div class=row style="opacity:.92;font-size:22px"><span class=n style="font-size:24px">4</span><span>지호</span><small><span class=coin></span> 2</small><span>17</span></div></div>
+ <div class=foot><span>24명 참가</span><span>Q3 / 12</span></div></section>

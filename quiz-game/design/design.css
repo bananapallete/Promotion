@@ -1,0 +1,10 @@
+:root{--cream:#e8d0a9;--cream-hi:#f6e6c8;--wood:#b27c53;--wood-dk:#7a4e32;--text:#5a3a24;--leaf:#b4d36a;--leaf-dk:#6e9a3a;--navy:#14122b;--gold:#f0a000;--rose:#e5483c;--sky:#4a86d9;--violet:#9a62d6;--green:#4fd16a;--yellow:#f2c230}
+*{box-sizing:border-box}html,body{margin:0}body{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--text);background:#2b4d2a}
+.px{border:4px solid var(--navy);box-shadow:0 5px 0 rgba(20,18,43,.45)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font-weight:900;border:2px solid var(--navy);color:#fff;font-size:.9em}
+.c-ind{background:var(--sky)}.c-team{background:var(--violet)}.c-real{background:var(--gold)}
+.gauge{height:var(--gh,14px);background:#14122b55;border:3px solid var(--navy);border-radius:99px;overflow:hidden}
+.gauge i{display:block;height:100%;background:linear-gradient(var(--c1,#7ee08a),var(--c2,#4fd16a))}
+.gauge.mid i{--c1:#ffe27a;--c2:#f2c230}.gauge.low i{--c1:#ff8f84;--c2:#e5483c}
+.floor{background:repeating-conic-gradient(#8fc27a 0 25%,#7db469 0 50%) 0 0/48px 48px}
+.coin{display:inline-block;width:.8em;height:.8em;border-radius:50%;background:var(--gold);border:2px solid var(--navy);vertical-align:-.1em}

@@ -1,0 +1,66 @@
+<!doctype html><meta charset=utf-8><title>관리자 화면 시안</title><link rel=stylesheet href=design.css>
+<style>
+body{width:1440px;height:900px;background:#243d2b;display:grid;grid-template-rows:64px 1fr 56px;gap:12px;padding:12px;font-size:15px}
+.bar{display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--cream);border-radius:14px}
+.logo{font-weight:900;font-size:20px}.seg{display:flex;border:3px solid var(--navy);border-radius:10px;overflow:hidden;margin-left:auto}
+.seg span{padding:6px 14px;font-weight:900;background:var(--cream-hi);border-right:2px solid var(--navy)}.seg span:last-child{border:0}.seg .on{background:var(--leaf)}
+.pill{padding:4px 12px;border-radius:99px;font-weight:900;border:2px solid var(--navy);background:var(--cream-hi)}
+.g{display:grid;grid-template-columns:300px minmax(0,1fr) 400px;gap:12px;min-height:0}
+.col{background:var(--cream);border-radius:14px;padding:14px;display:grid;gap:10px;align-content:start;min-height:0;overflow:hidden}
+h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}h3 em{margin-left:auto;font-style:normal;font-size:13px;opacity:.7}
+.q{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:var(--cream-hi);border:2px solid #d9bd8a;font-weight:800}
+.q.cur{border-color:var(--navy);background:#fff3c4;box-shadow:0 3px 0 #14122b55}.q.done{opacity:.55}.q i{font-style:normal;width:18px;height:18px;border-radius:50%;border:2px solid var(--navy);background:#fff;display:inline-block}
+.q.done i{background:var(--leaf)}.q.cur i{background:var(--gold)}.q span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.btn{padding:12px 16px;border-radius:12px;border:3px solid var(--navy);font-weight:900;font-size:16px;box-shadow:0 4px 0 #14122b66;background:var(--cream-hi);color:var(--text);text-align:center}
+.btn.go{background:var(--leaf)}.btn.red{background:#ff8f84}.btn.gold{background:#ffd54a}.btn.sky{background:#9cc4ff}.btn.ghost{box-shadow:none;background:transparent;border-style:dashed}
+.ctl{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:var(--cream-hi);border:3px solid var(--navy);border-radius:14px;padding:14px;display:grid;gap:10px}
+.qt{font-weight:900;font-size:22px;line-height:1.3}.row2{display:grid;grid-template-columns:1fr 150px;gap:14px;align-items:start}.th{height:96px;border-radius:10px;border:3px solid var(--navy);background:linear-gradient(135deg,#bfe3ff,#e9f7ff);display:grid;place-items:center;font-size:44px}
+.dist{display:grid;grid-template-columns:30px 1fr 36px;gap:8px;align-items:center;font-weight:900}.dist .t{height:20px;border:2px solid var(--navy);border-radius:6px;background:#14122b22;overflow:hidden}.dist .t i{display:block;height:100%}
+.tog{display:flex;gap:0;border:3px solid var(--navy);border-radius:10px;overflow:hidden;width:max-content}.tog span{padding:6px 14px;font-weight:900;background:var(--cream-hi);border-right:2px solid var(--navy)}.tog span:last-child{border:0}.tog .on{background:var(--violet);color:#fff}.tog .on.r{background:var(--gold)}
+.t2{display:flex;align-items:center;gap:8px}.tbar{flex:1;height:18px;border:3px solid var(--navy);border-radius:99px;background:#14122b22;overflow:hidden}.tbar i{display:block;width:62%;height:100%;background:linear-gradient(#ffe27a,#f2c230)}
+.pl{display:grid;grid-template-columns:26px 1fr 60px 70px 94px;gap:6px;align-items:center;padding:5px 8px;border-radius:10px;background:var(--cream-hi);font-weight:800;font-size:14px}
+.pl.h{background:transparent;font-size:12px;opacity:.7;padding-top:0}.tm{width:14px;height:14px;border-radius:4px;border:2px solid var(--navy);display:inline-block}
+.stp{display:flex;gap:4px;justify-content:flex-end}.stp b{min-width:26px;padding:0 6px;height:26px;white-space:nowrap;border-radius:8px;border:2px solid var(--navy);display:grid;place-items:center;background:#fff;font-size:14px}.stp .p{background:var(--leaf)}.stp .m{background:#ff8f84}
+.log{display:flex;gap:18px;align-items:center;padding:0 16px;background:#14122bcc;color:#fff;border-radius:12px;font-size:13px;overflow:hidden;white-space:nowrap}
+.award{display:grid;grid-template-columns:1fr auto;gap:8px}.inp{padding:9px 12px;border:3px solid var(--navy);border-radius:10px;background:#fff;font-weight:800;color:#8a7a60}
+.tag{position:absolute;right:20px;top:78px;background:#14122bcc;color:#fff;padding:3px 10px;border-radius:8px;font-size:12px}
+</style>
+<div class=bar><span class=logo>🎮 진행자</span><span class=pill>24명 접속</span><span class=pill style="background:var(--leaf)">문제 3 / 12 · 진행 중</span><span class=pill>⏱ 14초</span>
+ <div class=seg><span>타이틀</span><span class=on>퀴즈</span><span>맵</span><span>순위</span></div></div>
+<div class=g>
+ <div class=col><h3>문제 <em>드래그로 순서</em></h3>
+  <div class="q done"><i></i><span>1. 가장 큰 행성은?</span><b class="chip c-ind" style="font-size:11px">개인</b></div>
+  <div class="q done"><i></i><span>2. 팀 줄다리기</span><b class="chip c-real" style="font-size:11px">현실</b></div>
+  <div class="q cur"><i></i><span>3. 서울은 수도다 O/X</span><b class="chip c-ind" style="font-size:11px">개인</b></div>
+  <div class=q><i></i><span>4. 팀 협동 미로</span><b class="chip c-team" style="font-size:11px">팀</b></div>
+  <div class=q><i></i><span>5. 눈 감고 그림 그리기</span><b class="chip c-real" style="font-size:11px">현실</b></div>
+  <div class=q><i></i><span>6. 국기 맞히기</span><b class="chip c-team" style="font-size:11px">팀</b></div>
+  <div class=q><i></i><span>7. 노래 제목 퀴즈</span><b class="chip c-ind" style="font-size:11px">개인</b></div>
+  <div class=q><i></i><span>8. 초성 게임</span><b class="chip c-team" style="font-size:11px">팀</b></div>
+  <div class="btn ghost" style="margin-top:4px">＋ 문제 추가 / 시트 불러오기</div></div>
+ <div class=col style="background:transparent;padding:0;gap:12px">
+  <div class=card><div class=row2><div><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><span class="chip c-ind">3</span><div class=tog><span class=on style="background:var(--sky)">개인전</span><span>팀전</span><span>현실</span></div></div><div class=qt>한국의 수도는 서울이다. 맞으면 O, 틀리면 X 구역으로 이동하세요.</div></div><div class=th>🗺️</div></div>
+   <div class=t2><span style="font-weight:900">제한시간</span><div class=tbar><i></i></div><div class=stp><b class=m>−10</b><b class=p>＋10</b></div><span class=pill>⏸</span></div></div>
+  <div class=ctl><div class="btn go">▶ 출제 + 맵 이동</div><div class="btn gold">✓ 정답 공개</div><div class="btn sky">🏆 등수 공개</div><div class="btn red">■ 종료</div></div>
+  <div class=card><h3>실시간 응답 <em>21 / 24명</em></h3>
+   <div class=dist><b style="color:var(--sky)">O</b><div class=t><i style="width:55%;background:#4a86d9"></i></div><span>11</span></div>
+   <div class=dist><b style="color:var(--rose)">X</b><div class=t><i style="width:43%;background:#e5483c"></i></div><span>9</span></div>
+   <div class=dist><b>—</b><div class=t><i style="width:12%;background:#8b8b8b"></i></div><span>3</span></div></div>
+  <div class=card style="grid-template-columns:1fr 1fr;gap:12px"><div><h3>점수 부여 <em>현실 퀴즈·보너스</em></h3><div class=award><div class=inp>대상 선택 (개인/팀)</div><div class=inp style="width:80px">＋ 3</div></div></div><div class=ctl style="grid-template-columns:1fr 1fr;align-content:end"><div class="btn gold">지급</div><div class="btn ghost">실행 취소</div></div></div>
+ </div>
+ <div class=col><h3>참가자 <em>팀 · 점수</em></h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="btn go" style="padding:9px">팀 자동 구성</div><div class="btn ghost" style="padding:9px">팀 편집</div></div>
+  <div class="pl h"><span>#</span><span>이름</span><span>팀</span><span>점수</span><span style="text-align:right">수정</span></div>
+  <div class=pl><span>1</span><span>수빈</span><span><i class=tm style="background:#ff6b6b"></i> A</span><span>23.5</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>2</span><span>민재</span><span><i class=tm style="background:#4a86d9"></i> B</span><span>21</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>3</span><span>하윤</span><span><i class=tm style="background:#ff6b6b"></i> A</span><span>19.5</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>4</span><span>지호</span><span><i class=tm style="background:#4fd16a"></i> C</span><span>17</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>5</span><span>서연</span><span><i class=tm style="background:#4a86d9"></i> B</span><span>16.5</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>6</span><span>도윤</span><span><i class=tm style="background:#4fd16a"></i> C</span><span>14</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl><span>7</span><span>예은</span><span><i class=tm style="background:#ff6b6b"></i> A</span><span>12</span><div class=stp><b class=m>−</b><b class=p>＋</b></div></div>
+  <div class=pl style="opacity:.6"><span>⋯</span><span>17명 더</span><span></span><span></span><span></span></div>
+  <h3 style="margin-top:4px">팀 합계 <em>개인전은 숨김</em></h3>
+  <div style="display:flex;gap:8px"><span class=pill style="background:#ffb3ab">A 55</span><span class=pill style="background:#b8d3ff">B 38</span><span class=pill style="background:#bdeec6">C 31</span></div></div>
+</div>
+<div class=log><span>14:03:22 Q3 출제</span><span>14:02:51 수빈 +3 (현실 퀴즈)</span><span>14:01:10 팀 재구성 (A·B·C)</span><span>13:58:04 Q2 정답 공개</span><span style="margin-left:auto;opacity:.7">로그 · 점수 되돌리기 가능</span></div>
