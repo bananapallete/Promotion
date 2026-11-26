@@ -5,7 +5,7 @@
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -83,6 +83,12 @@ const RUN = {
         hitArea(g, p, p.x, p.y, u.radius, u.dmg, 0, u.fx, 0, u.burn ? (o) => { o.burnUntil = g.t + u.burn.sec; o.burnBy = p.id; o.burnNext = g.t + u.burn.tick; o.burnDmg = u.burn.dmg; } : undefined);
       });
     }
+  },
+
+  tether(g, p, u) { // 가까운 적 n명을 혀로 묶음: 개구리에게서 멀어지려 하면 저항을 받는다
+    const ts = g._enemies(p).filter((o) => !g._stealthed(o) && Math.hypot(o.x - p.x, o.y - p.y) <= u.radius).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y)).slice(0, u.n);
+    for (const o of ts) o.tether = { by: p.id, until: g.t + u.sec, len: u.len, resist: u.resist, pull: u.pull };
+    g.events.push({ e: 'tetherStart', id: p.id, x: r2(p.x), y: r2(p.y), r: 2 });
   },
 
   slam(g, p, u, dx, dy) { // 제자리(못 움직임)에서 원뿔 내려찍기를 hits 목록대로 연달아. 기절하면 끊김

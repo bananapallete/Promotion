@@ -891,15 +891,19 @@ test('궁극기 burst: 내 주변 범위 안만 맞고 묶임(root)이 걸린다
   run(g, 0.7); g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 0.5); assert.ok(Math.abs(B.x - x) < 0.3, `못 움직임 ${B.x - x}`);
 });
 
-test('혀 올가미(개구리): 범위 안 모두 끌려오고 묶인다', () => {
+test('혀 올가미(개구리): 가까운 적 3명을 묶어 멀어지는 움직임에 저항을 준다', () => {
   const { g, A, B } = duo('frog', 'blue');
-  const far = g.join({ token: 'f', name: 'F', charId: 'blue' });
-  A.x = 10; A.y = 10; B.x = 14; B.y = 10; far.x = 20; far.y = 10; B.kx = B.ky = 0;
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' }), D = g.join({ token: 'd', name: 'D', charId: 'blue' }), E = g.join({ token: 'e', name: 'E', charId: 'blue' });
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 10; C.y = 12; D.x = 8; D.y = 10; E.x = 10; E.y = 14.5; // E는 가장 멀어서 제외
   A.ult = A.cfg.ult.need; g.ult('a', null);
-  run(g, 0.6);
-  assert.ok(Math.hypot(B.x - A.x, B.y - A.y) < 2, `가까이 끌려옴 ${B.x - A.x}`);
-  assert.ok(B.rootUntil > g.t, '묶임');
-  assert.equal(far.x, 20, '범위 밖은 그대로');
+  assert.ok(B.tether && C.tether && D.tether && !E.tether, '가까운 3명만');
+  assert.equal(g.snapshot().players.find((p) => p.id === 'b').tt, 'a', '스냅샷에 묶인 상대');
+  g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 1);
+  assert.ok(B.x - x < B.cfg.walkSpeed * 0.5, `멀어지는 이동이 느림 ${B.x - x}`);
+  g.setInput('b', { mx: -1, my: 0, run: false }); const x1 = B.x; run(g, 0.5);
+  assert.ok(x1 - B.x > 0.5 * B.cfg.walkSpeed * 0.8, '다가오는 이동은 그대로');
+  g.setInput('b', { mx: 1, my: 0, run: false }); run(g, 4);
+  assert.equal(B.tether, null, '4초 뒤 풀림');
 });
 
 test('진흙 목욕(돼지): 안의 상대는 느려지고, 돼지는 회복하며 피해가 줄어든다', () => {
@@ -1088,4 +1092,20 @@ test('대지 분쇄(오크): 제자리에서 세 번 내려찍고 사거리가 4
   assert.equal(B.cfg.hp - B.hp, 26, '가까운 적은 6+6+14'); assert.equal(C.cfg.hp - C.hp, 14, '멀리 있는 적은 마지막 일격만');
   assert.equal(D.hp, D.cfg.hp, '옆은 안 맞음');
   assert.equal(A.channel, null);
+});
+
+test('매혹은 이동 속도 50%: 공주 평타 3번 맞으면 매혹, 5초 안에 못 채우면 쌓임이 사라진다', () => {
+  const { g, A, B } = duo('princess', 'blue');
+  A.x = 8; A.y = 10; B.x = 12; B.y = 10; B.invUntil = 0;
+  for (let i = 0; i < 2; i++) { A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); run(g, 0.6); }
+  assert.ok(g.t >= B.charmUntil, '2번까지는 매혹 아님');
+  A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); run(g, 0.6);
+  assert.ok(B.charmUntil > g.t && B.charmBy === 'a', '3번째에 매혹');
+  B.x = 20; B.y = 10; B.kx = B.ky = 0; g.setInput('b', { mx: 0, my: 0, run: false }); const x = B.x; run(g, 1);
+  assert.ok(Math.abs(B.x - x + B.cfg.walkSpeed * 0.5) < 0.5, `절반 속도로 따라옴 ${x - B.x}`);
+  // 쌓임 만료
+  B.charmUntil = 0; B.charmStack = null; B.invUntil = 0; B.x = 14;
+  A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); run(g, 6);
+  A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); run(g, 0.8);
+  assert.ok(g.t >= B.charmUntil, '6초 지나 쌓임 초기화');
 });

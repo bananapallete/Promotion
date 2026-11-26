@@ -95,7 +95,7 @@ export class Game {
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
-      charmUntil: 0, charmBy: null, channel: null, orbit: null, ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
+      tether: null, charmStack: null, charmUntil: 0, charmBy: null, channel: null, orbit: null, ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
@@ -525,6 +525,12 @@ export class Game {
     if (dmg > 0) {
       if (attacker.cfg) charge(attacker, dmg);
       charge(target, dmg * CHARGE_TAKEN);
+      const cm = attacker.cfg?.attack?.charm; // 평타 중첩 매혹(공주): window초 안에 stacks번 맞으면 sec초 매혹
+      if (cm) {
+        const st = target.charmStack && this.t < target.charmStack.until ? target.charmStack : (target.charmStack = { n: 0, until: 0 });
+        st.n++; st.until = this.t + cm.window;
+        if (st.n >= cm.stacks) { target.charmStack = null; target.charmUntil = this.t + cm.sec; target.charmBy = attacker.id; this.events.push({ e: 'charm', id: attacker.id, x: r2(target.x), y: r2(target.y), r: 0.9 }); }
+      }
       target.hp = Math.max(0, target.hp - dmg);
       if (target.hp === 0) this._ko(target);
     }
@@ -626,7 +632,7 @@ export class Game {
       // 공격 모션 중에는 이동 속도 감소 (캐릭터별 attack.moveSpeedWhileAttacking, 근접 0.5)
       const slow = this.t < p.attackUntil ? (c.attack.moveSpeedWhileAttacking ?? 1) : 1;
       const boost = (this.t < p.speedUntil ? ITEM.shoe.mul : 1) * (buffOf(this, p)?.spd ?? 1); // 신발 · 궁극기 강화
-      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (p.channel ? p.channel.move : 1) * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
+      const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (p.channel ? p.channel.move : 1) * (this.t < p.charmUntil ? 0.5 : 1) * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
       if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
@@ -640,6 +646,19 @@ export class Game {
       if (p.exhausted && p.runGauge >= 1) p.exhausted = false;
     }
 
+    const th = p.tether; // 혀로 묶임: 개구리에게서 멀어지는 속도는 줄고, 줄 길이를 넘으면 끌려옴
+    if (th) {
+      const by = this.players.get(th.by);
+      if (!by || by.stunned || this.t >= th.until) p.tether = null;
+      else {
+        const tx = p.x - by.x, ty = p.y - by.y, d = Math.hypot(tx, ty);
+        if (d > 0.01) {
+          const ux = tx / d, uy = ty / d, away = vx * ux + vy * uy;
+          if (away > 0) { vx -= ux * away * (1 - th.resist); vy -= uy * away * (1 - th.resist); }
+          if (d > th.len) { vx -= ux * th.pull * (d - th.len); vy -= uy * th.pull * (d - th.len); }
+        }
+      }
+    }
     p.x += (vx + p.kx) * dt;
     p.y += (vy + p.ky) * dt;
     const decay = Math.exp(-KNOCK_DECAY * dt);
@@ -759,7 +778,7 @@ export class Game {
           : { k: 'run', rg: r2(p.runGauge), mrg: p.cfg.runGauge }),
         tn: p.cfg.tint || null, zs: buffOf(this, p)?.morph ? 1 : (p.cfg.scale || 1) * (buffOf(this, p)?.scale || 1),
         am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
-        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, sl: this._stealthed(p) ? 1 : 0, ch: p.channel ? 1 : 0, cm: this.t < p.charmUntil ? 1 : 0, ob: p.orbit && this.t < p.orbit.until ? { a: r2(p.orbit.a0 + p.orbit.w * (this.t - p.orbit.t0)), w: p.orbit.w, n: p.orbit.n, r: p.orbit.r } : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
+        ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, sl: this._stealthed(p) ? 1 : 0, ch: p.channel ? 1 : 0, cm: this.t < p.charmUntil ? 1 : 0, tt: p.tether && this.t < p.tether.until ? p.tether.by : 0, rv: p.stunned ? r2(Math.max(0, p.stunUntil - this.t)) : 0, ob: p.orbit && this.t < p.orbit.until ? { a: r2(p.orbit.a0 + p.orbit.w * (this.t - p.orbit.t0)), w: p.orbit.w, n: p.orbit.n, r: p.orbit.r } : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
         sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
       });
     }

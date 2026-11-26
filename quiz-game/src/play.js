@@ -158,6 +158,8 @@ socket.on('state', (s) => {
   const p = s.players.find((x) => x.id === me.token);
   if (!p) return;
   showAmmo(p);
+  document.body.classList.toggle('dead', !!p.st);
+  const dm = $('#deathMsg'); dm.hidden = !p.st; if (p.st) dm.textContent = `${Math.ceil(p.rv)}초 뒤 부활합니다`;
   ultBtn.style.setProperty('--f', p.ul); ultBtn.classList.toggle('ready', !!p.ur);
   $('#hp').style.width = `${(p.hp / p.mhp) * 100}%`;
   $('#rg').style.width = `${(p.rg / p.mrg) * 100}%`;

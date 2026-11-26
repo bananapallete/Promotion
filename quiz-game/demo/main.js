@@ -36,6 +36,8 @@ window.__world = scene; // 테스트용 접근
 scene.focusId = ME; // 크리티컬 화면 흔들림은 내가 때리거나 맞았을 때만
 let follow = true;
 let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
+let deadT = 0; // 쓰러지면 0→1 (0.5초에 걸쳐): 줌인 + 흑백
+const deathMsg = document.getElementById('deathMsg');
 let ultAt = -1e9; // 내가 궁극기를 쓴 시각 (카메라 줌인용)
 const ultZoom = () => { // 0.15초에 확 들어갔다가 0.75초 유지, 0.5초에 걸쳐 돌아옴 → 0~1
   const t = (performance.now() - ultAt) / 1000, e = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
@@ -49,7 +51,11 @@ scene.onFrame = (sc, dt) => {
     // 세로 화면은 폭 16.5칸, 가로 화면은 폭 24칸이 보이도록 (1칸 = 몸 폭 1개)
     runT = Math.max(0, Math.min(1, runT + (v.p.a === 'run' ? dt : -dt) / 400));
     const ease = runT < 0.5 ? 4 * runT ** 3 : 1 - (-2 * runT + 2) ** 3 / 2; // 이즈 인/아웃
-    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom())); // 달리면 1.3배 줌 아웃, 궁극기를 쓰면 1.22배 줌인
+    const dead = !!v.p.st; deadT = Math.max(0, Math.min(1, deadT + (dead ? dt : -dt) / 500));
+    const de = deadT < 0.5 ? 4 * deadT ** 3 : 1 - (-2 * deadT + 2) ** 3 / 2;
+    cam.setZoom((w / ((h > w ? 16.5 : 24) * BU * (1 + 0.3 * ease))) * (1 + 0.22 * ultZoom()) * (1 + 0.45 * de)); // 달리면 1.3배 줌 아웃, 궁극기는 1.22배, 쓰러지면 1.45배 줌인
+    document.body.classList.toggle('dead', dead);
+    deathMsg.hidden = !dead; if (dead) deathMsg.textContent = `${Math.ceil(v.p.rv)}초 뒤 부활합니다`;
     cam.centerOn(v.x, v.y - 30);
   } else {
     cam.setZoom(Math.min(w / WORLD_W, h / WORLD_H));

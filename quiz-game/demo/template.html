@@ -60,6 +60,9 @@
   body.hideui #uiToggle { opacity: .4; }
   /* 상단에는 캐릭터 바와 설정 버튼만: 내 상태 패널은 숨기고, 문제 배너는 아래 가운데로, UI 숨김 버튼은 왼쪽 아래 모서리로 */
   #me { display: none; }
+  #deathMsg { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 30; font: 900 30px/1.2 system-ui, 'Noto Sans KR', sans-serif; color: #fff; text-shadow: 0 0 4px #000, 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000; pointer-events: none; white-space: nowrap; }
+  body.dead #game canvas { filter: grayscale(1) contrast(1.05); }
+  #game canvas { transition: filter .35s; }
   #top { top: auto; bottom: max(14px, env(safe-area-inset-bottom, 0px)); left: 50%; right: auto; transform: translateX(-50%); width: min(44vw, 520px); padding: 0; }
   #uiToggle { top: auto; right: auto; left: max(10px, env(safe-area-inset-left, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); width: 36px; height: 28px; font-size: 11px; opacity: .55; }
   /* 상단 UI 숨김: 캐릭터 바, 내 상태·문제 배너, 단계 표시, 테스트 패널. 조작 버튼과 맵은 그대로 */
@@ -101,6 +104,7 @@
   #pickgo:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #4d7226; }
 </style>
 
+<div id="deathMsg" hidden></div>
 <div id="pick"><div class="box"><div id="pickroot"></div><button id="pickgo" type="button">시작</button></div></div>
 <div id="charbar"></div>
 <div id="stage">

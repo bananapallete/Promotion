@@ -513,3 +513,20 @@ export function beamFx(scene, e, BU) {
   }, 6100);
   if (scene.focusId === e.id) scene.cameras.main.shake(120, 0.004);
 }
+
+// ---------- 혀 올가미: 개구리와 묶인 적을 잇는 혀 (매 프레임 다시 그림) ----------
+export function tetherLines(scene, now) {
+  const g = scene.tetherGfx || (scene.tetherGfx = scene.add.graphics().setDepth(5001));
+  g.clear();
+  for (const v of scene.views.values()) {
+    const f = v.p.tt ? scene.views.get(v.p.tt) : null;
+    if (!f) continue;
+    const x0 = f.x, y0 = f.y - 0.5 * 48, x1 = v.x, y1 = v.y - 0.5 * 48, n = Math.max(2, Math.floor(Math.hypot(x1 - x0, y1 - y0) / 8));
+    for (let i = 0; i <= n; i++) { // 도트 혀가 살짝 출렁임
+      const t = i / n, w = Math.sin(t * 9 + now / 90) * 3 * Math.sin(t * Math.PI), px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t + w;
+      g.fillStyle(0x14122b, 1).fillRect(Math.round((px - 5) / 2) * 2, Math.round((py - 5) / 2) * 2, 10, 10);
+      g.fillStyle(0xff6f91, 1).fillRect(Math.round((px - 3) / 2) * 2, Math.round((py - 3) / 2) * 2, 6, 6);
+    }
+    g.fillStyle(0x14122b, 1).fillRect(x1 - 8, y1 - 8, 16, 16).fillStyle(0xff6f91, 1).fillRect(x1 - 5, y1 - 5, 10, 10); // 붙잡힌 쪽 끝
+  }
+}

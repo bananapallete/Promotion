@@ -411,7 +411,12 @@
         "radius": 0.3,
         "art": "spark"
       },
-      "fx": "spark"
+      "fx": "spark",
+      "charm": {
+        "stacks": 3,
+        "window": 5,
+        "sec": 2
+      }
     },
     "pickupRadius": 2.0,
     "ammo": {
@@ -419,7 +424,7 @@
       "reload": 1.5
     },
     "role": "ranged",
-    "atkInfo": "반짝 연사",
+    "atkInfo": "반짝 연사, 3번 맞으면 매혹",
     "ult": {
       "name": "매혹",
       "need": 90,
@@ -830,10 +835,13 @@
     "ult": {
       "name": "혀 올가미",
       "need": 90,
-      "type": "pull",
+      "type": "tether",
       "radius": 5,
-      "dmg": 4,
-      "root": 1,
+      "n": 3,
+      "sec": 4,
+      "len": 3,
+      "resist": 0.35,
+      "pull": 2.5,
       "range": 5
     }
   },

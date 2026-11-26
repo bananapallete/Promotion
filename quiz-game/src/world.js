@@ -5,8 +5,8 @@ import { CoinLayer } from './coins.js';
 import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
-import { burstFx, hitFx, meleeFx, muzzleFx, ultBanner } from './fx.js';
-import { auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
+import { burstFx, hitFx, meleeFx, muzzleFx } from './fx.js';
+import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, objectTexture, TILE } from './mapArt.js';
@@ -214,7 +214,7 @@ export class WorldScene extends Phaser.Scene {
     const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 임시 모습: 스프라이트가 오면 tint를 지운다
     if (tint) sprite.setTint(tint);
     sprite.play(`${p.s}-idle`);
-    const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '17px', color: '#1f2d3a', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
+    const name = this.add.text(0, 0, (p.b ? '🤖 ' : '') + p.n, { fontFamily: 'sans-serif', fontSize: '22px', color: '#1f2d3a', fontStyle: '900', stroke: '#ffffff', strokeThickness: 5 }).setOrigin(0.5, 1); // 이름: 굵게 22px
     const bar = this.add.graphics();
     const shoe = this.add.image(0, 0, 'item-shoe').setScale(1.5).setVisible(false);
     const status = this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '18px', color: '#c0392b', fontStyle: 'bold', stroke: '#ffffff', strokeThickness: 4 }).setOrigin(0.5, 1);
@@ -229,9 +229,10 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     const v = this.views.get(e.id);
     if (e.e === 'ult' && v) {
-      ultBanner(this, v, e.name, BU);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
+    } else if (e.e === 'tetherStart') {
+      shockRing(this, { x: e.x, y: e.y, r: 2 }, BU, 'pink');
     } else if (e.e === 'charm') {
       shockRing(this, { x: e.x, y: e.y, r: e.r }, BU, 'pink');
     } else if (e.e === 'snipeAim') {
@@ -308,6 +309,7 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     this._drawTelegraph(now);
     this.uzl.update(now);
+    tetherLines(this, now);
     this.wallLayer.update(now);
     const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
@@ -344,10 +346,10 @@ export class WorldScene extends Phaser.Scene {
 
       // 체력바 + 이름: 하트 + 칸 나뉜 바 (내 것은 크게, 남의 것은 작게)
       const me = p.id === this.focusId, sz = me ? 1 : 0.72;
-      const bw = 1.9 * BU * sz, bh = Math.round(14 * sz), bd = me ? 3 : 2;
+      const bw = 1.9 * BU * sz * (me ? 0.8 : 1), bh = Math.round(14 * sz * (me ? 0.7 : 1)), bd = 2; // 내 바: 가로 20%·세로 30% 줄임
       // 머리 위 UI는 캐릭터의 실제 머리 꼭대기 위에 쌓는다 (내 게이지가 아래로 늘어나도 캐릭터를 가리지 않게 전체를 위로 올림)
       const headPx = (SPRITE.anchor[1] - (BOUNDS[p.s] ?? 20)) * SPR_SCALE * (v.zsCur ?? (p.zs || 1));
-      const gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) : 0, below = gauges ? 7 + gauges * 5 + (gauges - 1) * 7 + 2 : 0;
+      const GH = 3.5, GG = 5, gauges = me ? (p.mam ? 1 : 0) + (p.mrg ? 1 : 0) : 0, below = gauges ? GG + gauges * GH + (gauges - 1) * GG + 2 : 0;
       const by = v.y - headPx - 10 - below - bh - bd;
       const bx0 = v.x - bw / 2; // 바 왼쪽 끝
       const bx = v.x;
@@ -360,17 +362,17 @@ export class WorldScene extends Phaser.Scene {
       for (let i = 1; i < 5; i++) v.bar.fillStyle(THEME.ink, 0.8).fillRect(bx0 + (bw * i) / 5 - 1, by, 2, bh); // 5칸 눈금
       v.shoe.setVisible(p.sp > 0).setPosition(bx0 + bw + 14, by + bh / 2).setDepth(v.y + 2).setAlpha(p.sp < 1 ? 0.5 + 0.5 * Math.sin(now / 60) : 1); // 신발 효과 중
       if (me) { // 탄창 · 대쉬 게이지는 내 것만 (빔프로젝터엔 내 캐릭터가 없어서 안 나옴)
-        const h = 5, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 2, y0 - 2, w + 4, h + 4).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
-        let y0 = by + bh + 7;
+        const h = GH, bar2 = (x0, y0, w, f, col) => v.bar.fillStyle(THEME.ink, 1).fillRect(x0 - 1.5, y0 - 1.5, w + 3, h + 3).fillStyle(THEME.hpEmpty, 1).fillRect(x0, y0, w, h).fillStyle(col, 1).fillRect(x0, y0, w * f, h);
+        let y0 = by + bh + GG;
         if (p.mam) { // 탄창: 가득 = 주황, 장전 중인 칸은 차오름
           const gap = 4, sw = (bw - gap * (p.mam - 1)) / p.mam;
           for (let i = 0; i < p.mam; i++) bar2(bx0 + i * (sw + gap), y0, sw, i < p.am ? 1 : i === p.am ? p.amf : 0, THEME.ammo);
-          y0 += h + 7;
+          y0 += h + GG;
         }
-        if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + 7; } // 대쉬 쿨타임 / 달리기 게이지
+        if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + GG; } // 대쉬 쿨타임 / 달리기 게이지
       }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1);
-      v.status.setText(p.st ? '기절!' : p.rt ? '스턴' : '').setPosition(bx, by - 32).setDepth(v.y + 1);
+      v.status.setText('').setPosition(bx, by - 32).setDepth(v.y + 1); // 상태이상 글자는 쓰지 않음
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨
       const bk = Math.max(0, 1 - (now - v.bump) / 250);
       v.coinIcon.setVisible(shown > 0).setPosition(bx0 + bw + (p.sp > 0 ? 40 : 18), by + 7).setDepth(v.y + 1).setScale(1.5 * (1 + 0.45 * bk));
