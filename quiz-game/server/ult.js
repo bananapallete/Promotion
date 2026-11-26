@@ -180,15 +180,22 @@ const RUN = {
     g.projectiles.set(id, { id, ult: true, owner: p.id, art: 'wave', dmgMin: u.dmg, dmgMax: u.dmg, knock: 0, root: u.root, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * u.speed, vy: dy * u.speed, speed: u.speed, travel: 0, maxDist: u.range, radius: u.width / 2, pierce: true, hit: new Set() });
   },
 
-  magnet(g, p, u) { // 맵의 동전을 전부 내가 줍고, 잠깐 빨라짐
+  magnet(g, p, u) { // 반경 안의 맵 동전은 전부, 다른 사람이 든 동전은 한 명당 최대 steal개를 흡수하고 잠깐 빨라짐
     let n = 0;
+    const R = u.radius ?? 8, near = (o) => Math.hypot(o.x - p.x, o.y - p.y) <= R;
+    for (const o of g._enemies(p)) { // 든 동전 흡수: 동전을 주울 때와 같은 모션(상대 자리에서 떠올라 내 머리 위로)
+      const k = Math.min(u.steal ?? 4, o.coins);
+      if (k <= 0 || !near(o)) continue;
+      o.coins -= k; p.coins += k; n += k;
+      for (let i = 0; i < k; i++) g.events.push({ e: 'coinGet', id: ++g.coinSeq, by: p.id, x: r2(o.x + (Math.random() - 0.5) * 0.6), y: r2(o.y + (Math.random() - 0.5) * 0.6) });
+    }
     for (const c of [...g.coins.values()]) {
-      if (g.t < c.readyAt) continue;
+      if (g.t < c.readyAt || !near(c)) continue;
       g.coins.delete(c.id); p.coins += 1; n++;
       g.events.push({ e: 'coinGet', id: c.id, by: p.id, x: r2(c.x), y: r2(c.y) });
     }
     RUN.buff(g, p, { sec: u.sec, spd: u.spd });
-    g.events.push({ e: 'magnet', id: p.id, x: r2(p.x), y: r2(p.y), n });
+    g.events.push({ e: 'magnet', id: p.id, x: r2(p.x), y: r2(p.y), r: R, n });
   },
 
   chain(g, p, u, dx, dy, near) { // 가까운 상대 뒤로 순간이동해서 hits연타, 마지막은 큰 일격

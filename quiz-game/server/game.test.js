@@ -937,15 +937,20 @@ test('해일(귀상어): 폭이 넓은 파도가 줄 선 상대를 모두 맞히
   assert.ok(B.rootUntil > 0);
 });
 
-test('보물 탐지(래브라도): 맵의 동전을 전부 줍는다', () => {
-  const { g, A } = duo('labrador', 'blue');
+test('보물 탐지(래브라도): 반경 8칸 안의 맵 동전과, 사람이 든 동전(한 명당 최대 4개)을 흡수한다', () => {
+  const { g, A, B } = duo('labrador', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' }), D = g.join({ token: 'd', name: 'D', charId: 'blue' });
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 14; C.y = 10; D.x = 30; D.y = 10;
+  B.coins = 9; C.coins = 2; D.coins = 5; // D는 멀리 있음
   g.coinsSpawned = 0; g.coinClock = -1e9;
-  g.spawnCoin(35, 18); g.spawnCoin(3, 3); g.spawnCoin(20, 10);
-  run(g, 0.5);
-  const before = A.coins;
-  A.ult = A.cfg.ult.need; g.ult('a', null);
-  assert.equal(A.coins - before, 3);
-  assert.equal(g.coins.size, 0);
+  g.spawnCoin(13, 12); g.spawnCoin(35, 18); g.spawnCoin(3, 3); // 가까운 1개, 먼 2개
+  run(g, 0.5); g.events = [];
+  const before = A.coins; A.ult = A.cfg.ult.need; g.ult('a', null);
+  assert.equal(A.coins - before, 1 + 4 + 2, '맵 1 + B에게 4 + C에게 2');
+  assert.equal(B.coins, 5); assert.equal(C.coins, 0); assert.equal(D.coins, 5, '먼 사람은 그대로');
+  assert.equal(g.coins.size, 2, '먼 동전 2개는 남음');
+  const gets = g.events.filter((e) => e.e === 'coinGet');
+  assert.equal(gets.length, 7, '습득 모션 이벤트'); assert.equal(new Set(gets.map((e) => e.id)).size, 7, '이벤트 id는 모두 다름');
   assert.ok(A.buff && A.buff.spd > 1);
 });
 

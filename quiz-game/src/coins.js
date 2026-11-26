@@ -86,7 +86,7 @@ export class CoinLayer {
 
   _get(e) {
     let v = this.views.get(e.id);
-    if (!v) v = this._make(e.id, e.x, e.y, 'idle');
+    if (!v) { v = this._make(e.id, e.x, e.y, 'idle'); this._place(v, e.x, e.y, 0, 1, 1); } // 맵에 없던 동전(남이 들고 있던 것)도 그 자리에서 시작
     v.mode = 'get';
     v.sprite.setAlpha(1);
     v.by = e.by;

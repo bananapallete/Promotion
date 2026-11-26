@@ -244,7 +244,7 @@ export class WorldScene extends Phaser.Scene {
     } else if (e.e === 'blink') {
       blink(this, e, BU);
     } else if (e.e === 'magnet') {
-      shockRing(this, { x: e.x, y: e.y, r: 3 }, BU);
+      shockRing(this, { x: e.x, y: e.y, r: e.r || 3 }, BU);
     } else if (e.e === 'wallHit') {
       hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
