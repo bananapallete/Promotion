@@ -721,6 +721,27 @@ export class Game {
     }
   }
 
+  /** best 둘레 2.5칸 안에 (p 말고) 몇 명이 붙어 있는지 */
+  _crowd(best, p) {
+    let n = 0;
+    for (const o of this.players.values()) if (o !== p && o !== best && o.connected && Math.hypot(o.x - best.x, o.y - best.y) < 2.5) n++;
+    return n;
+  }
+
+  /** 봇이 노릴 줍기 대상: 가까운 동전(줍을 수 있는 것), 체력이 80% 미만이면 하트, 신발 */
+  _botPickup(p, range) {
+    let best = null, bd = range;
+    const consider = (o, w = 1) => { const d = Math.hypot(o.x - p.x, o.y - p.y) * w; if (d < bd) { best = { x: o.x, y: o.y, d: Math.hypot(o.x - p.x, o.y - p.y) }; bd = d; } };
+    const claimed = (c) => { // 한 동전을 노리는 봇은 가장 가까운 2마리까지만 (모두 한 동전에 몰리지 않게)
+      let closer = 0, d0 = Math.hypot(c.x - p.x, c.y - p.y);
+      for (const o of this.players.values()) if (o !== p && o.isBot && o.botMode !== 'idle' && o.connected && !o.stunned && Math.hypot(c.x - o.x, c.y - o.y) < d0) closer++;
+      return closer >= 2;
+    };
+    for (const c of this.coins.values()) if (this.t >= c.readyAt && !claimed(c)) consider(c);
+    for (const it of this.items.values()) if (it.k === 'shoe' || p.hp < p.cfg.hp * 0.8) consider(it, 0.8);
+    return best;
+  }
+
   // ---------- 더미 봇 ----------
   _botThink(p) {
     if (p.stunned || p.botMode === 'idle') { p.input = { mx: 0, my: 0, run: false }; return; }
@@ -743,6 +764,9 @@ export class Game {
       return;
     }
     const humans = this._enemies(p).filter((o) => !this._stealthed(o)); // 공격형 봇은 봇끼리도 서로 공격 (은신한 상대는 못 찾음)
+    p.ai.greed ??= Math.random(); // 봇마다 욕심(0 싸움꾼 ~ 1 수집가): 동전을 노리는 거리와 쫓아가는 거리가 달라 흩어진다
+    const loot = p.botMode === 'idle' ? null : this._botPickup(p, p.botMode === 'aggro' ? 8 + p.ai.greed * 6 : 6); // 동전·아이템 줍기
+    const toward = (t, d) => { p.input = { mx: (t.x - p.x) / d, my: (t.y - p.y) / d, run: false }; };
     if (p.botMode === 'aggro' && this.botsCanAttack && humans.length) {
       let best = null, bd = Infinity;
       for (const o of humans) {
@@ -751,13 +775,23 @@ export class Game {
       }
       const a = p.cfg.attack;
       const hold = a.type === 'melee' ? a.range * 0.85 : a.range * 0.8;
-      if (bd > hold) {
-        p.input = { mx: (best.x - p.x) / bd, my: (best.y - p.y) / bd, run: false };
-      } else {
-        p.input = { mx: 0, my: 0, run: false };
-      }
-      if (bd <= a.range) this._tryAttack(p, null);
+      const onBreak = this.t < (p.ai.breakUntil ?? 0); // 한 상대와 오래 붙어 싸웠으면 잠깐 떨어져서 줍거나 돌아다님
+      if (bd <= a.range && !onBreak) { // 사거리 안: 때리되, 발 앞에 동전이 있으면 줍는다
+        if (!p.ai.fightAt || this.t - p.ai.lastFight > 2) p.ai.fightAt = this.t; // 새 교전 시작
+        p.ai.lastFight = this.t;
+        if (this.t - p.ai.fightAt > 3.5 + p.ai.greed * 3) { p.ai.breakUntil = this.t + 3 + rand(0, 2); p.ai.fightAt = 0; }
+        if (loot && loot.d < 3) toward(loot, loot.d); else p.input = bd > hold ? { mx: (best.x - p.x) / bd, my: (best.y - p.y) / bd, run: false } : { mx: 0, my: 0, run: false };
+        this._tryAttack(p, null);
+      } else if (loot) { toward(loot, loot.d); if (bd <= a.range) this._tryAttack(p, null); } // 싸울 상대가 멀거나 쉬는 중이면 동전부터 (지나가며 맞으면 때림)
+      else if (!onBreak && bd <= 2.5 + (1 - p.ai.greed) * 2.5 && this._crowd(best, p) < 2) toward(best, bd); // 가까울 때만, 이미 둘 넘게 붙어 있는 상대는 쫓지 않음
+      else { p.input = null; if (bd <= a.range) this._tryAttack(p, null); } // 아래 배회로
       if (ultReady(p) && bd <= (p.cfg.ult.range ?? 5)) this.ult(p.id, null);
+      if (p.input) return;
+    } else if (loot) { toward(loot, loot.d); return; }
+    if (p.botMode === 'aggro') { // 할 일이 없으면 맵 곳곳을 돌아다님 (한곳에 모여 있지 않도록)
+      let w = p.ai.wp;
+      if (!w || this.t > w.until || Math.hypot(w.x - p.x, w.y - p.y) < 1) w = p.ai.wp = { x: rand(2, MAP.w - 2), y: rand(2, MAP.h - 2), until: this.t + rand(4, 8) };
+      toward(w, Math.max(0.1, Math.hypot(w.x - p.x, w.y - p.y)));
       return;
     }
     // 배회

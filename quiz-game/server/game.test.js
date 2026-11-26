@@ -267,7 +267,7 @@ test('더미 봇(공격형)이 가까운 참가자를 때린다 (공격 허용�
   const p = g.join({ token: 'a', name: 'A', charId: 'blue' });
   p.x = 20; p.y = 10;
   const bot = g.addBot('aggro', 'blue');
-  bot.x = 25; bot.y = 10;
+  bot.x = 23; bot.y = 10; // 3칸: 봇이 쫓아가는 거리(3.5~7칸) 안
   run(g, 5);
   assert.ok(p.hp < p.cfg.hp || p.stunned || g.t < p.invUntil, `hp=${p.hp}`);
 });
@@ -1168,4 +1168,28 @@ test('보물 탐지: 래브라도 여럿이 겹쳐 써도 동전이 늘거나 �
     g.events = []; // 스냅샷을 만들지 않으니 직접 비움
     assert.equal(labs.reduce((s, p) => s + p.coins, 0) + g.coins.size, total, '동전 합계 유지');
   }
+});
+
+test('공격형 봇: 싸울 상대가 멀면 동전부터 줍고, 사거리 안에 상대가 있으면 때리면서 발 앞의 동전도 줍는다', () => {
+  const g = new Game(chars, quizzes); g.botsCanAttack = true;
+  const bot = g.addBot('aggro', 'blue'), foe = g.join({ token: 'f', name: 'F', charId: 'blue' });
+  bot.x = 10; bot.y = 10; foe.x = 25; foe.y = 20; // 상대는 멀다
+  g.coinsSpawned = 0; g.coinClock = -1e9; g.spawnCoin(15, 10);
+  run(g, 4);
+  assert.equal(bot.coins, 1, '동전을 주움');
+  // 사거리 안에서 싸우는 중에도 발 앞 동전을 줍는다
+  bot.x = 10; bot.y = 10; foe.x = 11; foe.y = 10; foe.hp = 9999; foe.cfg = { ...foe.cfg, hp: 9999 }; g.spawnCoin(10, 12.2);
+  run(g, 3);
+  assert.equal(bot.coins, 2, '싸우면서 동전도 줍음');
+});
+
+test('공격형 봇 15마리: 한곳에 뭉치지 않고 동전을 주우러 흩어진다', () => {
+  const g = new Game(chars, quizzes); g.botsCanAttack = true;
+  const ids = Object.keys(chars);
+  const bots = Array.from({ length: 15 }, (_, i) => g.addBot('aggro', ids[i % ids.length]));
+  g.join({ token: 'h', name: 'H', charId: 'blue' }); // 사람 한 명 (동전 시계가 돌도록)
+  g.coinsSpawned = 0; g.coinClock = 0;
+  run(g, 60);
+  const got = bots.reduce((s, b) => s + b.coins, 0);
+  assert.ok(got >= 8, `60초 동안 봇이 주운 동전 ${got}`);
 });
