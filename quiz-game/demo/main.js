@@ -28,7 +28,7 @@ window.__game = game;
 game.join({ token: ME, name: '나', charId: 'blue' });
 const charIds = Object.keys(characters);
 game.botsCanAttack = true; // 기본 봇은 서로 싸우고, 문제 시간에는 구역으로 이동
-for (let i = 0; i < 15; i++) game.addBot('aggro', charIds[Math.floor(Math.random() * charIds.length)]);
+game.addSandbags(); // 우측 샌드백 봇 (돌아다니는 봇은 설정 패널의 '공격봇 15')
 
 let last = performance.now();
 setInterval(() => {
@@ -107,7 +107,7 @@ setInterval(() => {
 }, 50);
 
 function hud(s) {
-  renderQuizTop(qtop, s, s.players.map((x) => ({ id: x.id, name: x.n, score: x.sc })).sort((a, b) => b.score - a.score), ME);
+  renderQuizTop(qtop, s, s.players.filter((x) => !x.b).map((x) => ({ id: x.id, name: x.n, score: x.sc })).sort((a, b) => b.score - a.score), ME);
   const p = s.players.find((x) => x.id === ME);
   if (p) {
     showAmmo(p);

@@ -223,8 +223,19 @@ export class Game {
 
   gather() {
     for (const p of this.players.values()) {
+      if (p.home) continue; // 샌드백은 제자리
       [p.x, p.y] = spawnPos();
       p.kx = p.ky = 0;
+    }
+  }
+
+  /** 대기실 우측 샌드백: 가만히 서 있는 봇(idle)과, 가까이 오면 때리고 구역을 벗어나면 제자리로 돌아가는 봇(guard) */
+  addSandbags(only) {
+    const ids = only || Object.keys(this.characters).filter((c) => this.characters[c].attack.type === 'melee' || this.characters[c].role !== 'support');
+    const spots = [['idle', 35, 4], ['idle', 36, 8], ['idle', 35, 12], ['idle', 36, 16], ['idle', 35, 19], ['guard', 31, 6], ['guard', 32, 11], ['guard', 31, 16], ['guard', 37, 11]];
+    for (const [mode, x, y] of spots) {
+      const p = this.addBot(mode, ids[Math.floor(Math.random() * ids.length)]);
+      p.name = '샌드백'; p.x = x; p.y = y; p.home = { x, y };
     }
   }
 
@@ -271,7 +282,7 @@ export class Game {
       return { id: r.p.id, name: r.p.name, team: r.p.team || 0, zone: r.zone, correct: r.correct, rank: r.correct ? r.rank : null, gain, dropped };
     });
     for (const p of this.players.values()) { // 문제를 푸는 봇: 틀린 구역에 있으면 동전을 떨어뜨림
-      if (p.isBot && p.botMode !== 'idle' && p.connected && zoneAt(q.type, p.x, p.y) !== q.answer) this._dropCoins(p);
+      if (p.isBot && p.botMode !== 'idle' && !p.home && p.connected && zoneAt(q.type, p.x, p.y) !== q.answer) this._dropCoins(p);
     }
     this.reveal = { answer: q.answer, results, dist };
     this.locked = null;
@@ -878,8 +889,24 @@ export class Game {
   }
 
   // ---------- 더미 봇 ----------
+  /** 샌드백 지킴이: 사람이 sense 안으로 오면 쫓아가 때리고, 집에서 leash보다 멀어지면 포기하고 제자리로 돌아간다 */
+  _guardThink(p) {
+    const h = p.home, a = p.cfg.attack, SENSE = 4.5, LEASH = 6.5, dh = Math.hypot(h.x - p.x, h.y - p.y);
+    let best = null, bd = Infinity;
+    for (const o of this.players.values()) { if (o.isBot || !o.connected || o.stunned || this._stealthed(o)) continue; const d = Math.hypot(o.x - p.x, o.y - p.y), dt = Math.hypot(o.x - h.x, o.y - h.y); if (dt <= SENSE + 1 && d < bd) { best = o; bd = d; } }
+    if (p.ai.returning && dh < 0.5) p.ai.returning = false;
+    if (dh > LEASH) p.ai.returning = true; // 구역을 벗어나면 제자리로
+    if (best && !p.ai.returning) {
+      const hold = a.type === 'melee' ? a.range * 0.85 : a.range * 0.8;
+      p.input = bd > hold ? { mx: (best.x - p.x) / bd, my: (best.y - p.y) / bd, run: false } : { mx: 0, my: 0, run: false };
+      if (bd <= a.range) this._tryAttack(p, null);
+      if (ultReady(p) && bd <= (p.cfg.ult.range ?? 5)) this.ult(p.id, null);
+    } else p.input = dh > 0.4 ? { mx: (h.x - p.x) / dh, my: (h.y - p.y) / dh, run: false } : { mx: 0, my: 0, run: false };
+  }
+
   _botThink(p) {
     if (p.stunned || p.botMode === 'idle') { p.input = { mx: 0, my: 0, run: false }; return; }
+    if (p.botMode === 'guard') { this._guardThink(p); return; }
     // 문제를 푸는 중: 무작위로 구역을 하나 골라 그 안의 한 지점으로 걸어감
     if (this.phase === PHASE.MOVING && this.question) { // 정지 봇만 빼고 모두 문제를 풂 (공격형은 가는 길에 사거리 안의 상대를 때림)
       const q = this.question;

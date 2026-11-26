@@ -1195,6 +1195,18 @@ test('테스트용 충전 배수: 사람만 궁극기 충전이 2배(자동·타
   } finally { ULT_CHARGE.humanMul = 1; }
 });
 
+test('샌드백: 가만히 선 봇과, 가까이 오면 때리고 구역을 벗어나면 제자리로 돌아가는 봇. 모이기·문제에 끌려가지 않는다', () => {
+  const g = new Game(chars, quizzes); g.addSandbags(['blue']); // 캐릭터를 고정해 결과가 흔들리지 않게
+  const sand = [...g.players.values()].filter((p) => p.home), guards = sand.filter((p) => p.botMode === 'guard'), idle = sand.filter((p) => p.botMode === 'idle');
+  assert.ok(idle.length >= 3 && guards.length >= 2 && sand.every((p) => p.x >= 30), '우측에 배치');
+  const a = g.join({ token: 'a', name: 'A', charId: 'blue' }), gd = guards[0]; gd.cfg = { ...gd.cfg, hp: 9999 }; gd.hp = 9999;
+  a.x = gd.home.x - 3; a.y = gd.home.y; a.hp = 999; a.invUntil = 1e9; const before = a.hp; run(g, 3);
+  assert.ok(Math.abs(a.x - gd.x) < 4, '가까이 오면 쫓아옴'); void before;
+  a.x = 5; a.y = 5; run(g, 10); assert.ok(Math.hypot(gd.x - gd.home.x, gd.y - gd.home.y) < 1, '멀어지면 제자리로 복귀');
+  g.gather(); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '모이기에 안 끌려감');
+  g.ask(1); run(g, 20); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '문제 중에도 제자리');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
