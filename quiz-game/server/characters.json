@@ -824,14 +824,22 @@
       "interval": 0.5,
       "range": 3.5,
       "knockback": 0,
-      "canAttackWhileRunning": true
+      "canAttackWhileRunning": true,
+      "tether": {
+        "stacks": 3,
+        "window": 5,
+        "sec": 3,
+        "len": 3,
+        "resist": 0.5,
+        "pull": 2.5
+      }
     },
     "ammo": {
       "max": 3,
       "reload": 1.5
     },
     "role": "speed",
-    "atkInfo": "혀로 끌어당김",
+    "atkInfo": "혀 공격, 3번 맞으면 혀로 묶임",
     "ult": {
       "name": "혀 올가미",
       "need": 90,

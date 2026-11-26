@@ -96,7 +96,7 @@ export class Game {
       kx: 0, ky: 0, // 밀림 속도
       face: 1,
       input: { mx: 0, my: 0, run: false },
-      tether: null, charmStack: null, charmUntil: 0, charmBy: null, channel: null, orbit: null, ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
+      tether: null, tetherStack: null, charmStack: null, charmUntil: 0, charmBy: null, channel: null, orbit: null, ult: 0, buff: null, rootUntil: 0, slowUntil: 0, slowMul: 1, shield: null, burnUntil: 0, burnBy: null, burnNext: 0, speedUntil: 0, hp: cfg.hp, stunned: false, stunUntil: 0, invUntil: 0,
       runGauge: cfg.runGauge, exhausted: false, running: false, moving: false,
       nextAttackAt: 0, attackUntil: 0, comboStep: 0, lastAttackAt: -99,
       skillReadyAt: 0, dash: null, dashPass: false,
@@ -528,6 +528,12 @@ export class Game {
       charge(target, dmg * CHARGE_TAKEN);
       if (target.cfg.role === 'tank' && target.cfg.ult) charge(target, target.cfg.ult.need * ULT_CHARGE.tankHit); // 탱커는 맞을 때마다 2% 더
       const cm = attacker.cfg?.attack?.charm; // 평타 중첩 매혹(공주): window초 안에 stacks번 맞으면 sec초 매혹
+      const tt = attacker.cfg?.attack?.tether; // 평타 중첩 혀 묶임(개구리): window초 안에 stacks번 맞으면 sec초 묶임
+      if (tt) {
+        const st = target.tetherStack && this.t < target.tetherStack.until ? target.tetherStack : (target.tetherStack = { n: 0, until: 0 });
+        st.n++; st.until = this.t + tt.window;
+        if (st.n >= tt.stacks) { target.tetherStack = null; target.tether = { by: attacker.id, until: this.t + tt.sec, len: tt.len, resist: tt.resist, pull: tt.pull }; this.events.push({ e: 'tetherStart', id: attacker.id, x: r2(target.x), y: r2(target.y), r: 1 }); }
+      }
       if (cm) {
         const st = target.charmStack && this.t < target.charmStack.until ? target.charmStack : (target.charmStack = { n: 0, until: 0 });
         st.n++; st.until = this.t + cm.window;

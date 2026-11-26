@@ -808,6 +808,8 @@ test('맵 장식물: 규칙 배치 — 구역 밖, 중앙 통로엔 꽃만, 나�
   assert.ok(trees.length >= 18, `나무 ${trees.length}`);
   for (let i = 0; i < trees.length; i++) for (let j = i + 1; j < trees.length; j++) assert.ok(Math.hypot(trees[i].x - trees[j].x, trees[i].y - trees[j].y) >= 2.4, '나무끼리 겹침');
   assert.ok(trees.every((t) => t.x < 8 || t.x > MAP.w - 8 || t.y < 3), '나무는 가장자리 줄에만');
+  const { TREE_H } = await import('../shared/mapObjects.js');
+  assert.ok(trees.every((t) => t.y >= TREE_H && t.x >= 1.2 && t.x <= MAP.w - 1.2), '잎이 맵 밖으로 잘리지 않음');
   assert.deepEqual([...new Set(trees.map((t) => t.v))].sort(), [0, 1, 2], '세 가지 모양을 돌려 씀');
 });
 
@@ -1132,4 +1134,16 @@ test('궁극기 충전: 가만히 있어도 초당 3%, 탱커는 맞을 때마�
   A.cfg = { ...A.cfg, ult: { name: 't', need: 1000, type: 'burst', radius: 3, dmg: 10, knock: 0 } };
   A.ult = 1000; g.ult('a', null);
   assert.ok(Math.abs(A.ult - 10) < 0.01, `궁극기로 때린 충전 ${A.ult}`);
+});
+
+test('개구리 평타 3번 맞으면 혀로 묶인다 (궁극기와 같은 효과, 3초)', () => {
+  const { g, A, B } = duo('frog', 'blue');
+  A.x = 10; A.y = 10; B.x = 12.5; B.y = 10; B.invUntil = 0;
+  for (let i = 0; i < 2; i++) { A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null); }
+  assert.equal(B.tether, null, '2번까지는 안 묶임');
+  A.nextAttackAt = 0; A.ammoF = 3; g.attack('a', null);
+  assert.ok(B.tether && B.tether.by === 'a' && B.tether.until - g.t > 2.5, '3번째에 묶임');
+  assert.equal(g.snapshot().players.find((p) => p.id === 'b').tt, 'a');
+  g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 1);
+  assert.ok(B.x - x < B.cfg.walkSpeed * 0.6, `멀어지는 이동이 느림 ${B.x - x}`);
 });
