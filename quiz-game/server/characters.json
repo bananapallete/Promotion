@@ -1199,7 +1199,7 @@
       "radiusY": 2.85,
       "intro": 2,
       "shield": 0.5,
-      "move": 0.1
+      "move": 0.3
     }
   },
   "nurse": {

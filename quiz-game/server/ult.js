@@ -102,14 +102,14 @@ const RUN = {
   },
 
   stage(g, p, u, dx, dy) { // 무대 펼치기: 제자리에서 sec초 춤추며, 무대(반경) 안 적에게 tick마다 피해 (소수 피해는 모아서 1 이상이 될 때 적용)
-    const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: u.move ?? 0, armor: true }, x = p.x, y = p.y, ry = u.radiusY ?? u.radius; // armor: 춤추는 동안 밀리지 않음
+    const intro = u.intro ?? 0, ch = p.channel = { until: g.t + intro + u.sec, move: u.move ?? 0, armor: true }, ry = u.radiusY ?? u.radius; // 무대는 디바를 따라 움직임 // armor: 춤추는 동안 밀리지 않음
     p.shield = { until: g.t + intro + u.sec, mul: u.shield ?? 0.5 }; // 받는 피해 감소
-    g.events.push({ e: 'stageOpen', id: p.id, x: r2(x), y: r2(y), r: u.radius, ry, sec: u.sec, intro });
+    g.events.push({ e: 'stageOpen', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius, ry, sec: u.sec, intro });
     for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {
       later(g, intro + i * u.tick, () => { // 무대가 완성된 뒤(intro) 피해 시작
         if (p.channel !== ch || p.stunned) return;
         for (const o of g._enemies(p)) {
-          if (o.stunned || ((o.x - x) / (u.radius + o.cfg.radius)) ** 2 + ((o.y - y) / (ry + o.cfg.radius)) ** 2 > 1) continue; // 가로 radius × 세로 radiusY 타원
+          if (o.stunned || ((o.x - p.x) / (u.radius + o.cfg.radius)) ** 2 + ((o.y - p.y) / (ry + o.cfg.radius)) ** 2 > 1) continue; // 가로 radius × 세로 radiusY 타원
           o.stageAcc = (o.stageAcc || 0) + u.dmg;
           if (o.stageAcc >= 1) { const n = Math.floor(o.stageAcc); o.stageAcc -= n; hit(g, o, p, n, 0, dx, dy, u.fx); }
         }

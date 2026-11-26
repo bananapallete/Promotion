@@ -1109,14 +1109,15 @@ test('무대 펼치기(크림슨 디바): 제자리에서 5초 춤추며 무대 
   const { g, A, B } = duo('gaga', 'blue');
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 20; C.y = 10; B.invUntil = 0; C.invUntil = 0; A.ult = A.cfg.ult.need;
-  g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null); const hp = B.hp, x0 = A.x;
+  g.ult('a', null); const hp = B.hp;
   run(g, 1.8); assert.equal(B.hp, hp, '무대 등장(2초) 동안은 피해 없음');
   run(g, 2.8); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
-  assert.ok(A.x - x0 > 0.3 && A.x - x0 < 2.2, `춤추는 동안 이동속도 10% (${(A.x - x0).toFixed(2)}칸)`);
   run(g, 3);
   const total = hp - B.hp; assert.ok(total >= 28 && total <= 40, `5초 합계 ${total}`);
   assert.equal(C.hp, C.cfg.hp, '무대 밖은 안 맞음');
   const after = B.hp; run(g, 1); assert.equal(B.hp, after, '끝나면 피해 멈춤');
+  const { g: g3, A: M } = duo('gaga', 'blue'); M.x = 10; M.y = 10; M.ult = M.cfg.ult.need; g3.ult('a', null); g3.setInput('a', { mx: 1, my: 0, run: false }); run(g3, 3);
+  assert.ok(M.x - 10 > 1 && M.x - 10 < 4, `춤추며 이동속도 30% (${(M.x - 10).toFixed(2)}칸/3초)`);
   const { g: g2, A: D, B: E } = duo('gaga', 'blue'); D.x = 10; D.y = 10; E.x = 12; E.y = 10; E.invUntil = 0; D.ult = D.cfg.ult.need; g2.ult('a', null); run(g2, 0.5); g2._applyHit(D, E, 10, 5, -1, 0, 'punch');
   assert.ok(Math.abs(D.kx) < 1e-6 && D.hp >= D.cfg.hp - 5, '춤추는 동안 밀리지 않고 받는 피해 50%');
 });
@@ -1204,7 +1205,7 @@ test('샌드백: 가만히 선 봇과, 가까이 오면 때리고 구역을 벗�
   assert.ok(Math.abs(a.x - gd.x) < 4, '가까이 오면 쫓아옴'); void before;
   a.x = 5; a.y = 5; run(g, 10); assert.ok(Math.hypot(gd.x - gd.home.x, gd.y - gd.home.y) < 1, '멀어지면 제자리로 복귀');
   g.gather(); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '모이기에 안 끌려감');
-  g.ask(1); run(g, 20); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '문제 중에도 제자리');
+  a.x = 5; a.y = 5; g.ask(1); run(g, 20); assert.ok(sand.every((p) => Math.hypot(p.x - p.home.x, p.y - p.home.y) < 1.5), '문제 중에도 제자리');
 });
 
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {

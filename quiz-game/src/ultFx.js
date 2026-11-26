@@ -659,44 +659,52 @@ function stageTex(scene, Rx, Ry) { // 가로 Rx × 세로 Ry(도트) 타원 무�
   });
 }
 export function stageFx(scene, e, BU) {
-  const x = e.x * BU, y = e.y * BU, R = e.r * BU, RY = (e.ry ?? e.r) * BU, intro = (e.intro || 0) * 1000, total = intro + e.sec * 1000;
-  const floor = scene.add.image(x, y, stageTex(scene, Math.max(6, Math.round(R / DOT)), Math.max(4, Math.round(RY / DOT)))).setScale(DOT).setDepth(-43).setAlpha(0);
+  const R = e.r * BU, RY = (e.ry ?? e.r) * BU, intro = (e.intro || 0) * 1000, total = intro + e.sec * 1000, owner = scene.views.get(e.id);
+  const pos = () => (owner ? { x: owner.x, y: owner.y } : { x: e.x * BU, y: e.y * BU }); // 무대는 디바를 따라 움직임
+  const parts = []; const add = (o, ox, oy) => { o.ox = ox; o.oy = oy; parts.push(o); return o; };
+  const LIGHT = [0xff9a9a, 0xffb8b8, 0xffd6d6]; // 바닥 효과는 연한 붉은색으로 통일
+  // 깊이: 바닥 < 바닥 효과(FXD) < 무대 장비(FXD+1) < 조명(FXD+2) < 캐릭터
+  const floor = add(scene.add.image(0, 0, stageTex(scene, Math.max(6, Math.round(R / DOT)), Math.max(4, Math.round(RY / DOT)))).setScale(DOT).setDepth(-43).setAlpha(0), 0, 0);
   scene.tweens.add({ targets: floor, alpha: 1, duration: Math.max(200, intro * 0.5) });
-  // 앰프 음파: 공격 주기(0.33초)마다 앰프에서 범위 안쪽으로 퍼지는 호
-  const waveEvt = scene.time.addEvent({ delay: 333, startAt: -intro, loop: true, callback: () => {
-    for (const sx of [-1, 1]) {
-      const g = scene.add.graphics().setDepth(FXD), ax = x + sx * R * 0.8, ay = y + RY * 0.1;
-      scene.tweens.addCounter({ from: 0, to: 1, duration: 330, onUpdate: (tw) => { const u = tw.getValue(); g.clear(); for (let k = 0; k < 2; k++) { const r = (0.25 + u * 0.9 + k * 0.28) * R * 0.5; for (let a = -1.0; a <= 1.0; a += 0.16) { const ang = (sx > 0 ? Math.PI : 0) + a; sq(g, ax + Math.cos(ang) * r, ay + Math.sin(ang) * r * 0.8, 6, k ? 0xff7a8a : 0xffffff, (1 - u) * 0.85); } } }, onComplete: () => g.destroy() });
-    }
-  } });
-  scene.time.delayedCall(total, () => waveEvt.remove());
-  scene.tweens.add({ targets: floor, alpha: 0, delay: total - 400, duration: 400, onComplete: () => floor.destroy() });
-  // 무대 장비(받은 도트): 등장 모션(intro) 동안 무대가 한 단계씩 지어지고, 완성되면 배경·앰프·조명이 움직임 (도트 크기 = PX)
-  const by = y + RY * 0.4, parts = [floor]; // 무대 배경의 아랫단을 범위 중앙(디바 발밑) 바로 뒤에 둬서, 디바가 무대 위에서 춤추는 것처럼 보임
-  const build = scene.add.sprite(x, by, 'diva-intro', 0).setOrigin(0.5, 1).setScale(DOT).setDepth(FXD - 1); parts.push(build);
-  const back = scene.add.image(x, by, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD - 1).setVisible(false); parts.push(back);
+  const stageH = 56 * DOT, baseY = RY * 0.4; // 무대 배경의 아랫단을 발 바로 뒤에: 디바가 무대 위에서 춤춤
+  const build = add(scene.add.sprite(0, 0, 'diva-intro', 0).setOrigin(0.5, 1).setScale(DOT).setDepth(FXD + 1), 0, baseY);
+  const back = add(scene.add.image(0, 0, 'diva-stage').setOrigin(0.5, 1).setScale(DOT, 0).setDepth(FXD + 1).setVisible(false), 0, baseY);
   if (intro) {
     const n = 6, step = (intro * 0.85) / n;
     for (let i = 1; i < n; i++) scene.time.delayedCall(step * i, () => build.active && build.setFrame(i));
     scene.time.delayedCall(intro * 0.85, () => { if (!back.active) return; build.setVisible(false); back.setVisible(true); scene.tweens.add({ targets: back, scaleY: DOT, duration: intro * 0.15, ease: 'Back.easeOut' }); });
   } else { build.setVisible(false); back.setVisible(true).setScale(DOT); }
+  const spotScale = (stageH + baseY + RY * 0.55) / (22 * 1); // 조명: 무대 맨 위에서 무대 아래 바닥까지 비춤
   for (const sx of [-1, 1]) {
-    const amp = scene.add.sprite(x + sx * R * 0.8, y + RY * 0.35, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD - 1).setAlpha(0).play('diva-amp'); parts.push(amp);
-    const spot = scene.add.sprite(x + sx * R * 0.5, by - 40 * DOT * 0.5, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, DOT).setDepth(FXD + 1).setAlpha(0).play('diva-spot'); parts.push(spot);
-    scene.tweens.add({ targets: [amp, spot], alpha: { from: 0, to: 0.95 }, delay: intro, duration: 250 });
+    const amp = add(scene.add.sprite(0, 0, 'diva-amp').setOrigin(0.5, 1).setScale(DOT * sx, DOT).setDepth(FXD + 1).setAlpha(0).play('diva-amp'), sx * R * 0.8, RY * 0.35);
+    const spot = add(scene.add.sprite(0, 0, 'diva-spot').setOrigin(0.5, 0).setScale(DOT, spotScale).setDepth(FXD + 2).setAlpha(0).play('diva-spot'), sx * R * 0.5, baseY - stageH + 8 * DOT);
+    scene.tweens.add({ targets: amp, alpha: { from: 0, to: 0.95 }, delay: intro, duration: 250 });
+    scene.tweens.add({ targets: spot, alpha: { from: 0, to: 0.55 }, delay: intro, duration: 250 });
   }
-  scene.tweens.add({ targets: parts.filter((o) => o !== floor), alpha: 0, delay: total - 400, duration: 400, onComplete: () => parts.forEach((o) => o.destroy()) });
-  const BEAM = [0xff7ad9, 0x7ad9ff, 0xffe27a];
-  drawLoop(scene, total, (g, u) => {
-    const tt = u * total / 1000, t = Math.max(0, tt - intro / 1000), fade = Math.min(1, (total / 1000 - tt) / 0.4), open = Math.min(1, t / 0.25) * (tt >= intro / 1000 ? 1 : 0);
-    if (!open) return;
-    for (let k = 0; k < 3; k++) { // 도는 조명
-      const a = t * 1.1 + k * 2.094; // 춤 속도에 맞춰 절반 속도
-      for (let r = 12; r < R * open; r += 9) { const px = x + Math.cos(a) * r * 1, py = y + Math.sin(a) * r * (RY / R); sq(g, px, py, 6 + r / 40, BEAM[k], 0.55 * fade); }
+  const follow = () => { const { x, y } = pos(); for (const o of parts) if (o.active) o.setPosition(x + o.ox, y + o.oy); };
+  scene.events.on('update', follow); follow();
+  scene.tweens.add({ targets: parts.filter((o) => o !== floor), alpha: 0, delay: total - 400, duration: 400 });
+  scene.tweens.add({ targets: floor, alpha: 0, delay: total - 400, duration: 400 });
+  scene.time.delayedCall(total, () => { scene.events.off('update', follow); parts.forEach((o) => o.destroy()); });
+  // 앰프 음파: 공격 주기(0.33초)마다 앰프에서 범위 안쪽으로 퍼지는 호
+  const waveEvt = scene.time.addEvent({ delay: 333, startAt: -intro, loop: true, callback: () => {
+    const { x, y } = pos();
+    for (const sx of [-1, 1]) {
+      const g = scene.add.graphics().setDepth(FXD), ax = x + sx * R * 0.8, ay = y + RY * 0.1;
+      scene.tweens.addCounter({ from: 0, to: 1, duration: 330, onUpdate: (tw) => { const u = tw.getValue(); g.clear(); for (let k = 0; k < 2; k++) { const r = (0.25 + u * 0.9 + k * 0.28) * R * 0.5; for (let a = -1.0; a <= 1.0; a += 0.16) { const ang = (sx > 0 ? Math.PI : 0) + a; sq(g, ax + Math.cos(ang) * r, ay + Math.sin(ang) * r * 0.8, 6, k ? LIGHT[0] : LIGHT[2], (1 - u) * 0.85); } } }, onComplete: () => g.destroy() });
     }
-    for (let i = 0; i < 16; i++) { // 반짝임·떠오르는 음표 점
+  } });
+  scene.time.delayedCall(total, () => waveEvt.remove());
+  drawLoop(scene, total, (g, u) => {
+    const { x, y } = pos(), tt = u * total / 1000, t = Math.max(0, tt - intro / 1000), fade = Math.min(1, (total / 1000 - tt) / 0.4), open = Math.min(1, t / 0.25) * (tt >= intro / 1000 ? 1 : 0);
+    if (!open) return;
+    for (let k = 0; k < 3; k++) { // 도는 조명(바닥): 연한 붉은색
+      const a = t * 1.1 + k * 2.094;
+      for (let r = 12; r < R * open; r += 9) sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * (RY / R), 6 + r / 40, LIGHT[k], 0.5 * fade);
+    }
+    for (let i = 0; i < 16; i++) { // 반짝임·떠오르는 점
       const ph = (i * 0.37 + t * 0.45) % 1, a = i * 2.4 + 0.5, r = 0.25 + 0.7 * ((i * 53) % 10) / 10;
-      sq(g, x + Math.cos(a) * R * r, y + Math.sin(a) * RY * r - ph * 50, 6, BEAM[i % 3], (1 - ph) * fade);
+      sq(g, x + Math.cos(a) * R * r, y + Math.sin(a) * RY * r - ph * 50, 6, LIGHT[i % 3], (1 - ph) * fade);
     }
   }, FXD);
 }
