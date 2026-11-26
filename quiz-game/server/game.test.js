@@ -1047,13 +1047,29 @@ test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타�
   assert.equal(A.x, xe, '5초 뒤엔 멈춤');
 });
 
-test('걷는 동안 자동 조준 대상이 뒤에 있으면 그쪽을 바라본다 (달리면 가는 방향)', () => {
+test('공격 모션이 재생되는 동안만 뒤의 자동 조준 대상을 바라본다 (평소엔 가는 방향, 달리면 가는 방향)', () => {
   const { g, A, B } = duo('blue', 'blue');
   A.x = 20; A.y = 10; B.x = 19; B.y = 10; // 대상은 왼쪽 1칸
   g.setInput('a', { mx: 1, my: 0, run: false }); run(g, 0.05);
-  assert.equal(A.face, -1, '앞(오른쪽)으로 걸어도 뒤의 대상을 봄');
-  A.x = 20; B.x = 19; g.setInput('a', { mx: 1, my: 0, run: true }); run(g, 0.05);
-  assert.equal(A.face, 1, '달릴 땐 가는 방향');
+  assert.equal(A.face, 1, '공격 안 할 땐 가는 방향');
+  g.attack('a', { x: 1, y: 0 }); g.setInput('a', { mx: 1, my: 0, run: false }); A.x = 20; B.x = 19; A.attackUntil = g.t + 0.3; run(g, 0.05);
+  assert.equal(A.face, -1, '공격 모션 중엔 뒤의 대상을 봄');
+  run(g, 0.5); A.x = 20; B.x = 19; g.setInput('a', { mx: 1, my: 0, run: false }); run(g, 0.05);
+  assert.equal(A.face, 1, '모션이 끝나면 다시 가는 방향');
+});
+
+test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
+  const { g, A, B } = duo('brawler', 'blue');
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;
+  g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null);
+  const x0 = A.x, hp = B.hp; run(g, 1);
+  assert.ok(A.x > x0 + 3, '앞으로 전진');
+  assert.ok(B.hp < hp, '앞의 적을 연타');
+  g.setInput('a', { mx: 0, my: 0, run: false }); run(g, 1.5);
+  assert.ok(A.x > x0 + 6, '입력이 없어도 계속 전진');
+  run(g, 3.2);
+  const xe = A.x; run(g, 0.5);
+  assert.equal(A.x, xe, '5초 뒤엔 멈춤');
 });
 
 test('궁극기 직접 조준: 드래그 방향·거리대로 중심이 정해진다', () => {

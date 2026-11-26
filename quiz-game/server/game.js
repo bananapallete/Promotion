@@ -657,7 +657,7 @@ export class Game {
       const speed = (running ? c.runSpeed : c.walkSpeed) * slow * boost * (p.channel ? p.channel.move : 1) * (this.t < p.charmUntil ? 0.5 : 1) * (this.t < p.slowUntil ? p.slowMul : 1); // 진흙에 느려짐
       vx = p.input.mx * speed;
       vy = p.input.my * speed;
-      const lock = running ? null : this._aimDir(p, null, c.attack.range).near; // 자동 조준 대상이 있으면 걷는 동안에도 그쪽을 바라봄 (달리면 가는 방향)
+      const lock = !running && this.t < p.attackUntil ? this._aimDir(p, null, c.attack.range).near : null; // 공격 모션이 재생되는 동안만 자동 조준 대상을 바라봄 (평소엔 가는 방향)
       if (lock && Math.abs(lock.x - p.x) > 0.15) p.face = lock.x > p.x ? 1 : -1;
       else if (Math.abs(p.input.mx) > 0.1) p.face = p.input.mx > 0 ? 1 : -1;
     }
