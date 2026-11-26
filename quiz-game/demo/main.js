@@ -228,12 +228,19 @@ function pickChar(id) {
 $('#charbtn').addEventListener('click', () => { picker.setValue(game.players.get(ME).charId); $('#pick').hidden = false; });
 // 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
 const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, ultUrl: (id) => ultUrls[`../public/ult/${id}.mp4`], selected: charIds[0] });
-const nameInput = $('#pickname'), NAME_KEY = 'quiz_demo_name';
-try { nameInput.value = localStorage.getItem(NAME_KEY) || ''; } catch { /* 저장 불가 환경 */ }
-$('#pickgo').addEventListener('click', () => {
-  const nm = nameInput.value.trim(); // 닉네임은 꼭 필요
-  if (!nm) { nameInput.classList.remove('bad'); void nameInput.offsetWidth; nameInput.classList.add('bad'); nameInput.focus(); return; }
+// 첫 화면: 닉네임 모달 → 캐릭터 선택. 저장된 닉네임이 있으면 모달은 건너뜀
+const NAME_KEY = 'quiz_demo_name', nickIn = $('#nickin');
+const saved = (() => { try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; } })();
+if (saved) game.players.get(ME).name = saved; else { $('#pick').hidden = true; $('#nick').hidden = false; setTimeout(() => nickIn.focus(), 50); }
+function nickDone() {
+  const nm = nickIn.value.trim();
+  if (!nm) { nickIn.classList.remove('bad'); void nickIn.offsetWidth; nickIn.classList.add('bad'); return; }
   game.players.get(ME).name = nm; try { localStorage.setItem(NAME_KEY, nm); } catch { /* 저장 불가 */ }
+  nickIn.blur(); $('#nick').hidden = true; $('#pick').hidden = false; // blur: 모바일 키보드·확대 해제
+}
+$('#nickgo').addEventListener('click', nickDone);
+nickIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') nickDone(); });
+$('#pickgo').addEventListener('click', () => {
   pickChar(picker.value()); $('#pick').hidden = true; $('#pickgo').textContent = '선택'; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;

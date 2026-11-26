@@ -15,8 +15,9 @@ const browser = await chromium.launch();
 for (const id of ids.filter((i) => !only.length || only.includes(i))) {
   rmSync(tmp, { recursive: true, force: true });
   const ctx = await browser.newContext({ viewport: { width: 800, height: 450 }, recordVideo: { dir: tmp, size: { width: 800, height: 450 } } });
+  await ctx.addInitScript(() => localStorage.setItem('quiz_demo_name', '나')); // 닉네임 모달 건너뜀
   const t0 = Date.now(), page = await ctx.newPage();
-  await page.goto('file://' + demo); await page.waitForTimeout(600); await page.fill('#pickname', '나'); await page.click('#pickgo'); await page.waitForTimeout(500);
+  await page.goto('file://' + demo); await page.waitForTimeout(600); await page.click('#pickgo'); await page.waitForTimeout(500);
   await page.addStyleTag({ content: 'body > *:not(#stage):not(script){display:none!important}' });
   await page.evaluate((id) => {
     const g = window.__game, w = window.__world;
