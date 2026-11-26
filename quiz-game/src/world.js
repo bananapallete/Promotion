@@ -6,7 +6,7 @@ import { ItemLayer } from './items.js';
 import { THEME } from '../shared/theme.js';
 import BOUNDS from '../shared/spriteBounds.json';
 import { burstFx, dmgText, hitFx, meleeFx, muzzleFx } from './fx.js';
-import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
+import { tetherLines, auraOff, auraTick, beamFx, blink, burnTick, dashFx, fireRing, heartTick, meteorFall, orbitTick, orcDust, quake, shockRing, snipeAim, speedLines, spinFx, tongues, rangeDisc, UltZoneLayer, WallLayer, warn as warnFx } from './ultFx.js';
 import { ProjectileLayer } from './projectiles.js';
 import sprites from '../shared/sprites.json';
 import { buildFloor, MAT_MARGIN, matTexture, OBJ_PAD, objectTexture, TILE } from './mapArt.js';
@@ -251,6 +251,7 @@ export class WorldScene extends Phaser.Scene {
     } else if (e.e === 'wallHit') {
       hitFx(this, { x: e.x, y: e.y, fx: 'stone' }, BU);
     } else if (e.e === 'burst') {
+      if (e.r) rangeDisc(this, e.x, e.y, e.r, BU);
       if (e.fx === 'stomp') quake(this, e, BU); else if (e.fx === 'shock') shockRing(this, e, BU); else if (e.fx === 'flurry') spinFx(this, e, BU); else if (e.fx === 'crescent') fireRing(this, e, BU); else burstFx(this, e, BU);
     } else if (e.e === 'warn') {
       warnFx(this, e, BU);

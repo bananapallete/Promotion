@@ -73,6 +73,15 @@ export function explosion(scene, x, y, R, kind, BU) {
 
 // ---------- 예고(디더링 원이 차오름) ----------
 const WARN_LV = [0.3, 0.55, 0.8, 1];
+/** 궁극기 유효 범위: 테두리 없는 연한 원형 도트 면. 이펙트와 별개로 '여기까지 맞는다'만 보여 준다 */
+function rangeTex(scene, Rd) {
+  return tex(scene, `ux-range-${Rd}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => disc(put, w / 2, w / 2, Rd, [255, 255, 255], 255));
+}
+export function rangeDisc(scene, x, y, R, BU, ms = 600) {
+  const Rd = Math.max(6, Math.round((R * BU) / DOT));
+  const sp = scene.add.image(x * BU, y * BU, rangeTex(scene, Rd)).setScale(DOT).setDepth(-43).setAlpha(0.2);
+  scene.tweens.add({ targets: sp, alpha: 0, delay: ms * 0.4, duration: ms * 0.6, onComplete: () => sp.destroy() });
+}
 function warnTex(scene, Rd, lv) {
   return tex(scene, `ux-warn-${Rd}-${lv}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => {
     for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
