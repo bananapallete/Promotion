@@ -1147,3 +1147,19 @@ test('개구리 평타 3번 맞으면 혀로 묶인다 (궁극기와 같은 효�
   g.setInput('b', { mx: 1, my: 0, run: false }); const x = B.x; run(g, 1);
   assert.ok(B.x - x < B.cfg.walkSpeed * 0.6, `멀어지는 이동이 느림 ${B.x - x}`);
 });
+
+test('보물 탐지: 래브라도 여럿이 겹쳐 써도 동전이 늘거나 줄지 않고, 같은 동전을 두 번 줍지 않는다', () => {
+  const g = new Game(chars, quizzes);
+  const labs = Array.from({ length: 6 }, (_, i) => g.join({ token: `l${i}`, name: `L${i}`, charId: 'labrador' }));
+  labs.forEach((p, i) => { p.x = 8 + i * 4; p.y = 10 + (i % 2) * 3; });
+  g.coinsSpawned = 0; g.coinClock = -1e9;
+  let total = 0; for (let i = 0; i < 30; i++) { g.spawnCoin(2 + (i * 7) % 36, 2 + (i * 5) % 18); total++; }
+  g.update(0.5);
+  const seen = new Set();
+  for (let t = 0; t < 300; t++) {
+    if (t % 5 === 0) { const p = labs[(t / 5) % labs.length]; p.ult = p.cfg.ult.need; g.ult(p.id, null); }
+    g.update(1 / 30);
+    for (const e of g.events) if (e.e === 'coinGet') { assert.ok(!seen.has(e.id), `동전 ${e.id} 중복 습득`); seen.add(e.id); }
+    assert.equal(labs.reduce((s, p) => s + p.coins, 0) + g.coins.size, total, '동전 합계 유지');
+  }
+});
