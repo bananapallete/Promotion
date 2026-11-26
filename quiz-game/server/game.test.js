@@ -1103,8 +1103,8 @@ test('별 궤도(단발 소녀): 몸 주위를 도는 별이 가까운 상대를
   assert.equal(A.orbit, null, '5초 뒤 끝');
 });
 
-test('저격(파란티 원거리): 조준하는 동안 못 움직이고, 뒤에 일직선 관통 빔', () => {
-  const { g, A, B } = duo('blue_ranged', 'blue');
+test('저격(엘프): 조준하는 동안 못 움직이고, 뒤에 일직선 관통 빔', () => {
+  const { g, A, B } = duo('elf', 'blue');
   const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
   A.x = 5; A.y = 10; B.x = 9; B.y = 10; C.x = 14; C.y = 10.3;
   A.ult = A.cfg.ult.need; g.ult('a', { x: 1, y: 0 });

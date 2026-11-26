@@ -97,13 +97,16 @@
     "role": "ranged",
     "atkInfo": "화살 연사",
     "ult": {
-      "name": "저격",
+      "name": "화살비",
       "need": 100,
-      "type": "snipe",
-      "aim": 1.2,
-      "range": 14,
-      "width": 1,
-      "dmg": 18
+      "type": "zone",
+      "center": "target",
+      "range": 6.5,
+      "radius": 2.6,
+      "sec": 3,
+      "tick": 0.5,
+      "dmg": 4,
+      "kind": "rain"
     }
   },
   "elf": {
@@ -143,16 +146,13 @@
     "role": "ranged",
     "atkInfo": "멀리 쏘는 화살",
     "ult": {
-      "name": "화살비",
+      "name": "저격",
       "need": 100,
-      "type": "zone",
-      "center": "target",
-      "range": 6.5,
-      "radius": 2.6,
-      "sec": 3,
-      "tick": 0.5,
-      "dmg": 4,
-      "kind": "rain"
+      "type": "snipe",
+      "aim": 1.2,
+      "range": 14,
+      "width": 1,
+      "dmg": 18
     }
   },
   "witch": {
