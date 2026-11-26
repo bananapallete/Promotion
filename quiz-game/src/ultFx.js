@@ -271,9 +271,16 @@ export class UltZoneLayer {
       for (const it of v.items) {
         if (v.mud) it.sp.setTexture(`ux-mud-${Math.floor((now / 260 + it.ph * 4) % 4)}`).setPosition(it.x, it.y).setAlpha(fade * 0.95);
         else if (v.fire) it.sp.setTexture(`ux-flame-${Math.floor(now / 110 + it.ph * 4) % 4}`).setPosition(it.x, it.y).setAlpha(fade);
-        else { // 화살이 위에서 떨어져 꽂히면 사라짐
-          const u = (now / 520 + it.ph) % 1;
-          it.sp.setTexture(`ux-rain-${Math.floor(now / 120) % 4}`).setPosition(it.x, it.y - (1 - u) * 150).setAlpha(Math.min(1, u * 5) * (u > 0.9 ? 0.3 : 1) * fade);
+        else { // 화살: 대각선 위에서 빠르게 내려꽂힘(0.18초) → 꽂힌 채 0.5초 동안 투명해지며 사라짐 → 쉬었다가 다른 자리에 다시
+          if (it.t0 === undefined) { it.t0 = now + it.ph * 900; it.gap = 100 + Math.random() * 500; }
+          let T = now - it.t0;
+          if (T >= 680 + it.gap) { // 다음 화살: 범위 안 새 자리
+            const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * v.z.r * this.bu * 0.92;
+            it.x = v.z.x * this.bu + Math.cos(a) * r; it.y = v.z.y * this.bu + Math.sin(a) * r * 0.9; it.t0 = now; it.gap = 100 + Math.random() * 500; T = 0;
+          }
+          if (T < 0 || T >= 680) { it.sp.setAlpha(0); continue; }
+          const f = Math.min(1, T / 180), k = (1 - f * f);
+          it.sp.setTexture(`ux-rain-${Math.floor(now / 120) % 4}`).setFlipY(true).setAngle(31).setPosition(it.x + 85 * k, it.y - 150 * k).setDepth(FXD).setAlpha((T < 180 ? 1 : 1 - (T - 180) / 500) * fade);
         }
       }
     }
