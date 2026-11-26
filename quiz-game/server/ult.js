@@ -6,7 +6,7 @@ import { ULT_CHARGE } from '../shared/constants.js';
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood', 'stage', 'boomerang'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood', 'stage', 'boomerang', 'rally'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -77,6 +77,15 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  rally(g, p, u) { // 간호사: 주변 아군 강화 + 주변 적 침묵(공격·궁극기 불가, 채널링·시전 끊김)
+    for (const o of g._allies(p)) if (Math.hypot(o.x - p.x, o.y - p.y) <= u.radius) o.buff = { until: g.t + u.sec, spd: u.spd ?? 1, atk: u.atk ?? 1, dmg: u.dmg ?? 1, crit: false, pickup: 1, stealth: false, assassin: 0 };
+    for (const o of g._enemies(p)) {
+      if (o.stunned || Math.hypot(o.x - p.x, o.y - p.y) > u.radius + o.cfg.radius) continue;
+      o.silenceUntil = g.t + u.sec; o.channel = null; o.flurry = null; o.orbit = null; o.windup = null; // 하던 시전을 끊음
+    }
+    g.events.push({ e: 'silence', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius });
   },
 
   boomerang(g, p, u) { // 부메랑 난사: 8방향으로 기본 공격 부메랑을 volleys번 연달아
@@ -204,6 +213,7 @@ const RUN = {
 
   charm(g, p, u) { // 범위 안 상대가 나에게 걸어오고, 그동안 공격·스킬을 못 씀
     for (const o of g._enemies(p)) if (Math.hypot(o.x - p.x, o.y - p.y) <= u.radius) { o.charmUntil = g.t + u.sec; o.charmBy = p.id; }
+    for (const o of g._allies(p)) if (Math.hypot(o.x - p.x, o.y - p.y) <= u.radius) o.regen = { until: g.t + u.healSec, rate: (o.cfg.hp * u.healPct) / u.healSec, acc: 0 }; // 아군은 매혹 대신 3초에 걸쳐 회복
     g.events.push({ e: 'charm', id: p.id, x: r2(p.x), y: r2(p.y), r: u.radius });
   },
 
@@ -326,7 +336,7 @@ const RUN = {
     if (fly) g.events.push({ e: 'bhThrow', x0: r2(p.x), y0: r2(p.y), x: r2(c.x), y: r2(c.y), sec: fly, art });
     later(g, fly, () => {
       const id = ++g.zoneSeq;
-      g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg ?? 0, kind: u.kind, art, slow: u.slow, heal: u.heal, shield: u.shield });
+      g.zonesU.set(id, { id, owner: p.id, x: c.x, y: c.y, r: u.radius, until: g.t + u.sec, next: g.t + (u.tick ?? 0.5), tick: u.tick ?? 0.5, dmg: u.dmg ?? 0, kind: u.kind, art, slow: u.slow, heal: u.heal, shield: u.shield, allyShield: u.allyShield });
     });
   },
 };
@@ -391,6 +401,7 @@ export function updateUlts(g) {
         if (heal > 0) { owner.hp += heal; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: owner.id, amount: heal, x: r2(owner.x), y: r2(owner.y) }); }
         owner.shield = { until: g.t + z.tick + 0.3, mul: z.shield ?? 0.5 };
       }
+      if (z.allyShield) for (const o of g._allies(owner)) if (o !== owner && Math.hypot(o.x - z.x, o.y - z.y) <= z.r + o.cfg.radius) o.shield = { until: g.t + z.allyShield, mul: z.shield ?? 0.5 }; // 아군은 진흙 안에 있으면 allyShield초 동안 방어(피해 감소)
     }
   }
   for (const p of g.players.values()) { // 화상: 일정 간격으로 지속 피해

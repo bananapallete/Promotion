@@ -73,6 +73,9 @@ export class Game {
     return this._spawn({ id: token, name: String(name || '이름없음').slice(0, 10), charId, isBot: false });
   }
 
+  /** 나와 같은 팀(팀이 있을 때만) 접속자, 나 포함 */
+  _allies(p) { return p.team ? [...this.players.values()].filter((o) => o.connected && !o.stunned && o.team === p.team) : [p]; }
+
   humans() {
     return [...this.players.values()].filter((p) => !p.isBot);
   }
@@ -278,7 +281,7 @@ export class Game {
   _stealthed(o) { return !!(o.buff && this.t < o.buff.until && o.buff.stealth); }
 
   _enemies(p) {
-    return [...this.players.values()].filter((o) => o !== p && o.connected);
+    return [...this.players.values()].filter((o) => o !== p && o.connected && !(p.team && o.team === p.team)); // 같은 팀은 적이 아님
   }
 
   // 지금 공격을 하면 몇 타째인지, 그 타의 배율과 사거리
@@ -355,7 +358,7 @@ export class Game {
 
   _tryAttack(p, aim) {
     const a = p.cfg.attack;
-    if (this.t < p.nextAttackAt || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
+    if (this.t < p.nextAttackAt || this.t < (p.silenceUntil || 0) || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || p.ammoF < 1) return; // 탄창이 비면 못 쏨
     if (p.running && !a.canAttackWhileRunning) return;
 
     if (a.burst) p.comboStep = 0; // 연타형: 한 번 누르면 항상 1타부터 n타까지
@@ -433,7 +436,7 @@ export class Game {
     if (pr.lob) {
       const L = this._lobLanding(p, { dx, dy, manual: !!(Math.hypot(Number(aim?.x) || 0, Number(aim?.y) || 0) > 0.2), near }, range, aim);
       const dist = Math.hypot(L.x - p.x, L.y - p.y);
-      this.projectiles.set(base.id, { ...base, kind: 'lob', sx: p.x, sy: p.y, tx: L.x, ty: L.y, x: p.x, y: p.y, t0: this.t, T: Math.max(0.15, dist / pr.speed), r: pr.explodeRadius });
+      this.projectiles.set(base.id, { ...base, kind: 'lob', sx: p.x, sy: p.y, tx: L.x, ty: L.y, x: p.x, y: p.y, t0: this.t, T: Math.max(0.15, dist / pr.speed), r: pr.explodeRadius, heal: pr.heal });
     } else {
       this.projectiles.set(base.id, { ...base, kind: 'bolt', x: p.x, y: p.y, dx, dy, vx: dx * pr.speed, vy: dy * pr.speed, speed: pr.speed, travel: 0, maxDist: range, radius: pr.radius, pierce: !!pr.pierce || !!pr.boomerang, hit: new Set(), boom: pr.boomerang ? { ph: 'out', wait: pr.boomerang.wait, until: 0 } : null });
     }
@@ -445,7 +448,7 @@ export class Game {
 
   _updateProjectiles(dt) {
     for (const q of [...this.projectiles.values()]) {
-      const foes = [...this.players.values()].filter((o) => o.connected && o.id !== q.owner);
+      const ownerP = this.players.get(q.owner), foes = [...this.players.values()].filter((o) => o.connected && o.id !== q.owner && !(ownerP?.team && o.team === ownerP.team));
       if (q.kind === 'lob') {
         const u = (this.t - q.t0) / q.T;
         if (u < 1) { q.x = q.sx + (q.tx - q.sx) * u; q.y = q.sy + (q.ty - q.sy) * u; continue; }
@@ -456,6 +459,10 @@ export class Game {
           if (d > q.r + o.cfg.radius) continue;
           const nx = d > 1e-6 ? (o.x - q.tx) / d : 1, ny = d > 1e-6 ? (o.y - q.ty) / d : 0;
           this._applyHit(o, this.players.get(q.owner) || { id: q.owner }, this._projDamage(q), q.knock, nx, ny, q.art);
+        }
+        if (q.heal && ownerP) for (const o of this._allies(ownerP)) { // 간호사: 터지는 범위 안 아군은 회복
+          if (Math.hypot(o.x - q.tx, o.y - q.ty) > q.r + o.cfg.radius) continue;
+          const h = Math.min(o.cfg.hp - o.hp, q.heal); if (h > 0) { o.hp += h; this.events.push({ e: 'itemGet', id: 0, k: 'heart', by: o.id, amount: h, x: r2(o.x), y: r2(o.y) }); }
         }
         continue;
       }
@@ -664,7 +671,7 @@ export class Game {
   // ---------- 궁극기 ----------
   ult(id, aim) {
     const p = this.players.get(id);
-    if (!p || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || p.channel || this._dashing(p) || !ultReady(p)) return false;
+    if (!p || p.stunned || this.t < p.rootUntil || this.t < p.charmUntil || this.t < (p.silenceUntil || 0) || p.channel || this._dashing(p) || !ultReady(p)) return false;
     useUlt(this, p, aim);
     return true;
   }
@@ -735,6 +742,10 @@ export class Game {
     const am = c.ammo; // 탄창 장전: 쏜 직후에도 계속 차오름
     if (am) p.ammoF = Math.min(am.max, p.ammoF + dt / am.reload);
     if (p.stunned) p.dash = null;
+    if (p.regen) { // 회복 효과(예: 공주 응원): 초당 rate만큼 서서히 회복
+      if (this.t >= p.regen.until || p.stunned) p.regen = null;
+      else { p.regen.acc += p.regen.rate * dt; const n = Math.floor(p.regen.acc); if (n >= 1) { p.regen.acc -= n; const h = Math.min(p.cfg.hp - p.hp, n); if (h > 0) { p.hp += h; this.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } } }
+    }
     const dashing = this._dashing(p);
     if (!dashing) p.dash = null;
     p.dashPass = dashing && p.dash.pass;
@@ -939,7 +950,7 @@ export class Game {
         tn: p.cfg.tint || null, zs: buffOf(this, p)?.morph ? 1 : (p.cfg.scale || 1) * (buffOf(this, p)?.scale || 1),
         am: Math.floor(p.ammoF + 1e-9), amf: r2(p.ammoF % 1), mam: p.cfg.ammo?.max ?? 0,
         ul: p.cfg.ult ? r2(p.ult / p.cfg.ult.need) : 0, ur: ultReady(p) ? 1 : 0, ub: buffOf(this, p) ? r2(p.buff.until - this.t) : 0, pr: buffOf(this, p)?.morph === 'phoenix' ? p.cfg.ult.radius : 0, pu: buffOf(this, p)?.morph === 'phoenix' ? r2(1 - (p.buff.until - this.t) / p.cfg.ult.sec) : 0, mo: buffOf(this, p)?.morph === 'phoenix' && p.cfg.ult.sec - (p.buff.until - this.t) < 0.7 ? 1 : 0, sl: this._stealthed(p) ? 1 : 0, ch: p.channel ? 1 : 0, cm: this.t < p.charmUntil ? 1 : 0, tt: p.tether && this.t < p.tether.until ? p.tether.by : 0, rv: p.stunned ? r2(Math.max(0, p.stunUntil - this.t)) : 0, ob: p.orbit && this.t < p.orbit.until ? { a: r2(p.orbit.a0 + p.orbit.w * (this.t - p.orbit.t0)), w: p.orbit.w, n: p.orbit.n, r: p.orbit.r } : 0, bn: this.t < p.burnUntil ? 1 : 0, rt: this.t < p.rootUntil ? 1 : 0,
-        tm: p.team || 0, sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
+        si: this.t < (p.silenceUntil || 0) ? 1 : 0, sd: p.shield && this.t < p.shield.until ? r2(p.shield.until - this.t) : 0, tm: p.team || 0, sc: this.totalScore(p), cn: p.coins, sp: r2(Math.max(0, p.speedUntil - this.t)),
       });
     }
     const q = this.question

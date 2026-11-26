@@ -436,7 +436,9 @@
       "type": "charm",
       "radius": 5,
       "sec": 2.5,
-      "range": 5
+      "range": 5,
+      "healSec": 3,
+      "healPct": 0.4
     }
   },
   "brawler": {
@@ -1038,7 +1040,8 @@
       "slow": 0.5,
       "heal": 3,
       "shield": 0.5,
-      "range": 3
+      "range": 3,
+      "allyShield": 10
     }
   },
   "chicken": {
@@ -1189,5 +1192,55 @@
       "fx": "note"
     },
     "scale": 1.67
+  },
+  "nurse": {
+    "name": "간호사",
+    "sprite": "elf",
+    "tint": "#bdf5e0",
+    "radius": 0.5,
+    "hp": 55,
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 3,
+      "dmgMax": 3,
+      "interval": 0.7,
+      "range": 5,
+      "knockback": 0,
+      "multi": true,
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 8,
+        "lob": true,
+        "explodeRadius": 1.7,
+        "art": "spark",
+        "heal": 4
+      },
+      "fx": "spark"
+    },
+    "ammo": {
+      "max": 3,
+      "reload": 1.8
+    },
+    "role": "support",
+    "atkInfo": "범위 폭발, 아군 회복 · 적 피해",
+    "ult": {
+      "name": "응원과 침묵",
+      "need": 100,
+      "type": "rally",
+      "radius": 4.5,
+      "sec": 6,
+      "spd": 1.2,
+      "atk": 1.3,
+      "dmg": 1.2
+    }
   }
 }

@@ -653,10 +653,10 @@ test('대시 캐릭터는 달리기 입력을 무시하고, 기절하면 돌진�
 
 import { dpsOf, FIGHT_SEC, powerIndex, shotsOf } from './balance.js';
 
-test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 끌어당기는 혀가 있어 15 이상)', () => {
+test('밸런스: 전투력 지수가 17~21.5 안 (개구리는 혀, 서포터는 회복이 있어 15 이상)', () => {
   for (const [id, c] of Object.entries(chars)) {
     const v = powerIndex(c);
-    assert.ok(v >= (id === 'frog' ? 15 : 17) && v <= 21.5, `${c.name}: ${v.toFixed(1)}`);
+    assert.ok(v >= (id === 'frog' || c.role === 'support' ? 15 : 17) && v <= 21.5, `${c.name}: ${v.toFixed(1)}`);
     assert.ok(c.hp >= 30 && c.hp <= 90, `${c.name} 체력`);
   }
 });
@@ -1142,6 +1142,28 @@ test('점수 수정·팀 구성·퀴즈별 방식', () => {
   g.autoTeams(2); assert.deepEqual([...new Set(ps.map((p) => p.team))].sort(), [1, 2]);
   assert.equal(ps.filter((p) => p.team === 1).length, 2, '균형'); assert.equal(g.snapshot().teams.length, 2);
   assert.ok(g.setQuestionMode(1, '팀')); assert.equal(g.questions[0].mode, '팀');
+});
+
+test('아군 효과: 공주는 같은 팀을 3초에 걸쳐 회복시키고(매혹은 적만), 돼지 진흙 안 아군은 10초 방어를 받는다', () => {
+  const { g, A, B } = duo('princess', 'blue'); const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  A.team = 1; B.team = 1; C.team = 2; A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 13; C.y = 10; B.hp = 10; C.hp = 10;
+  A.ult = A.cfg.ult.need; g.ult('a', null); run(g, 0.3);
+  assert.ok(B.charmUntil === 0 || B.charmUntil < g.t, '아군은 매혹 안 됨'); assert.ok(C.charmUntil > g.t, '적은 매혹');
+  run(g, 3.2); assert.ok(B.hp >= 10 + Math.floor(B.cfg.hp * 0.4) - 1, `3초 회복 ${B.hp}`); assert.ok(C.hp <= 10, '적은 회복 안 됨');
+  const { g: g2, A: P, B: Q } = duo('pig', 'blue'); P.team = 1; Q.team = 1; P.x = 10; P.y = 10; Q.x = 11.5; Q.y = 10;
+  P.ult = P.cfg.ult.need; g2.ult('a', null); run(g2, 1);
+  assert.ok(Q.shield && Q.shield.until - g2.t > 8, '아군 방어 10초'); assert.ok(g2.snapshot().players.find((x) => x.id === 'b').sd > 8, '스냅샷 방어 표시');
+});
+
+test('간호사: 평타 폭발이 같은 팀은 회복·적은 피해, 궁극기는 아군 강화 + 적 침묵(공격·궁극 불가, 시전 끊김)', () => {
+  const { g, A, B } = duo('nurse', 'blue'); const C = g.join({ token: 'c', name: 'C', charId: 'orc' });
+  A.team = 1; B.team = 1; C.team = 2; A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 12.5; C.y = 10; B.hp = 10; C.invUntil = 0; const ch = C.hp;
+  g.attack('a', null); run(g, 1.5); // 자동 조준: 가장 가까운 적 위치에 폭발
+  assert.ok(B.hp > 10, '아군 회복'); assert.ok(C.hp < ch, '적 피해');
+  C.channel = { until: g.t + 5, move: 0 }; C.ult = C.cfg.ult.need; A.ult = A.cfg.ult.need; A.x = 11; A.y = 10; g.ult('a', null);
+  assert.ok(g.snapshot().players.find((p) => p.id === 'c').si, '침묵 표시'); assert.equal(C.channel, null, '채널링 끊김');
+  assert.ok(B.buff && B.buff.atk > 1, '아군 강화'); assert.equal(g.ult('c', null), false, '침묵 중 궁극기 불가');
+  const cc = C.nextAttackAt = 0; g.attack('c', null); assert.ok(g.events.filter((e) => e.e === 'atk' && e.id === 'c').length === 0, '침묵 중 공격 불가');
 });
 
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {

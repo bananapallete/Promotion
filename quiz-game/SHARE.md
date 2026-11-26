@@ -15,7 +15,8 @@ cloudflared tunnel --url http://localhost:3000
 - 노트북이 꺼지거나 터미널을 닫으면 끊긴다.
 
 ## B. 항상 켜 두기 (Render 같은 Node 호스팅)
-1. GitHub 저장소를 연결해 Web Service를 만든다 (루트 디렉터리 `quiz-game`).
+0. (가장 쉬운 방법) 저장소 루트의 `render.yaml`을 쓴다: Render에서 New → Blueprint로 이 저장소를 열면 아래 설정이 자동으로 채워진다. `HOST_KEY`만 직접 입력.
+1. 수동이면 GitHub 저장소를 연결해 Web Service를 만든다 (루트 디렉터리 `quiz-game`).
 2. Build: `npm ci && npm run build` · Start: `npm start`
 3. 환경변수: `HOST_KEY`(필수, 진행자 키), `PUBLIC_URL`(발급된 주소)
 4. 웹소켓을 쓰므로 무료 플랜의 "잠들기"로 첫 접속이 느릴 수 있다. 파티 직전에 한 번 열어 둔다.

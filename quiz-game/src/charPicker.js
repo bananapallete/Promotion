@@ -3,8 +3,8 @@ import sprites from '../shared/sprites.json';
 import { RUN_DRAIN, SPRITE } from '../shared/constants.js';
 import { HEART_PALETTE, heartRows, SHOE_PALETTE, SHOE_ROWS, SWORD_ROWS } from '../shared/itemPixels.js';
 
-const TABS = [['all', '전체'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리']];
-const ROLE_NAME = { melee: '근접', tank: '탱커', speed: '스피드', ranged: '원거리' };
+const TABS = [['all', '전체'], ['melee', '근접'], ['tank', '탱커'], ['speed', '스피드'], ['ranged', '원거리'], ['support', '서포터']];
+const ROLE_NAME = { melee: '근접', tank: '탱커', speed: '스피드', ranged: '원거리', support: '서포터' };
 const BLUE = { idle: 4, walk: 7, run: 7, combo: 8, die: 6 }; // sprites.json에 없는 기본 캐릭터
 const CELL = 256;
 
@@ -16,7 +16,7 @@ const CSS = `
 .pk .pk-info{grid-area:i;min-width:0;display:grid;gap:3px;align-content:center}
 .pk .pk-nm{font-size:18px;font-weight:900;line-height:1.05}
 .pk .pk-pill{display:inline-block;padding:1px 9px;border-radius:99px;font-size:10px;font-weight:900;color:#fff;border:2px solid var(--navy);text-shadow:0 1px 0 #0006;margin-right:3px}
-.pk .pk-pill.melee{background:#e0702a}.pk .pk-pill.tank{background:#4a86d9}.pk .pk-pill.speed{background:#4fae55}.pk .pk-pill.ranged{background:#9a62d6}.pk .pk-pill.pk-rec{background:#f0a000}
+.pk .pk-pill.melee{background:#e0702a}.pk .pk-pill.tank{background:#4a86d9}.pk .pk-pill.speed{background:#4fae55}.pk .pk-pill.support{background:#3fb9a0}.pk .pk-tile .pk-dot.support{background:#3fb9a0}.pk .pk-pill.ranged{background:#9a62d6}.pk .pk-pill.pk-rec{background:#f0a000}
 .pk .pk-bars{display:grid;gap:3px;font-size:11px;font-weight:700}
 .pk .pk-stat{display:flex;align-items:center;justify-content:flex-start;gap:4px;white-space:nowrap}
 .pk .pk-stat div{display:flex;align-items:center;gap:3px}

@@ -266,7 +266,7 @@ export class WorldScene extends Phaser.Scene {
     const now = performance.now();
     const v = this.views.get(e.id);
     if (e.e === 'ult' && v) {
-      if (['channel', 'charm', 'magnet', 'tether', 'stage', 'brood'].includes(e.t)) auraPulse(this, { ...e, r: e.r || 2.25 }, BU, e.t === 'charm' ? [0xffe6f2, 0xffb3d9, 0xff7ab8, 0xc94c8a] : undefined);
+      if (['channel', 'charm', 'magnet', 'tether', 'stage', 'brood', 'rally'].includes(e.t)) auraPulse(this, { ...e, r: e.r || 2.25 }, BU, e.t === 'charm' ? [0xffe6f2, 0xffb3d9, 0xff7ab8, 0xc94c8a] : undefined);
       if (e.t === 'rush') speedLines(this, e, BU);
       else if (e.t === 'buff' || e.t === 'barrage') shockRing(this, { x: e.x, y: e.y, r: e.t === 'buff' ? 1.6 : 1.2 }, BU);
     } else if (e.e === 'chain') {
@@ -383,7 +383,7 @@ export class WorldScene extends Phaser.Scene {
       if (p.cm) heartTick(this, v, now, BU);
       orbitTick(this, v, now, BU);
       v.sprite.setFlipX(p.f < 0).setOrigin(p.f < 0 ? 1 - SPRITE.anchor[0] / SPRITE.cell : SPRITE.anchor[0] / SPRITE.cell, SPRITE.anchor[1] / SPRITE.cell); // 왼쪽을 볼 땐 기준점도 거울상으로 (체력바·이름이 몸 중앙에 맞게)
-      const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
+      const tint = p.si ? 0x8fa0c8 : p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 침묵 중엔 회청색 // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
       v.zsCur = (v.zsCur ?? (p.zs || 1)) + ((p.zs || 1) - (v.zsCur ?? (p.zs || 1))) * Math.min(1, (delta / 1000) * 8); // 진화 등 크기 변화는 부드럽게
       const pop = v.popAt && now > v.popAt && now < v.popAt + 200 ? 1 + 0.35 * Math.sin(Math.PI * ((now - v.popAt) / 200)) : 1; // 오라에 맞으면 깜빡 → 팡
@@ -425,7 +425,7 @@ export class WorldScene extends Phaser.Scene {
       if (f > v.chip) v.chip = f;
       if (now >= v.chipHold && v.chip > f) v.chip = Math.max(f, v.chip - (v.chipRate * delta) / 1000);
       v.hpLast = f;
-      const hpCol = f > 0.6 ? 0x4fd16a : f > 0.3 ? 0xf2c230 : 0xe5483c; // 색 이동: 초록 → 노랑 → 빨강
+      const hpCol = p.sd > 0 ? 0x4a86d9 : f > 0.6 ? 0x4fd16a : f > 0.3 ? 0xf2c230 : 0xe5483c; // 색 이동: 초록 → 노랑 → 빨강
       v.bar.fillStyle(THEME.hpEmpty, 1).fillRect(bx0, by, bw, bh);
       v.bar.fillStyle(0xfff1d6, 0.85).fillRect(bx0, by, bw * v.chip, bh);
       v.bar.fillStyle(hpCol, low ? 0.65 + 0.35 * Math.sin((now / 1000) * Math.PI * 6) : 1).fillRect(bx0, by, bw * f, bh); // 30% 아래는 초당 3번 깜빡임

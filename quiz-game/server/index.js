@@ -99,6 +99,7 @@ io.on('connection', (socket) => {
   host('host:setTeam', (d) => ({ ok: game.setTeam(String(d?.id), d?.team) }));
   host('host:setMode', (d) => ({ ok: game.setQuestionMode(Number(d?.id), d?.mode) }));
   host('host:realSet', (d) => ({ ok: d?.team ? game.realTeam(d.team, d?.pts) : game.realSet(String(d?.id), d?.pts) }));
+  host('host:realTeam', (d) => ({ ok: game.realTeam(d?.team, d?.pts) }));
   host('host:realConfirm', () => ({ ok: game.realConfirm() }));
   host('host:realReveal', () => ({ ok: game.realReveal() }));
   host('host:spawnCoin', () => { game.spawnCoin(); });
