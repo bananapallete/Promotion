@@ -2,10 +2,12 @@ import { io } from 'socket.io-client';
 import QRCode from 'qrcode';
 import { fmtScore, PHASE } from '../shared/constants.js';
 import { startWorld } from './world.js';
+import { mountScreenUi, renderScreenUi } from './screenUi.js';
 
 const $ = (s) => document.querySelector(s);
 const { scene } = startWorld('game');
 const socket = io();
+const sq = mountScreenUi();
 
 socket.on('connect', () => { socket.emit('screen:join'); $('#conn').textContent = ''; });
 socket.on('disconnect', () => { $('#conn').textContent = '연결 끊김'; });
@@ -22,6 +24,7 @@ fetch('/api/info').then((r) => r.json()).then(async (info) => {
 socket.on('state', (s) => {
   scene.applyState(s);
   hud(s);
+  renderScreenUi(sq, s);
 });
 
 function hud(s) {

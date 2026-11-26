@@ -161,6 +161,16 @@ export class WorldScene extends Phaser.Scene {
   _drawAim(now) {
     const g = this.aimGfx;
     g.clear();
+    const cg = this.cmpGfx || (this.cmpGfx = this.add.graphics().setDepth(FXD)); cg.clear();
+    const mv = this.views.get(this.focusId), lv = this.leaderId && this.leaderId !== this.focusId ? this.views.get(this.leaderId) : null;
+    if (mv && lv) { // 나침반: 1등 쪽을 가리키는 화살표, 가까워질수록 투명 (5칸 이내 0%, 10칸 이상 100%)
+      const dx = lv.x - mv.x, dy = lv.y - mv.y, d = Math.hypot(dx, dy) / BU, a = Math.max(0, Math.min(1, (d - 5) / 5));
+      if (a > 0.02) {
+        const ux = dx / (d * BU), uy = dy / (d * BU), cx = mv.x + ux * 1.7 * BU, cy = mv.y - 0.4 * BU + uy * 1.7 * BU * 0.8, nx = -uy, ny = ux, S = 11;
+        const tri = (k, col, al) => cg.fillStyle(col, al * a).fillTriangle(cx + ux * S * k, cy + uy * S * k, cx - ux * S * k * 0.6 + nx * S * k * 0.8, cy - uy * S * k * 0.6 + ny * S * k * 0.8, cx - ux * S * k * 0.6 - nx * S * k * 0.8, cy - uy * S * k * 0.6 - ny * S * k * 0.8);
+        tri(1.35, 0x14122b, 1); tri(1, 0xffd54a, 1);
+      }
+    }
     const ua = this.ultAim, uv = ua && this.views.get(ua.id);
     if (uv) { // 궁극기 직접 조준: 방향으로 뻗는 점선과 끝 원
       const ex = uv.x + ua.dx * ua.len * BU, ey = uv.y + ua.dy * ua.len * BU;
@@ -210,6 +220,8 @@ export class WorldScene extends Phaser.Scene {
     this.uzl.apply(s.uz);
     this.wallLayer.apply(s.wl);
 
+    let best = null; for (const p of s.players) if (p.sc > 0 && (!best || p.sc > best.sc)) best = p; // 1등(점수 있는 사람 중 최고)
+    this.leaderId = best ? best.id : null;
     const seen = new Set();
     for (const p of s.players) {
       seen.add(p.id);
@@ -365,7 +377,7 @@ export class WorldScene extends Phaser.Scene {
       if (p.bn) burnTick(this, v, now, BU);
       if (p.cm) heartTick(this, v, now, BU);
       orbitTick(this, v, now, BU);
-      v.sprite.setFlipX(p.f < 0);
+      v.sprite.setFlipX(p.f < 0).setOrigin(p.f < 0 ? 1 - SPRITE.anchor[0] / SPRITE.cell : SPRITE.anchor[0] / SPRITE.cell, SPRITE.anchor[1] / SPRITE.cell); // 왼쪽을 볼 땐 기준점도 거울상으로 (체력바·이름이 몸 중앙에 맞게)
       const tint = p.tn ? parseInt(p.tn.slice(1), 16) : 0; // 캐릭터가 바뀌면 임시 색과 크기도 따라감
       if (tint !== v.tint) { v.tint = tint; if (tint) v.sprite.setTint(tint); else v.sprite.clearTint(); }
       v.zsCur = (v.zsCur ?? (p.zs || 1)) + ((p.zs || 1) - (v.zsCur ?? (p.zs || 1))) * Math.min(1, (delta / 1000) * 8); // 진화 등 크기 변화는 부드럽게
@@ -424,6 +436,10 @@ export class WorldScene extends Phaser.Scene {
         }
         if (p.mrg) { bar2(bx0, y0, bw, Math.min(1, p.rg / p.mrg), p.rg >= p.mrg ? THEME.dashReady : THEME.dash); y0 += h + GG; } // 대쉬 쿨타임 / 달리기 게이지
       }
+      const lead = p.id === this.leaderId, nm = (lead ? '👑 ' : '') + (p.b ? '🤖 ' : '') + p.n;
+      if (v.nameStr !== nm) { v.nameStr = nm; v.name.setText(nm); }
+      if (lead && this.sys.game.renderer.type === Phaser.WEBGL && !v.lglow) { v.sprite.preFX.setPadding(24); v.lglow = v.sprite.preFX.addGlow(0xffd54a, 4, 0, false, 0.1, 12); } // 1등: 항상 노란 테두리로 빛남
+      else if (!lead && v.lglow) { v.sprite.preFX.remove(v.lglow); v.lglow = null; }
       v.name.setPosition(bx, by - 8).setDepth(v.y + 1).setAlpha(me || p.id === this.lockId ? 1 : 0.35); // 다른 사람 이름은 흐리게, 내가 조준한 상대만 또렷하게
       v.status.setText('').setPosition(bx, by - 32).setDepth(v.y + 1); // 상태이상 글자는 쓰지 않음
       const shown = Math.max(0, (p.cn || 0) - (v.pending || 0)); // 습득 연출이 끝나야 '기록'됨

@@ -47,7 +47,7 @@ export class MinionLayer {
         v.fly = null; v.x = v.fly?.tx ?? m.x * bu; v.y = m.y * bu;
       }
       v.x += (m.x * bu - v.x) * k; v.y += (m.y * bu - v.y) * k;
-      v.sp.setPosition(v.x, v.y).setDepth(v.y).setFlipX(m.f < 0);
+      v.sp.setPosition(v.x, v.y).setDepth(v.y).setFlipX(m.f < 0).setOrigin(m.f < 0 ? 1 - SPRITE.anchor[0] / SPRITE.cell : SPRITE.anchor[0] / SPRITE.cell, SPRITE.anchor[1] / SPRITE.cell);
       if (m.e) { if (v.hatched) { v.hatched = false; } v.sp.setTexture('egg-idle', 0); continue; }
       v.hatched = true;
       v.sp.play(`chick-${m.a === 2 ? 'atk0' : m.a === 1 ? 'walk' : 'idle'}`, true);

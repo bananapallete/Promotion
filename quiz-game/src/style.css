@@ -167,3 +167,4 @@ td, th, .qrow { border-bottom-color: #7a4e3233; }
 #toprank span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #toprank i { font-style: normal; font-variant-numeric: tabular-nums; }
 #hudbar, #phase, #result { display: none !important; } /* 상단 UI(quizTop)로 대체 */
+body.screen #banner, body.screen #timer, body.screen #reveal, body.screen #rank, body.screen #lb { display: none !important; } /* 새 퀴즈 UI(screenUi)로 대체 */
