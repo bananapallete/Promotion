@@ -373,12 +373,12 @@ test('조준 미리보기: 자동 조준은 사거리 안의 가장 가까운 �
   const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
   const near = g.join({ token: 'n', name: 'N', charId: 'blue' });
   const far = g.join({ token: 'f', name: 'F', charId: 'blue' });
-  a.x = 20; a.y = 10; near.x = 21; near.y = 10; far.x = 22.5; far.y = 10;
+  a.x = 20; a.y = 10; near.x = 21; near.y = 10; far.x = 23.5; far.y = 10;
   assert.equal(g.aimPreview('a', null).targetId, 'n');
-  near.x = 25; // 사거리(1.2) 밖
+  near.x = 25; // 사거리(1.7) 밖
   far.x = 26;
   assert.equal(g.aimPreview('a', null).targetId, null);
-  assert.equal(g.aimPreview('a', null).range, 1.2);
+  assert.equal(g.aimPreview('a', null).range, 1.7);
 });
 
 test('조준 미리보기: 직접 조준한 방향의 적을 가리키고, 실제 공격이 맞는 대상과 같다', () => {
@@ -397,10 +397,10 @@ test('조준 미리보기: 직접 조준한 방향의 적을 가리키고, 실�
 test('조준 미리보기: 3타 차례에는 늘어난 사거리를 보여준다', () => {
   const { g, a, b } = setup();
   b.cfg = { ...b.cfg, hp: 1000 }; b.hp = 1000;
-  assert.equal(g.aimPreview('a', null).range, 1.2);
+  assert.equal(g.aimPreview('a', null).range, 1.7);
   for (let i = 0; i < 2; i++) { b.x = 21; b.y = 10; b.kx = b.ky = 0; g.attack('a', null); run(g, 0.4); }
   assert.equal(g.aimPreview('a', null).step, 2);
-  assert.ok(Math.abs(g.aimPreview('a', null).range - 1.2 * 1.15) < 1e-9);
+  assert.ok(Math.abs(g.aimPreview('a', null).range - 1.7 * 1.15) < 1e-9);
 });
 
 // ---------- 동전 ----------
@@ -665,7 +665,7 @@ test('DPS 계산: 콤보 평균, 명중률, 범위, 돌진 피해를 반영한�
   const blue = dpsOf(chars.blue); // 평균 피해 × 콤보 평균 × 교전 중 발수 ÷ 교전 시간
   const a = chars.blue.attack;
   assert.ok(Math.abs(blue.basic - ((a.dmgMin + a.dmgMax) / 2) * ((2 + a.combo[2].dmg) / 3) * shotsOf(chars.blue) / FIGHT_SEC) < 1e-9);
-  assert.ok(dpsOf(chars.brawler).dps > dpsOf(chars.brawler).basic, '돌진 피해가 더해짐');
+  assert.ok(dpsOf(chars.brawler).dps > dpsOf(chars.brawler).basic * 0.85, '돌진 피해가 더해짐 (직선 명중률 0.85 적용 후)');
   assert.ok(dpsOf(chars.witch).dps < dpsOf(chars.witch).basic, '느린 투사체는 명중률로 깎임');
   assert.ok(dpsOf(chars.bomber).dps > dpsOf(chars.bomber).basic * 0.65, '범위 공격은 보정이 붙음');
   assert.ok(dpsOf(chars.blue).dps < dpsOf({ ...chars.blue, ammo: undefined }).dps, '탄창이 있으면 교전 DPS가 낮아짐');
@@ -1192,4 +1192,15 @@ test('공격형 봇 15마리: 한곳에 뭉치지 않고 동전을 주우러 흩
   run(g, 60);
   const got = bots.reduce((s, b) => s + b.coins, 0);
   assert.ok(got >= 8, `60초 동안 봇이 주운 동전 ${got}`);
+});
+
+test('주먹 평타는 부채꼴이 아니라 직선: 정면 1.7칸은 맞고, 옆으로 조금만 벗어나도 안 맞는다', () => {
+  const { g, a, b } = setup();
+  const c = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  a.x = 10; a.y = 10; b.x = 11.6; b.y = 10; c.x = 10.9; c.y = 11.3; // C는 1.3칸 옆 (부채꼴이면 맞는 각도)
+  b.invUntil = 0; c.invUntil = 0;
+  g.attack('a', { x: 1, y: 0 });
+  assert.ok(b.hp < b.cfg.hp, '정면 직선은 맞음');
+  assert.equal(c.hp, c.cfg.hp, '옆은 안 맞음');
+  assert.ok(g.events.some((e) => e.e === 'atk' && e.lineW === 0.9), '이벤트에 직선 폭');
 });

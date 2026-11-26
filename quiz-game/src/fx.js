@@ -18,7 +18,12 @@ const arcDots = (g, cx, cy, r, a0, a1, size, c, a = 1) => {
   for (let i = 0; i <= n; i++) { const t = lerp(a0, a1, i / n); dot(g, cx + Math.cos(t) * r, cy + Math.sin(t) * r, size, c, a); }
 };
 /** 맞는 범위 부채꼴(바닥): 테두리 없이 면만. k = 불투명도(0~1) */
-function footprint(g, cx, cy, R, ang, half, c, k) {
+function footprint(g, cx, cy, R, ang, half, c, k, lw = 0) {
+  if (lw) { // 직선: 앞으로 R, 폭 lw
+    const nx = -Math.sin(ang) * lw / 2, ny = Math.cos(ang) * lw / 2, ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R, pts = [{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }];
+    g.fillStyle(c, 0.5 * k).fillPoints(pts, true); g.fillStyle(0xffffff, 0.16 * k).fillPoints(pts, true);
+    return;
+  }
   g.fillStyle(c, 0.5 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
   g.fillStyle(0xffffff, 0.16 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
 }
@@ -40,11 +45,11 @@ export const FX_COLOR = {
 /** 근접 공격: e = { dx, dy, arc(도, 반각), range(칸), fx, step } */
 export function meleeFx(scene, e, v, BU) {
   const c = FX_COLOR[e.fx] ?? 0xffffff, big = (e.step || 0) === 2;
-  const cx = v.x, cy = v.y - 0.1 * BU, R = (e.range || 1.2) * BU, ang = Math.atan2(e.dy, e.dx), half = (e.arc ?? 60) * Math.PI / 180;
+  const cx = v.x, cy = v.y - 0.1 * BU, R = (e.range || 1.2) * BU, ang = Math.atan2(e.dy, e.dx), half = (e.arc ?? 60) * Math.PI / 180, lw = e.lineW ? e.lineW * BU : 0;
   const px = cx + Math.cos(ang) * R * 0.8, py = cy - 0.45 * BU + Math.sin(ang) * R * 0.8; // 타격 지점 (가슴 높이)
   const T = { thrust: 220, smash: 380, stomp: 420, bite: 240, claw: 260, paw: 320, crescent: 260, shock: big ? 380 : 260, bump: 240, sweep: 300, flurry: big ? 340 : 240 }[e.fx] ?? (big ? 320 : 220);
   const LINGER = 150; // 공격이 끝난 뒤에도 범위 잔상이 남는 시간 (ms)
-  play(scene, T + LINGER, (g, u) => { const t = u * (T + LINGER); footprint(g, cx, cy, R, ang, half, c, t < T ? 1 : 0.6 - 0.25 * ((t - T) / LINGER)); }, 4990); // 맞는 범위: 공격 내내 + 끝난 뒤 0.15초
+  play(scene, T + LINGER, (g, u) => { const t = u * (T + LINGER); footprint(g, cx, cy, R, ang, half, c, t < T ? 1 : 0.6 - 0.25 * ((t - T) / LINGER), lw); }, 4990); // 맞는 범위: 공격 내내 + 끝난 뒤 0.15초
   const slash = (g, u, w, a0, a1, col = c) => arcDots(g, cx, cy - 0.45 * BU, R * (0.55 + 0.4 * u), lerp(a0, a1, u) - 0.5, lerp(a0, a1, u) + 0.5, w, col, 1 - u * 0.7);
   switch (e.fx) {
     case 'thrust': // 일직선 찌르기

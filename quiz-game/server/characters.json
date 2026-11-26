@@ -18,7 +18,7 @@
       "dmgMin": 5,
       "dmgMax": 7,
       "interval": 0.3333,
-      "range": 1.2,
+      "range": 1.7,
       "knockback": 0,
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.5,
@@ -39,7 +39,8 @@
           "knockback": 1.6
         }
       ],
-      "fx": "punch"
+      "fx": "punch",
+      "lineW": 0.9
     },
     "ammo": {
       "max": 3,
@@ -278,7 +279,7 @@
       "dmgMin": 5,
       "dmgMax": 5,
       "interval": 0.3,
-      "range": 1.2,
+      "range": 1.7,
       "knockback": 0,
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.5,
@@ -298,11 +299,12 @@
           "dmg": 1.5,
           "range": 1.1,
           "knockback": 1.5,
-          "arc": 180,
+          "lineW": 1.4,
           "multi": true
         }
       ],
-      "fx": "flurry"
+      "fx": "flurry",
+      "lineW": 0.9
     },
     "ammo": {
       "max": 3,
@@ -458,7 +460,7 @@
       "dmgMin": 6,
       "dmgMax": 6,
       "interval": 0.55,
-      "range": 1.2,
+      "range": 1.7,
       "knockback": 0,
       "canAttackWhileRunning": true,
       "moveSpeedWhileAttacking": 0.5,
@@ -477,10 +479,12 @@
           "dmg": 2,
           "range": 1.35,
           "knockback": 2.0,
-          "multi": true
+          "multi": true,
+          "lineW": 1.3
         }
       ],
-      "fx": "shock"
+      "fx": "shock",
+      "lineW": 0.9
     },
     "scale": 1.1,
     "ammo": {

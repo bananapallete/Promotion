@@ -161,7 +161,10 @@ export class WorldScene extends Phaser.Scene {
     // 공격 범위는 항상 또렷하게 (직접 조준 중엔 더 진하게)
     const k = a.dragging ? 1 : 0.7;
     if (!a.lob) { // 근접은 부채꼴(맞는 범위), 원거리는 사거리만큼 뻗는 빔
-      if (a.kind === 'melee') {
+      if (a.kind === 'melee' && a.line) { // 직선 주먹
+        const w = (a.line * BU) / 2, nx = -Math.sin(ang) * w, ny = Math.cos(ang) * w, ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R;
+        g.fillStyle(0xffffff, 0.34 * k).fillPoints([{ x: cx + nx, y: cy + ny }, { x: ex + nx, y: ey + ny }, { x: ex - nx, y: ey - ny }, { x: cx - nx, y: cy - ny }], true);
+      } else if (a.kind === 'melee') {
         const half = ((a.arc ?? 60) * Math.PI) / 180;
         g.fillStyle(0xffffff, 0.34 * k).slice(cx, cy, R, ang - half, ang + half, false).fillPath();
       } else {

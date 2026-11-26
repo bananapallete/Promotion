@@ -226,7 +226,7 @@ export class Game {
     const combo = a.combo;
     const step = combo && this.t - p.lastAttackAt <= COMBO_RESET_SEC ? p.comboStep : 0;
     const m = combo?.[step] || {};
-    return { combo, step, m, range: a.range * (m.range ?? 1), arc: m.arc ?? a.arcDeg ?? 60, multi: m.multi ?? a.multi };
+    return { combo, step, m, range: a.range * (m.range ?? 1), arc: m.arc ?? a.arcDeg ?? 60, multi: m.multi ?? a.multi, line: m.lineW ?? a.lineW };
   }
 
   // 조준 방향: 직접 조준 > 사거리 안에서 가장 가까운 상대(자동 조준) > 바라보는 방향
@@ -248,7 +248,7 @@ export class Game {
 
   // 그 방향으로 공격했을 때 맞는 대상
   // 그 방향으로 공격했을 때 맞는 대상들 (가까운 순). 근접은 부채꼴(arcDeg, 기본 ±60°), 원거리는 직선
-  _pickTargets(p, range, dx, dy, arc = p.cfg.attack.arcDeg ?? 60) {
+  _pickTargets(p, range, dx, dy, arc = p.cfg.attack.arcDeg ?? 60, lineW) {
     const a = p.cfg.attack;
     const cosMin = Math.cos((arc * Math.PI) / 180);
     const hits = [];
@@ -256,7 +256,10 @@ export class Game {
       const vx = o.x - p.x, vy = o.y - p.y;
       const along = vx * dx + vy * dy; // 조준 방향으로의 거리
       if (along <= 0) continue;
-      if (a.type === 'melee') {
+      if (a.type === 'melee' && lineW) { // 직선(주먹): 앞으로 range, 폭 lineW의 길쭉한 상자
+        const perp = Math.abs(vx * dy - vy * dx);
+        if (along <= range && perp <= lineW / 2 + o.cfg.radius) hits.push({ o, dist: along });
+      } else if (a.type === 'melee') {
         const d = Math.hypot(vx, vy);
         if (d <= range && along / d >= cosMin) hits.push({ o, dist: d });
       } else {
@@ -267,8 +270,8 @@ export class Game {
     return hits.sort((x, y) => x.dist - y.dist);
   }
 
-  _pickTarget(p, range, dx, dy, arc) {
-    const h = this._pickTargets(p, range, dx, dy, arc)[0];
+  _pickTarget(p, range, dx, dy, arc, lineW) {
+    const h = this._pickTargets(p, range, dx, dy, arc, lineW)[0];
     return { target: h ? h.o : null, tDist: h ? h.dist : Infinity };
   }
 
@@ -276,17 +279,17 @@ export class Game {
   aimPreview(id, aim) {
     const p = this.players.get(id);
     if (!p) return null;
-    const { range, step, arc } = this._comboState(p);
+    const { range, step, arc, line } = this._comboState(p);
     const dir = this._aimDir(p, aim, range);
     const pr = p.cfg.attack.projectile;
-    let { target } = this._pickTarget(p, range, dir.dx, dir.dy, arc);
+    let { target } = this._pickTarget(p, range, dir.dx, dir.dy, arc, line);
     let lob = null;
     if (pr?.lob) { // 던지기: 착탄 지점과 폭발 범위, 그 안의 가장 가까운 상대를 조준 대상으로 표시
       const L = this._lobLanding(p, dir, range, aim);
       lob = { x: r2(L.x), y: r2(L.y), r: pr.explodeRadius };
       target = this._enemies(p).filter((o) => Math.hypot(o.x - L.x, o.y - L.y) <= pr.explodeRadius + o.cfg.radius).sort((u, v) => Math.hypot(u.x - L.x, u.y - L.y) - Math.hypot(v.x - L.x, v.y - L.y))[0] || null;
     }
-    return { lob, dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc, radius: p.cfg.radius, targetId: target ? target.id : null };
+    return { lob, dx: dir.dx, dy: dir.dy, manual: dir.manual, range, step, kind: p.cfg.attack.type, arc, radius: p.cfg.radius, line, targetId: target ? target.id : null };
   }
 
   _tryAttack(p, aim) {
@@ -295,7 +298,7 @@ export class Game {
     if (p.running && !a.canAttackWhileRunning) return;
 
     // 콤보: 잽 → 잽 → 큰 휘두르기. 일정 시간 공격하지 않으면 1타부터 다시
-    const { combo, step, m, range, arc, multi } = this._comboState(p);
+    const { combo, step, m, range, arc, multi, line } = this._comboState(p);
     const { dx, dy, near } = this._aimDir(p, aim, range);
     if (Math.abs(dx) > 0.15) p.face = dx > 0 ? 1 : -1;
     p.nextAttackAt = this.t + a.interval / (buffOf(this, p)?.atk ?? 1);
@@ -311,18 +314,18 @@ export class Game {
       return;
     }
     if (a.windup) { // 예고 후 타격: 범위를 보여 주는 동안 피할 수 있다
-      p.windup = { at: this.t + a.windup, range, dx, dy, m, step, arc, multi };
+      p.windup = { at: this.t + a.windup, range, dx, dy, m, step, arc, multi, line };
       p.attackUntil += a.windup;
       this.events.push({ e: 'windup', id: p.id, dx: r2(dx), dy: r2(dy), range: r2(range), arc, sec: a.windup, fx: a.fx });
       return;
     }
-    this._strike(p, range, dx, dy, m, step, arc, multi);
+    this._strike(p, range, dx, dy, m, step, arc, multi, line);
   }
 
-  _strike(p, range, dx, dy, m, step, arc, multi) {
+  _strike(p, range, dx, dy, m, step, arc, multi, line) {
     const a = p.cfg.attack;
-    const hits = this._pickTargets(p, range, dx, dy, arc);
-    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc, step, range: r2(range), len: r2(hits[0] && !(multi && a.type === 'ranged') ? hits[0].dist : range) });
+    const hits = this._pickTargets(p, range, dx, dy, arc, line);
+    this.events.push({ e: 'atk', id: p.id, dx: r2(dx), dy: r2(dy), kind: a.type, fx: a.fx, arc, lineW: line, step, range: r2(range), len: r2(hits[0] && !(multi && a.type === 'ranged') ? hits[0].dist : range) });
     for (const h of multi ? hits : hits.slice(0, 1)) this._hit(h.o, p, dx, dy, m.dmg ?? 1, m.knockback ?? 1); // multi: 범위 안 모두
   }
 
@@ -608,7 +611,7 @@ export class Game {
     const c = p.cfg;
     if (p.windup && (p.stunned || this.t >= p.windup.at)) { // 예고가 끝나면 타격 (그 전에 쓰러지면 취소)
       const w = p.windup; p.windup = null;
-      if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step, w.arc, w.multi);
+      if (!p.stunned) this._strike(p, w.range, w.dx, w.dy, w.m, w.step, w.arc, w.multi, w.line);
     }
     if (this.t < p.charmUntil) { // 매혹: 걸은 사람 쪽으로 걸어가고 가까워지면 멈춘다
       const by = this.players.get(p.charmBy);
