@@ -79,4 +79,4 @@ export const SPRITE = {
 };
 export const COMBO_RESET_SEC = 1.0; // 이 시간 동안 공격하지 않으면 다시 1타부터
 
-export const PHASE = { LOBBY: 'lobby', READING: 'reading', MOVING: 'moving', REVEAL: 'reveal' };
+export const PHASE = { LOBBY: 'lobby', READING: 'reading', MOVING: 'moving', HOLD: 'hold', REAL: 'real', REVEAL: 'reveal' }; // HOLD: 시간 종료, 진행자가 정답 공개를 누를 때까지 대기 · REAL: 현실 퀴즈(점수 입력 후 공개)

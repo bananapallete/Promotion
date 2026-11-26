@@ -1117,6 +1117,33 @@ test('무대 펼치기(레이디 가가): 제자리에서 5초 춤추며 무대 
   const after = B.hp; run(g, 1); assert.equal(B.hp, after, '끝나면 피해 멈춤');
 });
 
+test('진행: 시간이 끝나도 정답은 바로 공개되지 않고(대기), 진행자가 공개하면 그때 점수가 반영된다', () => {
+  const g = new Game(chars, quizzes); const a = g.join({ token: 'a', name: 'A', charId: 'blue' });
+  g.ask(1); run(g, 4); assert.equal(g.phase, PHASE.MOVING);
+  const q = g.question; const [zx, zy] = [a.x, a.y]; a.x = zx; a.y = zy;
+  run(g, q.time + 1); assert.equal(g.phase, PHASE.HOLD, '시간 종료 후 대기'); assert.equal(g.reveal, null);
+  assert.ok(g.snapshot().dist, '실시간 응답 분포'); const before = a.score;
+  g.endQuestion(); assert.equal(g.phase, PHASE.REVEAL); assert.ok(a.score >= before);
+});
+
+test('현실 퀴즈: 점수를 입력 → 확인 → 공개하면 반영되고, 확인 전에는 공개할 수 없다', () => {
+  const g = new Game(chars, quizzes); const a = g.join({ token: 'a', name: 'A', charId: 'blue' }), b = g.join({ token: 'b', name: 'B', charId: 'blue' });
+  const q = g.addQuestion({ type: 'real', text: '줄다리기' }); assert.equal(q.mode, '현실');
+  g.ask(q.id); assert.equal(g.phase, PHASE.REAL);
+  g.realSet('a', 3); g.realSet('b', 1);
+  assert.equal(g.realReveal(), false, '확인 전 공개 불가'); assert.equal(a.score, 0);
+  g.realConfirm(); assert.ok(g.realReveal()); assert.equal(a.score, 3); assert.equal(g.reveal.results[0].id, 'a');
+  assert.equal(g.phase, PHASE.REVEAL);
+});
+
+test('점수 수정·팀 구성·퀴즈별 방식', () => {
+  const g = new Game(chars, quizzes); const ps = ['a', 'b', 'c', 'd'].map((t) => g.join({ token: t, name: t, charId: 'blue' }));
+  g.adjust('a', 2.5); g.adjust('a', -1); assert.equal(ps[0].score, 1.5);
+  g.autoTeams(2); assert.deepEqual([...new Set(ps.map((p) => p.team))].sort(), [1, 2]);
+  assert.equal(ps.filter((p) => p.team === 1).length, 2, '균형'); assert.equal(g.snapshot().teams.length, 2);
+  assert.ok(g.setQuestionMode(1, '팀')); assert.equal(g.questions[0].mode, '팀');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;

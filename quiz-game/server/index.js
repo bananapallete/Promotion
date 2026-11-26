@@ -94,6 +94,13 @@ io.on('connection', (socket) => {
   });
   host('host:clearBots', () => game.clearBots());
   host('host:rank', (d) => { game.showRank = !!d?.on; });
+  host('host:adjust', (d) => ({ ok: game.adjust(String(d?.id), d?.delta) }));
+  host('host:teams', (d) => ({ ok: game.autoTeams(d?.n) }));
+  host('host:setTeam', (d) => ({ ok: game.setTeam(String(d?.id), d?.team) }));
+  host('host:setMode', (d) => ({ ok: game.setQuestionMode(Number(d?.id), d?.mode) }));
+  host('host:realSet', (d) => ({ ok: d?.team ? game.realTeam(d.team, d?.pts) : game.realSet(String(d?.id), d?.pts) }));
+  host('host:realConfirm', () => ({ ok: game.realConfirm() }));
+  host('host:realReveal', () => ({ ok: game.realReveal() }));
   host('host:spawnCoin', () => { game.spawnCoin(); });
   host('host:spawnItem', (d) => { game.spawnItem(d?.k); });
   host('host:botAttack', (d) => { game.botsCanAttack = !!d?.on; });
