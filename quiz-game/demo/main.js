@@ -228,7 +228,13 @@ function pickChar(id) {
 $('#charbtn').addEventListener('click', () => { picker.setValue(game.players.get(ME).charId); $('#pick').hidden = false; });
 // 첫 화면: 캐릭터 선택 (탭 필터 + 카드)
 const picker = mountPicker($('#pickroot'), (() => { const st = starsOf(characters); return Object.fromEntries(charIds.map((id) => [id, { ...characters[id], sk: characters[id].skill, stars: st[id] }])); })(), { spriteUrl: hooks.spriteUrl, ultUrl: (id) => ultUrls[`../public/ult/${id}.mp4`], selected: charIds[0] });
-$('#pickgo').addEventListener('click', () => { pickChar(picker.value()); $('#pick').hidden = true; $('#pickgo').textContent = '선택'; });
+const nameInput = $('#pickname'), NAME_KEY = 'quiz_demo_name';
+try { nameInput.value = localStorage.getItem(NAME_KEY) || ''; } catch { /* 저장 불가 환경 */ }
+$('#pickgo').addEventListener('click', () => {
+  const nm = nameInput.value.trim(); // 닉네임은 꼭 필요
+  if (!nm) { nameInput.classList.remove('bad'); void nameInput.offsetWidth; nameInput.classList.add('bad'); nameInput.focus(); return; }
+  game.players.get(ME).name = nm; try { localStorage.setItem(NAME_KEY, nm); } catch { /* 저장 불가 */ }
+  pickChar(picker.value()); $('#pick').hidden = true; $('#pickgo').textContent = '선택'; });
 $('#b-char').innerHTML = charIds.map((id) => `<option value="${id}">${characters[id].name}</option>`).join('');
 $('#b-attack').checked = true;
 $('#b-attack').addEventListener('change', (e) => { game.botsCanAttack = e.target.checked; });

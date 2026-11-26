@@ -105,6 +105,10 @@
   @keyframes ultwave { 0% { transform: scale(1); opacity: .95; } 70% { opacity: .25; } 100% { transform: scale(2); opacity: 0; } }
   #pick { position: fixed; inset: 0; z-index: 60; background: #2f4a33; overflow-y: auto; touch-action: pan-y; }
   #pick[hidden] { display: none; }
+  #pickname { display: block; width: 100%; box-sizing: border-box; margin: 0 0 10px; padding: 12px 14px; font: 800 18px/1 inherit; text-align: center; color: #5a3a24; background: #f6e6c8; border: 3px solid #d9a63a; border-radius: 12px; outline: none; box-shadow: 0 4px 0 #c18a1f; }
+  #pickname::placeholder { color: #b9a37a; }
+  #pickname.bad { border-color: #e5483c; animation: nameshake .3s; }
+  @keyframes nameshake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
   #pick .box { max-width: 760px; margin: 0 auto; padding: 16px 16px 90px; }
   #pickgo { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(16px, env(safe-area-inset-bottom, 0px)); padding: 14px 56px; border: 3px solid var(--leaf-dk); border-radius: 8px; background: var(--leaf); color: var(--text); font-size: 18px; font-weight: 800; box-shadow: 0 4px 0 #4d7226; cursor: pointer; }
   #pickgo:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #4d7226; }
@@ -113,7 +117,7 @@
 </style>
 
 <div id="deathMsg" hidden></div>
-<div id="pick"><div class="box"><div id="pickroot"></div><button id="pickgo" type="button">시작</button></div></div>
+<div id="pick"><div class="box"><input id="pickname" type="text" maxlength="10" placeholder="닉네임" autocomplete="off"><div id="pickroot"></div><button id="pickgo" type="button">시작</button></div></div>
 <button id="charbtn" type="button">캐릭터 변경</button>
 <div id="stage">
   <div id="game"></div>
