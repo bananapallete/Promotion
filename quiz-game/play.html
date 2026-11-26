@@ -13,7 +13,8 @@
     --accent: #4cc2ff; --ok: #2ecc71; --bad: #ff6b6b; --warn: #ffd54a;
     color-scheme: dark;
   }
-  html, body { height: 100%; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { position: fixed; inset: 0; width: 100%; } /* 화면이 밀려 올라가며 사파리 주소창이 접히는 것을 막음 */
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   button, select { font: inherit; }
 

@@ -371,7 +371,7 @@ export class WorldScene extends Phaser.Scene {
     this.minions.update(now, delta);
     tetherLines(this, now);
     this.wallLayer.update(now);
-    const k = Math.min(1, (delta / 1000) * 20); // 위치 보간 (끊김 완화)
+    const k = 1 - Math.exp(-delta / 50); // 지수 보간: 프레임 간격(60·120Hz)과 상관없이 같은 속도로 따라감 // 위치 보간 (끊김 완화)
     for (const v of this.views.values()) {
       const p = v.p;
       v.x += (v.tx - v.x) * k;
@@ -485,12 +485,14 @@ export function startWorld(parentId, opts = {}) {
   if (opts.fill) {
     const parent = document.getElementById(parentId);
     const apply = () => { game.scale.setZoom(1 / scene.dpr); game.scale.resize(Math.round(parent.clientWidth * scene.dpr), Math.round(parent.clientHeight * scene.dpr)); };
-    addEventListener('resize', () => { scene.dpr = Math.min(scene.dpr, pickDpr(parent)); apply(); });
-    let slow = 0; // 프레임이 2번 연속 40fps 아래면 해상도를 한 단계(0.25) 낮춤
+    let rt = 0, lw = parent.clientWidth, lh = parent.clientHeight; // 사파리 주소창이 접혔다 펴지며 크기가 조금씩 바뀔 때마다 캔버스를 다시 만들면 움직일 때 뚝 끊김 → 크게 바뀔 때만, 멈춘 뒤에
+    addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (Math.abs(parent.clientWidth - lw) < 24 && Math.abs(parent.clientHeight - lh) < 24) return; lw = parent.clientWidth; lh = parent.clientHeight; scene.dpr = Math.min(scene.dpr, pickDpr(parent)); apply(); }, 250); });
+    let slow = 0, born = performance.now(); // 시작 6초 뒤부터, 프레임이 3번 연속 30fps 아래면 해상도를 한 단계(0.25) 낮춤 (너무 자주 바꾸면 그 자체로 끊김)
     setInterval(() => {
       if (document.hidden || !game.loop || game.loop.actualFps === 0) return;
-      slow = game.loop.actualFps < 40 ? slow + 1 : 0;
-      if (slow >= 2 && scene.dpr > MIN_DPR) { scene.dpr = Math.max(MIN_DPR, scene.dpr - 0.25); slow = 0; apply(); }
+      if (performance.now() - born < 6000) return;
+      slow = game.loop.actualFps < 30 ? slow + 1 : 0;
+      if (slow >= 3 && scene.dpr > MIN_DPR) { scene.dpr = Math.max(MIN_DPR, scene.dpr - 0.25); slow = 0; apply(); }
     }, 1500);
   }
   return { game, scene };

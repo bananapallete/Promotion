@@ -20,7 +20,12 @@ const mine = () => me && { cfg: { skill: { type: me.skill }, ult: me.ult } };
 
 // ---------- 화면 ----------
 const { scene } = startWorld('game', { fill: true });
-window.__world = scene; // 테스트용 접근
+window.__world = scene;
+if (location.search.includes('debug')) { // 끊김 진단: ?debug 로 열면 화면 구석에 프레임·해상도·서버 응답 간격을 보여 줌
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:6px;bottom:44px;z-index:99;background:#000b;color:#0f0;font:11px monospace;padding:4px 6px;border-radius:6px;white-space:pre;pointer-events:none'; document.body.append(box);
+  let gaps = [], lastSt = performance.now(); socket.on('state', () => { const n = performance.now(); gaps.push(n - lastSt); lastSt = n; if (gaps.length > 40) gaps.shift(); });
+  setInterval(() => { const g = scene.game.loop, avg = gaps.reduce((a, b) => a + b, 0) / (gaps.length || 1); box.textContent = `fps ${Math.round(g.actualFps)} dpr ${scene.dpr.toFixed(2)}\n서버 ${avg.toFixed(0)}ms (최대 ${Math.max(0, ...gaps).toFixed(0)})`; }, 500);
+} // 테스트용 접근
 let follow = true;
 let runT = 0; // 0 평소 → 1 달리는 중 (0.4초에 걸쳐 오감)
 let deadT = 0; // 쓰러지면 0→1 (0.5초에 걸쳐): 줌인 + 흑백
