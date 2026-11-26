@@ -57,7 +57,7 @@ const star = (g, x, y, r, c) => { // 네 갈래 반짝임
 export const FX_COLOR = {
   punch: 0xffffff, flurry: 0xff8fb0, shock: 0xffa43a, thrust: 0xcfe3f5, smash: 0x8fd16a, bite: 0xffffff, claw: 0xff9a3c, paw: 0xf6e7b4,
   crescent: 0xff8a2a, stomp: 0xc9b79a, bump: 0xff8fb8, sweep: 0x5aa7ff, tongue: 0xff6f91,
-  stone: 0xb8bcc8, arrow: 0xc89b62, orb: 0xb072ff, spark: 0xffe066, star: 0xff7ab8, bottle: 0xff7a3c, egg: 0xffd54a,
+  stone: 0xb8bcc8, arrow: 0xc89b62, orb: 0xb072ff, spark: 0xffe066, star: 0xff7ab8, bottle: 0xff7a3c, egg: 0xffd54a, note: 0xff7ad9,
 };
 
 /** 근접 공격: e = { dx, dy, arc(도, 반각), range(칸), fx, step } */

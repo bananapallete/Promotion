@@ -166,5 +166,13 @@
   "run": 8,
   "combo": 8,
   "die": 6
+ },
+ "gaga": {
+  "idle": 4,
+  "walk": 8,
+  "run": 8,
+  "combo": 6,
+  "die": 6,
+  "ult": 8
  }
 }

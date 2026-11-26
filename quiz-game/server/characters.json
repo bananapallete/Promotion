@@ -1137,5 +1137,51 @@
       "fx": "phoenix",
       "spd": 1.1
     }
+  },
+  "gaga": {
+    "name": "레이디 가가",
+    "sprite": "gaga",
+    "radius": 0.5,
+    "hp": 42,
+    "walkSpeed": 6,
+    "runSpeed": 9,
+    "runGauge": 5,
+    "runRecharge": 10,
+    "stunSec": 2,
+    "invincibleSec": 3,
+    "skill": {
+      "type": "run"
+    },
+    "attack": {
+      "type": "ranged",
+      "dmgMin": 4,
+      "dmgMax": 4,
+      "interval": 0.45,
+      "range": 5.5,
+      "knockback": 0,
+      "canAttackWhileRunning": false,
+      "projectile": {
+        "speed": 10,
+        "radius": 0.3,
+        "art": "note"
+      },
+      "fx": "note"
+    },
+    "ammo": {
+      "max": 4,
+      "reload": 1.2
+    },
+    "role": "ranged",
+    "atkInfo": "음표 연사",
+    "ult": {
+      "name": "무대 펼치기",
+      "need": 100,
+      "type": "stage",
+      "sec": 5,
+      "tick": 0.05,
+      "radius": 3.2,
+      "dmg": 0.35,
+      "fx": "note"
+    }
   }
 }

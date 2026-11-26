@@ -1069,6 +1069,28 @@ test('부화(닭): 알 7개를 뿌리고 1초 뒤 병아리가 되어 가까운 
   run(g, 6); assert.equal(g.minions.size, 0, '10초 뒤 사라짐');
 });
 
+test('궁극기로 채우는 게이지는 한 번에 5%까지: 여러 명을 맞혀도 합쳐서 제한', () => {
+  const { g, A, B } = duo('hippo', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' }), D = g.join({ token: 'd', name: 'D', charId: 'blue' });
+  A.x = 10; A.y = 10; B.x = 11; B.y = 10; C.x = 10; C.y = 11; D.x = 9; D.y = 10;
+  A.cfg = { ...A.cfg, ult: { ...A.cfg.ult, dmg: 30 } }; A.ult = A.cfg.ult.need; g.ult('a', null); run(g, 1);
+  assert.ok(A.ult <= A.cfg.ult.need * 0.05 + 0.5 + A.cfg.ult.need * 0.03 * 1.1, `궁극기로 얻은 게이지 ${A.ult}`); // 5% + 1초치 자동 충전
+  assert.ok(B.hp < B.cfg.hp && C.hp < C.cfg.hp && D.hp < D.cfg.hp, '셋 다 맞음');
+});
+
+test('무대 펼치기(레이디 가가): 제자리에서 5초 춤추며 무대 안 적에게만 계속 피해를 준다', () => {
+  const { g, A, B } = duo('gaga', 'blue');
+  const C = g.join({ token: 'c', name: 'C', charId: 'blue' });
+  A.x = 10; A.y = 10; B.x = 12; B.y = 10; C.x = 20; C.y = 10; B.invUntil = 0; C.invUntil = 0; A.ult = A.cfg.ult.need;
+  g.setInput('a', { mx: 1, my: 0, run: false }); g.ult('a', null); const hp = B.hp, x0 = A.x;
+  run(g, 2.6); assert.ok(B.hp < hp - 10, `진행 중 피해 ${hp - B.hp}`);
+  assert.ok(Math.abs(A.x - x0) < 0.3, '춤추는 동안 제자리');
+  run(g, 3);
+  const total = hp - B.hp; assert.ok(total >= 28 && total <= 40, `5초 합계 ${total}`);
+  assert.equal(C.hp, C.cfg.hp, '무대 밖은 안 맞음');
+  const after = B.hp; run(g, 1); assert.equal(B.hp, after, '끝나면 피해 멈춤');
+});
+
 test('난타(격투가): 5초간 앞으로 걸어가며 전방 직선을 연타하고 끝나면 멈춘다', () => {
   const { g, A, B } = duo('brawler', 'blue');
   A.x = 10; A.y = 10; B.x = 12; B.y = 10; A.ult = A.cfg.ult.need;

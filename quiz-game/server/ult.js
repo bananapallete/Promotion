@@ -2,10 +2,11 @@
 //   rush 돌진(닿는 상대 모두) · burst 내 주변 범위(화상·회전 가능) · buff 일정 시간 강화(은신 포함) · barrage 투사체 난사 · meteor 예고 후 폭발 · zone 바닥 범위 지속 피해(진흙은 느려짐+회복)
 //   slam 제자리에서 원뿔 내려찍기를 연달아(오크) · channel 서서 시전(채널링: 느려지고 맞으면 끊김) · charm 매혹 · orbit 몸 주위를 도는 별 · snipe 조준 뒤 관통 빔
 //   pull 혀로 끌어당김 · wave 맵을 쓸고 가는 파도 · magnet 동전 끌어당김 · chain 순간이동 연타 · wall 막는 벽
+import { ULT_CHARGE } from '../shared/constants.js';
 const r2 = (n) => Math.round(n * 100) / 100;
 const rand = (a, b) => a + Math.random() * (b - a);
 
-export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood'];
+export const ULT_TYPES = ['rush', 'burst', 'buff', 'barrage', 'meteor', 'zone', 'pull', 'wave', 'magnet', 'chain', 'wall', 'channel', 'charm', 'orbit', 'snipe', 'slam', 'tether', 'phoenix', 'flurry', 'blackhole', 'brood', 'stage'];
 export const CHARGE_TAKEN = 0.5; // 맞은 피해는 때린 피해의 절반만큼 충전
 
 export const ultReady = (p) => !!p.cfg.ult && p.ult >= p.cfg.ult.need;
@@ -20,6 +21,7 @@ export function charge(p, amount) {
 export function useUlt(g, p, aim) {
   const u = p.cfg.ult;
   p.ult = 0;
+  p.ultRoom = u.need * ULT_CHARGE.ultCap; // 이번 궁극기로 채울 수 있는 양의 한도
   let { dx, dy, near, manual } = g._aimDir(p, aim, u.range ?? 6);
   if (u.type === 'flurry' && !manual && p.input && Math.hypot(p.input.mx, p.input.my) > 0.1) { dx = p.input.mx; dy = p.input.my; } // 난타는 가는 방향으로
   p.aimM = manual ? Number(aim.m) || null : null; // 직접 조준: 드래그 길이(0~1)로 거리 조절 (center가 읽음)
@@ -75,6 +77,21 @@ const RUN = {
     if (u.morph) p.buff.morph = u.morph; // 다른 캐릭터 그림으로 변신 (도트 크기는 그대로)
     if (u.scale > 1) { p.buff.scale = u.scale; if (!p.baseCfg) { p.baseCfg = p.cfg; p.cfg = { ...p.cfg, radius: p.cfg.radius * u.scale }; } } // 커진 만큼 몸집(충돌)도 커짐
     if (u.heal) { const h = Math.min(p.cfg.hp - p.hp, Math.ceil(p.cfg.hp * u.heal)); if (h > 0) { p.hp += h; g.events.push({ e: 'itemGet', id: 0, k: 'heart', by: p.id, amount: h, x: r2(p.x), y: r2(p.y) }); } }
+  },
+
+  stage(g, p, u, dx, dy) { // 무대 펼치기: 제자리에서 sec초 춤추며, 무대(반경) 안 적에게 tick마다 피해 (소수 피해는 모아서 1 이상이 될 때 적용)
+    const ch = p.channel = { until: g.t + u.sec, move: 0 }, x = p.x, y = p.y;
+    g.events.push({ e: 'stageOpen', id: p.id, x: r2(x), y: r2(y), r: u.radius, sec: u.sec });
+    for (let i = 0; i * u.tick < u.sec - 1e-6; i++) {
+      later(g, i * u.tick, () => {
+        if (p.channel !== ch || p.stunned) return;
+        for (const o of g._enemies(p)) {
+          if (o.stunned || Math.hypot(o.x - x, o.y - y) > u.radius + o.cfg.radius) continue;
+          o.stageAcc = (o.stageAcc || 0) + u.dmg;
+          if (o.stageAcc >= 1) { const n = Math.floor(o.stageAcc); o.stageAcc -= n; hit(g, o, p, n, 0, dx, dy, u.fx); }
+        }
+      });
+    }
   },
 
   brood(g, p, u) { // 알 n개를 동전처럼 뿌림 → hatch초 뒤 병아리로 부화 → sec초 동안 닭 곁에서 쪼아 공격하거나 동전을 주움

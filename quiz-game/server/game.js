@@ -545,7 +545,11 @@ export class Game {
     if (guard) dmg = Math.max(1, Math.round(dmg * (1 - gd)));
     if (target.shield && this.t < target.shield.until && dmg > 0) dmg = Math.max(1, Math.round(dmg * target.shield.mul)); // 진흙 목욕 피해 감소
     if (dmg > 0) {
-      if (attacker.cfg) charge(attacker, dmg * (this.ultDepth > 0 ? ULT_CHARGE.ultHit : 1));
+      if (attacker.cfg) {
+        let add = dmg * (this.ultDepth > 0 ? ULT_CHARGE.ultHit : 1);
+        if (this.ultDepth > 0) { add = Math.min(add, attacker.ultRoom ?? 0); attacker.ultRoom = (attacker.ultRoom ?? 0) - add; } // 궁극기로 채우는 양은 한 번에 게이지의 5%까지 (여러 명 합쳐서)
+        charge(attacker, add);
+      }
       charge(target, dmg * CHARGE_TAKEN);
       if (target.cfg.role === 'tank' && target.cfg.ult) charge(target, target.cfg.ult.need * ULT_CHARGE.tankHit); // 탱커는 맞을 때마다 2% 더
       const cm = attacker.cfg?.attack?.charm; // 평타 중첩 매혹(공주): window초 안에 stacks번 맞으면 sec초 매혹

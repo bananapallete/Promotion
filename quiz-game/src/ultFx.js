@@ -643,3 +643,29 @@ export function bhBlast(scene, e, BU) {
     for (const p of parts) { const r = R * p.sp * e3 * 1.1; sq(g, x + Math.cos(p.a) * r, y + Math.sin(p.a) * r * 0.82, p.s * (1 - t * 0.7), VOID[Math.min(4, 4 - Math.floor(t * 4))], 1 - t * 0.8); }
   }, FXD);
 }
+
+// ---------- 무대 펼치기: 체크무늬 무대 + 도는 조명 + 반짝임 ----------
+function stageTex(scene, Rd) {
+  return tex(scene, `ux-stage-${Rd}`, 2 * Rd + 2, 2 * Rd + 2, (put, w) => {
+    for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+      const d = Math.hypot(x + 0.5 - w / 2, y + 0.5 - w / 2) / Rd; if (d > 1) continue;
+      put(x, y, d > 0.9 ? [255, 190, 250] : ((x >> 2) + (y >> 2)) % 2 ? [96, 40, 150] : [150, 70, 200], d > 0.9 ? 235 : 170);
+    }
+  });
+}
+export function stageFx(scene, e, BU) {
+  const x = e.x * BU, y = e.y * BU, R = e.r * BU, Rd = Math.max(6, Math.round(R / DOT)), floor = scene.add.image(x, y, stageTex(scene, Rd)).setScale(DOT).setDepth(-43);
+  scene.tweens.add({ targets: floor, alpha: 0, delay: e.sec * 1000 - 400, duration: 400, onComplete: () => floor.destroy() });
+  const BEAM = [0xff7ad9, 0x7ad9ff, 0xffe27a];
+  drawLoop(scene, e.sec * 1000, (g, u) => {
+    const t = u * e.sec, fade = Math.min(1, (1 - u) * e.sec / 0.4), open = Math.min(1, u * e.sec / 0.25);
+    for (let k = 0; k < 3; k++) { // 도는 조명
+      const a = t * 2.2 + k * 2.094;
+      for (let r = 12; r < R * open; r += 9) sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82, 6 + r / 40, BEAM[k], 0.55 * fade);
+    }
+    for (let i = 0; i < 16; i++) { // 반짝임·떠오르는 음표 점
+      const ph = (i * 0.37 + t * 0.9) % 1, a = i * 2.4 + 0.5, r = R * (0.25 + 0.7 * ((i * 53) % 10) / 10);
+      sq(g, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.82 - ph * 50, 6, BEAM[i % 3], (1 - ph) * fade);
+    }
+  }, FXD);
+}
